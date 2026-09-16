@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ employee.full_name_ar }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">بيانات الموظف: {{ employee.full_name_ar }}</h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('employees.employees_edit', id=employee.id) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>تعديل</a>
+    <a href="{{ url_for('employees.employees_list') }}" class="btn btn-outline-secondary">العودة للقائمة</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">البيانات الأساسية</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong>رقم الموظف:</strong><p>{{ employee.employee_number }}</p></div>
+          <div class="col-md-4"><strong>الاسم بالعربي:</strong><p>{{ employee.full_name_ar }}</p></div>
+          <div class="col-md-4"><strong>الاسم بالإنجليزي:</strong><p>{{ employee.full_name_en or '-' }}</p></div>
+          <div class="col-md-4"><strong>رقم الهوية:</strong><p>{{ employee.national_id or '-' }}</p></div>
+          <div class="col-md-4"><strong>الجنس:</strong><p>{{ 'ذكر' if employee.gender == 'male' else ('أنثى' if employee.gender == 'female' else '-') }}</p></div>
+          <div class="col-md-4"><strong>الجنسية:</strong><p>{{ employee.nationality or '-' }}</p></div>
+          <div class="col-md-4"><strong>الهاتف:</strong><p>{{ employee.phone or '-' }}</p></div>
+          <div class="col-md-4"><strong>البريد الإلكتروني:</strong><p>{{ employee.email or '-' }}</p></div>
+          <div class="col-md-4"><strong>الحالة الاجتماعية:</strong><p>{{ employee.marital_status or '-' }}</p></div>
+          <div class="col-md-12"><strong>العنوان:</strong><p>{{ employee.address or '-' }}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h6 class="mb-0">البيانات الوظيفية</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong>القسم:</strong><p>{{ employee.department.name_ar if employee.department else '-' }}</p></div>
+          <div class="col-md-4"><strong>المنصب:</strong><p>{{ employee.position.name_ar if employee.position else '-' }}</p></div>
+          <div class="col-md-4"><strong>المدير المباشر:</strong><p>{{ employee.manager.full_name_ar if employee.manager else '-' }}</p></div>
+          <div class="col-md-4"><strong>تاريخ التعيين:</strong><p>{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '-' }}</p></div>
+          <div class="col-md-4"><strong>نوع العقد:</strong><p>{{ employee.contract_type or '-' }}</p></div>
+          <div class="col-md-4"><strong>الحالة:</strong>
+            <p>
+              {% if employee.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% elif employee.status == 'inactive' %}<span class="badge bg-secondary">غير نشط</span>
+              {% elif employee.status == 'on_leave' %}<span class="badge bg-warning">إجازة</span>
+              {% else %}<span class="badge bg-secondary">{{ employee.status }}</span>{% endif %}
+            </p>
+          </div>
+          <div class="col-md-4"><strong>الراتب:</strong><p>{{ '{:,.2f}'.format(employee.salary) if employee.salary else '-' }} د.ل</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">الإجراءات</h6></div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('employees.employees_edit', id=employee.id) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>تعديل البيانات</a>
+        <form method="POST" action="{{ url_for('employees.employees_delete', id=employee.id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا الموظف؟')">
+          <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash me-1"></i>حذف الموظف</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h6 class="mb-0">معلومات إضافية</h6></div>
+      <div class="card-body">
+        <p><strong>تاريخ الإنشاء:</strong> {{ employee.created_at.strftime('%Y-%m-%d') if employee.created_at else '-' }}</p>
+        <p><strong>آخر تعديل:</strong> {{ employee.updated_at.strftime('%Y-%m-%d') if employee.updated_at else '-' }}</p>
+        {% if employee.notes %}
+        <p><strong>ملاحظات:</strong></p>
+        <p class="text-muted">{{ employee.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

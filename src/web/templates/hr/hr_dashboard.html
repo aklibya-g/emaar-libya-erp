@@ -1,0 +1,480 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}شؤون الموظفين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">شؤون الموظفين</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-people-fill me-2"></i>شؤون الموظفين</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.hr_employee_list') }}" class="text-decoration-none">
+      <div class="stat-card stat-blue" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ total_employees }}</div>
+            <div class="stat-label">إجمالي الموظفين</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.attendance_daily') }}" class="text-decoration-none">
+      <div class="stat-card stat-green" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ present_today }}</div>
+            <div class="stat-label">حاضرون اليوم</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.leave_list') }}" class="text-decoration-none">
+      <div class="stat-card stat-yellow" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ on_leave_today }}</div>
+            <div class="stat-label">في إجازة اليوم</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-calendar-minus-fill"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.attendance_daily') }}" class="text-decoration-none">
+      <div class="stat-card stat-red" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ absent_today }}</div>
+            <div class="stat-label">غائبون اليوم</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-person-fill-x"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.hr_drivers_list') }}" class="text-decoration-none">
+      <div class="stat-card stat-teal" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ total_drivers }}</div>
+            <div class="stat-label">إجمالي السائقين</div>
+            <div style="font-size:12px;margin-top:4px">
+              <span style="color:var(--accent-green)">نشط: {{ active_drivers }}</span> |
+              <span style="color:var(--accent-red)">متوقف: {{ inactive_drivers }}</span>
+            </div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-bus-front-fill"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.attendance_daily') }}" class="text-decoration-none">
+      <div class="stat-card stat-cyan" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ late_today }}</div>
+            <div class="stat-label">متأخرون اليوم</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.leave_list') }}" class="text-decoration-none">
+      <div class="stat-card stat-purple" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ pending_leaves }}</div>
+            <div class="stat-label">طلبات إجازة معلقة</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.leave_list', tab='pending_executive') }}" class="text-decoration-none">
+      <div class="stat-card stat-orange" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ pending_executive }}</div>
+            <div class="stat-label">إجازات بانتظار الاعتماد</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-person-check"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <a href="{{ url_for('hr.notifications_list') }}" class="text-decoration-none">
+      <div class="stat-card stat-cyan" style="cursor:pointer">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="stat-value">{{ unread_notifications }}</div>
+            <div class="stat-label">إشعارات جديدة</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-bell-fill"></i></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-yellow">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ expiring_docs }}</div>
+          <div class="stat-label">مستندات تنتهي قريباً</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-red">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ expiring_contracts }}</div>
+          <div class="stat-label">عقود تنتهي قريباً</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-file-earmark-lock"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main HR Modules Grid -->
+<div class="row g-4 mb-4">
+  <!-- الموظفون -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(var(--accent-rgb),0.12);color:var(--accent);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <h6 class="mb-0">الموظفون</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة الملفات الوظيفية والبيانات الشخصية والوظيفية</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.hr_employee_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>قائمة الموظفين
+          </a>
+          <a href="{{ url_for('employees.employees_add') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-person-plus me-1"></i>إضافة موظف جديد
+          </a>
+          <a href="{{ url_for('hr.document_categories') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-folder me-1"></i>إدارة المستندات
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الحضور والانصراف -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(72,187,120,0.12);color:var(--accent-green);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h6 class="mb-0">الحضور والانصراف</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">تسجيل الحضور اليومي والكشف الشهري</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.attendance_entry') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar-day me-1"></i>ادخال الحضور اليومي
+          </a>
+          <a href="{{ url_for('hr.attendance_monthly') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-calendar-month me-1"></i>الكشف الشهري
+          </a>
+          <a href="{{ url_for('hr.attendance_settings') }}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-gear me-1"></i>إعدادات سجلات الحضور
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الإجازات -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(246,224,94,0.12);color:var(--accent-yellow);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-calendar-minus"></i>
+        </div>
+        <h6 class="mb-0">الإجازات</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة طلبات الإجازات والأرصد dung والموافقات</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.leave_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-check me-1"></i>طلبات الإجازة
+          </a>
+          <a href="{{ url_for('hr.leave_request_form') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>طلب إجازة جديد
+          </a>
+          <a href="{{ url_for('hr.leave_balances') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-wallet2 me-1"></i>أرصدة الإجازات
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- السلف -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(237,137,54,0.12);color:#ed8936;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-wallet2"></i>
+        </div>
+        <h6 class="mb-0">السلف</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة سلف الموظفين والاقساط</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.loans_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>قائمة السلف
+          </a>
+          <a href="{{ url_for('hr.loan_add') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>اضافة سلفة
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الجزاءات والخصومات -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(252,129,129,0.12);color:var(--accent-red);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h6 class="mb-0">الجزاءات والخصومات</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">سجل المخالفات والإنذارات والخصومات</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.disciplinary_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>سجل الجزاءات
+          </a>
+          <a href="{{ url_for('hr.disciplinary_add') }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>إضافة جزاء
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- العقود -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(118,228,247,0.12);color:var(--accent-cyan);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <h6 class="mb-0">العقود</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة عقود العمل والتجديدات</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.contracts_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>قائمة العقود
+          </a>
+          <a href="{{ url_for('hr.contracts_add') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>عقد جديد موظفين
+          </a>
+          <a href="{{ url_for('hr.driver_contracts_add') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>عقد جديد سائقين
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الورديات -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(183,148,244,0.12);color:var(--accent-purple);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <h6 class="mb-0">الورديات</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة الورديات وجداول العمل</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.shifts_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>الورديات
+          </a>
+          <a href="{{ url_for('hr.shifts_assign') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>تعيين وردية
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Second Row -->
+<div class="row g-4 mb-4">
+  <!-- العمل الإضافي -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(99,179,237,0.12);color:var(--accent);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-stopwatch"></i>
+        </div>
+        <h6 class="mb-0">العمل الإضافي</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة طلبات العمل الإضافي والحسابات</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.attendance_daily') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-clock me-1"></i>ساعات العمل الإضافي
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الترقيات والنقل -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(72,187,120,0.12);color:var(--accent-green);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-arrow-up-circle"></i>
+        </div>
+        <h6 class="mb-0">الترقيات والنقل</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">إدارة الترقيات والنقل والتكليف</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('hr.hr_employee_list') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-person-badge me-1"></i>الملف الوظيفي
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- التقارير -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <div class="stat-icon" style="background:rgba(246,224,94,0.12);color:var(--accent-yellow);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-bar-chart-line"></i>
+        </div>
+        <h6 class="mb-0">التقارير</h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">تقارير شاملة للموارد البشرية</p>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('reports.reports_employees') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-people me-1"></i>تقرير الموظفين
+          </a>
+          <a href="{{ url_for('reports.reports_index') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-graph-up me-1"></i>التقارير العامة
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts & Quick Actions -->
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-bell me-2"></i>تنبيهات ومستجدات</h6>
+      </div>
+      <div class="card-body">
+        {% if alerts %}
+          {% for alert in alerts %}
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--border-light) !important">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi {% if alert.severity == 'critical' %}bi-exclamation-circle text-danger{% elif alert.severity == 'warning' %}bi-exclamation-triangle text-warning{% else %}bi-info-circle text-info{% endif %}"></i>
+              <div>
+                <div class="fw-medium" style="font-size:13px">{{ alert.title }}</div>
+                {% if alert.message %}<div class="text-muted" style="font-size:12px">{{ alert.message }}</div>{% endif %}
+              </div>
+            </div>
+            <span class="badge {% if alert.severity == 'critical' %}badge-danger{% elif alert.severity == 'warning' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:11px">
+              {{ alert.created_at.strftime('%Y-%m-%d') if alert.created_at else '' }}
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-check-circle fs-3 d-block mb-2" style="color:var(--accent-green)"></i>
+            <p class="mb-0">لا توجد تنبيهات حالياً</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header"><h6 class="mb-0"><i class="bi bi-lightning me-2"></i>إجراءات سريعة</h6></div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('employees.employees_add') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-person-plus me-1"></i>إضافة موظف جديد
+        </a>
+        <a href="{{ url_for('hr.attendance_daily') }}" class="btn btn-success btn-sm">
+          <i class="bi bi-calendar-check me-1"></i>تسجيل الحضور
+        </a>
+        <a href="{{ url_for('hr.leave_request_form') }}" class="btn btn-warning btn-sm">
+          <i class="bi bi-calendar-minus me-1"></i>طلب إجازة
+        </a>
+        <a href="{{ url_for('hr.disciplinary_add') }}" class="btn btn-danger btn-sm">
+          <i class="bi bi-exclamation-triangle me-1"></i>إضافة جزاء
+        </a>
+        <a href="{{ url_for('hr.contracts_add') }}" class="btn btn-info btn-sm">
+          <i class="bi bi-file-earmark-plus me-1"></i>عقد جديد موظفين
+        </a>
+        <a href="{{ url_for('hr.driver_contracts_add') }}" class="btn btn-success btn-sm">
+          <i class="bi bi-file-earmark-plus me-1"></i>عقد جديد سائقين
+        </a>
+        <a href="{{ url_for('hr.rules_list') }}" class="btn btn-secondary btn-sm">
+          <i class="bi bi-gear me-1"></i>إعدادات لائحة العمل
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

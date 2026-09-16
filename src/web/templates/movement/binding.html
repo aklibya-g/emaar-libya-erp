@@ -1,0 +1,182 @@
+{% extends "layouts/base.html" %}
+{% block title %}ربط السائق بالمركبة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff; border-radius: 25px; text-decoration: none; font-weight: 500;
+    transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover { transform: translateY(-2px); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('movement.movement_dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i> لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-link-45deg"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- نموذج الربط -->
+  <div class="col-md-5">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h5 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-plus-circle me-2"></i>ربط سائق بمركبة</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('movement.assign_driver') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">المركبة <span class="text-danger">*</span></label>
+            <select class="form-select" name="vehicle_id" id="vehicleSelect" required>
+              <option value="">اختر المركبة</option>
+              {% for v in vehicles %}
+              <option value="{{ v.id }}" data-status="{{ v.status }}" data-driver="{{ v.driver.full_name_ar if v.driver else '' }}">
+                {{ v.plate_number }} - {{ v.emaar_number or '' }} ({{ v.brand or '' }} {{ v.model or '' }})
+                {% if v.driver %} | السائق: {{ v.driver.full_name_ar }}{% endif %}
+                {% if v.status != 'active' %} [{{ v.status }}]{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">السائق <span class="text-danger">*</span></label>
+            <select class="form-select" name="driver_id" id="driverSelect" required>
+              <option value="">اختر السائق</option>
+              {% for d in drivers %}
+              <option value="{{ d.id }}" data-phone="{{ d.phone or '' }}">
+                {{ d.full_name_ar }} ({{ d.driver_number }})
+                {% if d.status != 'active' %} [{{ d.status }}]{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-link-45deg me-1"></i> ربط الآن
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- تفريغ السيارة -->
+    <div class="card mt-3" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h5 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-unlink me-2"></i>تفريغ مركبة</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('movement.unassign_driver') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">المركبة المراد تفريغها</label>
+            <select class="form-select" name="vehicle_id" required>
+              <option value="">اختر المركبة</option>
+              {% for v in vehicles %}
+                {% if v.driver_id %}
+                <option value="{{ v.id }}">{{ v.plate_number }} - السائق: {{ v.driver.full_name_ar }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('هل انت متاكد من تفريغ هذه السيارة؟')">
+            <i class="bi bi-unlink me-1"></i> تفريغ الآن
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- قائمة السيارات والسائقين -->
+  <div class="col-md-7">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h5 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-list-check me-2"></i>قائمة السيارات والسائقين</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary)">رقم اللوحة</th>
+                <th style="color:var(--text-secondary)">رقم اعمار</th>
+                <th style="color:var(--text-secondary)">النوع</th>
+                <th style="color:var(--text-secondary)">الحالة</th>
+                <th style="color:var(--text-secondary)">السائق الحالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in vehicles %}
+              <tr>
+                <td class="fw-bold" style="color:var(--text-primary)">{{ v.plate_number }}</td>
+                <td style="color:var(--text-primary)">{{ v.emaar_number or '-' }}</td>
+                <td style="color:var(--text-primary)">{{ v.brand or '' }} {{ v.model or '' }}</td>
+                <td>
+                  {% if v.status == 'active' %}<span class="badge bg-success">نشط</span>
+                  {% elif v.status == 'maintenance' %}<span class="badge bg-warning text-dark">صيانة</span>
+                  {% else %}<span class="badge bg-secondary">متوقف</span>{% endif %}
+                </td>
+                <td>
+                  {% if v.driver %}
+                    <span class="badge bg-primary"><i class="bi bi-person me-1"></i>{{ v.driver.full_name_ar }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">غير معيّن</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not vehicles %}
+              <tr><td colspan="5" class="text-center text-muted py-4">لا توجد سيارات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- سجل التعيينات -->
+    <div class="card mt-3" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h5 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-clock-history me-2"></i>اخر التعيينات</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary)">المركبة</th>
+                <th style="color:var(--text-secondary)">السائق</th>
+                <th style="color:var(--text-secondary)">تاريخ البدء</th>
+                <th style="color:var(--text-secondary)">تاريخ الانتهاء</th>
+                <th style="color:var(--text-secondary)">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in logs %}
+              <tr>
+                <td style="color:var(--text-primary)">{{ log.vehicle.plate_number if log.vehicle else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ log.driver.full_name_ar if log.driver else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ log.start_date.strftime('%Y-%m-%d') if log.start_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ log.end_date.strftime('%Y-%m-%d') if log.end_date else 'حالي' }}</td>
+                <td>
+                  {% if not log.end_date %}<span class="badge bg-success">حالي</span>
+                  {% else %}<span class="badge bg-secondary">منتهي</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not logs %}
+              <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد سجل تعيينات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

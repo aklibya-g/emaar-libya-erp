@@ -1,0 +1,271 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل عقد سائق' if contract else 'عقد جديد سائقين' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">{{ 'تعديل بيانات العقد' if contract else 'عقد جديد سائقين' }}</h4>
+  <a href="{{ url_for('hr.driver_contracts_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> عقود السائقين
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">رقم العقد</label>
+          <input type="text" name="contract_number" class="form-control" id="contractNumber"
+                 value="{{ contract.contract_number if contract and contract.contract_number else '' }}"
+                 placeholder="بلا" onfocus="this.placeholder=''" onblur="this.placeholder='بلا'">
+          <div class="form-text">اتركه فارغاً للتوليدي تلقائياً</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">السائق <span class="text-danger">*</span></label>
+          <select name="driver_id" class="form-select" id="driverSelect" required onchange="onDriverChange(this.value)">
+            <option value="">اختر السائق</option>
+            {% for driver in drivers %}
+            <option value="{{ driver.id }}" data-join="{{ driver.join_date.strftime('%Y-%m-%d') if driver.join_date else '' }}"
+                    {% if contract and contract.driver_id == driver.id %}selected{% endif %}>
+              {{ driver.full_name_ar }} ({{ driver.driver_number }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم</label>
+          <input type="text" class="form-control" id="driverName" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم السائق</label>
+          <input type="text" class="form-control" id="driverNumber" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" class="form-control" id="driverPhone" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع الهوية</label>
+          <input type="text" class="form-control" id="driverIdType" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الهوية</label>
+          <input type="text" class="form-control" id="driverIdNumber" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الرقم الوطني</label>
+          <input type="text" class="form-control" id="driverNationalId" readonly style="background:var(--bg-secondary)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع العقد <span class="text-danger">*</span></label>
+          <select name="contract_type" class="form-select" id="contractType" required onchange="onContractTypeChange(this.value)">
+            <option value="">اختر النوع</option>
+            <option value="reserve" {% if contract and contract.contract_type == 'reserve' %}selected{% endif %}>احتياط</option>
+            <option value="seasonal" {% if contract and contract.contract_type == 'seasonal' %}selected{% endif %}>موسمي</option>
+            <option value="rent_to_own" {% if contract and contract.contract_type == 'rent_to_own' %}selected{% endif %}>ايجار لغرض التمليك</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">مدة العقد</label>
+          <div class="input-group">
+            <select name="contract_duration" class="form-select" id="contractDuration">
+              <option value="">اختر المدة</option>
+              <option value="year" {% if contract and contract.contract_duration == 'year' %}selected{% endif %}>سنة</option>
+              <option value="end_of_season" {% if contract and contract.contract_duration == 'end_of_season' %}selected{% endif %}>نهاية الموسم</option>
+              <option value="52_weeks" {% if contract and contract.contract_duration == '52_weeks' %}selected{% endif %}>52 اسبوع</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addDurationModal" title="إضافة مدة جديدة">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <div class="input-group">
+            <select name="status" class="form-select" id="contractStatus">
+              <option value="active" {% if contract and contract.status == 'active' %}selected{% endif %}>نشط</option>
+              <option value="inactive" {% if contract and contract.status == 'inactive' %}selected{% endif %}>متوقف</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStatusModal" title="إضافة حالة جديدة">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ المباشرة <span class="text-danger">*</span></label>
+          <input type="date" name="start_date" class="form-control" id="startDate"
+                 value="{{ contract.start_date.strftime('%Y-%m-%d') if contract and contract.start_date else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ الانتهاء</label>
+          <input type="date" name="end_date" class="form-control" value="{{ contract.end_date.strftime('%Y-%m-%d') if contract and contract.end_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الراتب (د.ل)</label>
+          <input type="number" step="0.01" name="salary" class="form-control" value="{{ contract.salary if contract and contract.salary else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">البدلات (د.ل)</label>
+          <input type="number" step="0.01" name="allowances" class="form-control" value="{{ contract.allowances if contract and contract.allowances else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ contract.notes if contract and contract.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if contract else 'إضافة العقد' }}</button>
+        <a href="{{ url_for('hr.driver_contracts_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- مودال اضافة حالة جديدة -->
+<div class="modal fade" id="addStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة حالة جديدة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم الحالة <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newStatusName" placeholder="أدخل اسم الحالة">
+        </div>
+        <div id="statusAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveStatus()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال اضافة مدة جديدة -->
+<div class="modal fade" id="addDurationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة مدة عقد جديدة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم المدة <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newDurationName" placeholder="أدخل اسم المدة">
+        </div>
+        <div id="durationAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveDuration()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onDriverChange(driverId) {
+  if (!driverId) return;
+  fetch('{{ url_for("hr.api_driver_info", driver_id="") }}' + driverId)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('driverName').value = data.full_name_ar || '';
+        document.getElementById('driverNumber').value = data.driver_number || '';
+        document.getElementById('driverPhone').value = data.phone || '';
+        document.getElementById('driverIdType').value = data.id_type == 'national_id' ? 'بطاقة شخصية' : (data.id_type == 'passport' ? 'جواز سفر' : '');
+        document.getElementById('driverIdNumber').value = data.id_number || '';
+        document.getElementById('driverNationalId').value = data.national_id || '';
+        if (data.join_date) {
+          document.getElementById('startDate').value = data.join_date;
+        }
+        if (data.status) {
+          document.getElementById('contractStatus').value = data.status;
+        }
+        if (data.contract_type) {
+          var typeSelect = document.getElementById('contractType');
+          for (var i = 0; i < typeSelect.options.length; i++) {
+            if (typeSelect.options[i].value === data.contract_type) {
+              typeSelect.selectedIndex = i;
+              break;
+            }
+          }
+          var durSelect = document.getElementById('contractDuration');
+          if (data.contract_type === 'reserve') {
+            for (var j = 0; j < durSelect.options.length; j++) {
+              if (durSelect.options[j].value === 'year') { durSelect.selectedIndex = j; break; }
+            }
+          } else if (data.contract_type === 'seasonal') {
+            for (var j = 0; j < durSelect.options.length; j++) {
+              if (durSelect.options[j].value === 'end_of_season') { durSelect.selectedIndex = j; break; }
+            }
+          } else if (data.contract_type === 'rent_to_own') {
+            for (var j = 0; j < durSelect.options.length; j++) {
+              if (durSelect.options[j].value === '52_weeks') { durSelect.selectedIndex = j; break; }
+            }
+          }
+        }
+      }
+    });
+}
+
+function onContractTypeChange(type) {
+  const durationSelect = document.getElementById('contractDuration');
+  if (type === 'seasonal') {
+    durationSelect.value = 'end_of_season';
+  } else if (type === 'reserve') {
+    durationSelect.value = 'year';
+  } else if (type === 'rent_to_own') {
+    durationSelect.value = '52_weeks';
+  }
+}
+
+function saveStatus() {
+  const name = document.getElementById('newStatusName').value.trim();
+  const alertEl = document.getElementById('statusAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم الحالة';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('contractStatus');
+  const value = name.replace(/\s+/g, '_');
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addStatusModal'));
+  modal.hide();
+  document.getElementById('newStatusName').value = '';
+  alertEl.className = 'alert d-none';
+}
+
+function saveDuration() {
+  const name = document.getElementById('newDurationName').value.trim();
+  const alertEl = document.getElementById('durationAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم المدة';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('contractDuration');
+  const value = name.replace(/\s+/g, '_');
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addDurationModal'));
+  modal.hide();
+  document.getElementById('newDurationName').value = '';
+  alertEl.className = 'alert d-none';
+}
+</script>
+{% endblock %}

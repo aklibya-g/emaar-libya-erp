@@ -1,0 +1,167 @@
+{% extends "layouts/base.html" %}
+{% block title %}مصروفات السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+  .stat-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 20px; text-align: center; transition: all 0.2s; }
+  .stat-card .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+  .stat-card .stat-number { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+  .finance-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .finance-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .finance-table tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .finance-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .finance-table tbody tr:last-child td { border-bottom: none; }
+  .action-btn { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 12px; transition: all 0.15s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('finance.finance_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة المالية
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">المالية</a></li>
+            <li class="breadcrumb-item active">صرف السائقين</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-wallet2 me-2"></i>مصروفات السائقين</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-clipboard-data"></i></div>
+      <div class="stat-number" style="color:#8b5cf6">{{ total_count|default(0) }}</div>
+      <div class="stat-label">اجمالي المصروفات</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-number" style="color:#f59e0b">{{ pending_count|default(0) }}</div>
+      <div class="stat-label">بانتظار الصرف</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-number" style="color:#10b981">{{ paid_count|default(0) }}</div>
+      <div class="stat-label">تم الصرف</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+    <h6 class="mb-0" style="font-weight:700"><i class="bi bi-table me-2" style="color:#8b5cf6"></i>قائمة المصروفات</h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="finance-table mb-0">
+        <thead>
+          <tr>
+            <th>رقم</th>
+            <th>السائق</th>
+            <th>مبلغ المطالبة</th>
+            <th>المبلغ المدفوع</th>
+            <th>المتبقي</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if payouts %}
+          {% for payout in payouts %}
+          <tr>
+            <td><span style="font-weight:700;color:#1e40af;background:#eff6ff;padding:3px 8px;border-radius:6px;font-size:12px">{{ payout.payout_number }}</span></td>
+            <td><span style="font-weight:600;font-size:12px">{{ payout.driver_name }}</span></td>
+            <td><span style="font-weight:600;color:#1e40af">{{ "{:,.0f}".format(payout.claim_amount) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+            <td><span style="font-weight:600;color:#10b981">{{ "{:,.0f}".format(payout.paid_amount) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+            <td><span style="font-weight:700;color:#ef4444">{{ "{:,.0f}".format(payout.remaining_amount) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+            <td style="font-size:11px">{{ payout.created_at.strftime('%Y-%m-%d') if payout.created_at else '-' }}</td>
+            <td>
+              {% if payout.status == 'paid' %}
+              <span class="badge" style="background:#dcfce7;color:#166534;border-radius:6px;font-size:10px;padding:4px 10px">مدفوع</span>
+              {% elif payout.status == 'partial' %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;border-radius:6px;font-size:10px;padding:4px 10px">جزئي</span>
+              {% else %}
+              <span class="badge" style="background:#fef2f2;color:#991b1b;border-radius:6px;font-size:10px;padding:4px 10px">معلق</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if payout.status == 'pending' %}
+              <button class="btn action-btn btn-outline-success" title="صرف" data-bs-toggle="modal" data-bs-target="#payModal{{ payout.id }}">
+                <i class="bi bi-wallet2"></i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+
+          {% if payout.status == 'pending' %}
+          <div class="modal fade" id="payModal{{ payout.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content" style="border-radius:12px;border:2px solid #10b981">
+                <div class="modal-header" style="background:#f0fdf4;border-radius:10px 10px 0 0">
+                  <h5 class="modal-title" style="color:#065f46"><i class="bi bi-wallet2 me-2"></i>دفع للسائق {{ payout.driver_name }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('finance.pay_payout', payout_id=payout.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-body">
+                    <div class="mb-3 text-center">
+                      <div style="font-size:13px;color:#64748b;margin-bottom:4px">المبلغ</div>
+                      <div style="font-size:28px;font-weight:900;color:#065f46">{{ "{:,.0f}".format(payout.remaining_amount) }} د.ل</div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-bold">طريقة الدفع <span class="text-danger">*</span></label>
+                      <select name="payment_method" class="form-select" required style="border-radius:8px">
+                        <option value="">اختر طريقة الدفع</option>
+                        <option value="cash">نقدي</option>
+                        <option value="transfer">تحويل بنكي</option>
+                        <option value="check">شيك</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>تأكيد الدفع</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+          {% else %}
+          <tr><td colspan="8" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-inbox fs-3 d-block mb-2"></i>لا توجد مصروفات</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

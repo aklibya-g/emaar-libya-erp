@@ -1,0 +1,287 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الإعدادات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .backup-card { border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s; }
+  .backup-card:hover { border-color: #667eea; box-shadow: 0 4px 15px rgba(102,126,234,0.15); }
+  .backup-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #f0f0f0; }
+  .backup-item:last-child { border-bottom: none; }
+  .backup-name { font-weight: 500; }
+  .backup-meta { font-size: 0.8rem; color: #888; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item active">الإعدادات</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-gear-fill me-2"></i>الإعدادات</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+    </div>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('settings.settings_update') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h6 class="mb-0">بيانات الشركة</h6></div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">اسم الشركة بالعربي</label>
+            <input type="text" name="company_name_ar" class="form-control" value="{{ settings_dict.get('company_name_ar', company.name_ar if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">اسم الشركة بالإنجليزي</label>
+            <input type="text" name="company_name_en" class="form-control" value="{{ settings_dict.get('company_name_en', company.name_en if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الهاتف</label>
+            <input type="text" name="company_phone" class="form-control" value="{{ settings_dict.get('company_phone', company.phone if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" name="company_email" class="form-control" value="{{ settings_dict.get('company_email', company.email if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المدينة</label>
+            <input type="text" name="company_city" class="form-control" value="{{ settings_dict.get('company_city', company.city if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">العنوان</label>
+            <textarea name="company_address" class="form-control" rows="2">{{ settings_dict.get('company_address', company.address if company else '') }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h6 class="mb-0">إعدادات النظام</h6></div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">صيغة الترقيم</label>
+            <input type="text" name="numbering_format" class="form-control" value="{{ settings_dict.get('numbering_format', '{prefix}/{type_code}/{year}/{sequence:05d}') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">بادئة الترقيم</label>
+            <input type="text" name="numbering_prefix" class="form-control" value="{{ settings_dict.get('numbering_prefix', '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">اللغة الافتراضية</label>
+            <select name="default_language" class="form-select">
+              <option value="ar" {% if settings_dict.get('default_language') == 'ar' %}selected{% endif %}>العربية</option>
+              <option value="en" {% if settings_dict.get('default_language') == 'en' %}selected{% endif %}>English</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المنطقة الزمنية</label>
+            <select name="timezone" class="form-select">
+              <option value="Africa/Tripoli" {% if settings_dict.get('timezone') == 'Africa/Tripoli' %}selected{% endif %}>Africa/Tripoli</option>
+              <option value="UTC" {% if settings_dict.get('timezone') == 'UTC' %}selected{% endif %}>UTC</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>حفظ الإعدادات</button>
+  </div>
+</form>
+
+<hr class="my-5">
+
+<!-- النسخ الاحتياطي والاستيراد -->
+<div class="row g-4">
+  <!-- نسخ احتياطي -->
+  <div class="col-lg-6">
+    <div class="card backup-card">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-cloud-download me-2"></i>النسخ الاحتياطي</h6>
+      </div>
+      <div class="card-body">
+        <!-- نسخة كاملة -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">نسخة كاملة للمنظومة</h6>
+          <form method="POST" action="{{ url_for('settings.backup_full') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-download me-1"></i>نسخ احتياطي كامل (.db)
+            </button>
+          </form>
+        </div>
+
+        <!-- نسخة لقسم معين -->
+        <div class="mb-3">
+          <h6 class="text-muted mb-3">نسخة لقسم معين</h6>
+          <form method="POST" action="{{ url_for('settings.backup_section') }}" class="d-flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="section" class="form-select" required>
+              <option value="">اختر القسم</option>
+              {% for section in sections %}
+              <option value="{{ section }}">{{ section }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-outline-primary">
+              <i class="bi bi-download"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الاستيراد -->
+  <div class="col-lg-6">
+    <div class="card backup-card">
+      <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>الاستيراد</h6>
+      </div>
+      <div class="card-body">
+        <!-- استعادة من نسخة موجودة -->
+        <div class="mb-4">
+          <h6 class="text-muted mb-3">استعادة من نسخة احتياطية موجودة</h6>
+          <form method="POST" action="{{ url_for('settings.restore_full') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="d-flex gap-2">
+              <select name="backup_file" class="form-select" required>
+                <option value="">اختر النسخة الاحتياطية</option>
+                {% for b in backups %}
+                {% if b.name.endswith('.db') %}
+                <option value="{{ b.name }}">{{ b.name }} ({{ (b.size // 1024) }} KB)</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-warning" onclick="return confirm('هل انت متاكد من الاستعادة؟ سيتم انشاء نسخة احتياطية تلقائياً قبل الاستعادة')">
+                <i class="bi bi-arrow-counterclockwise"></i> استعادة
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- رفع ملف -->
+        <div class="mb-3">
+          <h6 class="text-muted mb-3">استيراد من ملف</h6>
+          <form method="POST" action="{{ url_for('settings.restore_upload') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-2">
+              <input type="file" name="backup_file" class="form-control" accept=".db,.json" required>
+              <div class="form-text">يدعم ملفات .db (منظومة كاملة) و .json (قسم معين)</div>
+            </div>
+            <button type="submit" class="btn btn-success w-100" onclick="return confirm('هل انت متاكد من الاستيراد؟')">
+              <i class="bi bi-upload me-1"></i>استيراد وتطبيق
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- قائمة النسخ الاحتياطية -->
+{% if backups %}
+<div class="card mt-4 backup-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>النسخ الاحتياطية المحفوظة ({{ backups|length }})</h6>
+  </div>
+  <div class="card-body p-0">
+    {% for b in backups %}
+    <div class="backup-item">
+      <div>
+        <div class="backup-name">
+          {% if b.name.endswith('.db') %}
+            <i class="bi bi-database text-primary me-1"></i>
+          {% else %}
+            <i class="bi bi-filetype-json text-warning me-1"></i>
+          {% endif %}
+          {{ b.name }}
+        </div>
+        <div class="backup-meta">{{ b.date.strftime('%Y-%m-%d %H:%M') }} | {{ (b.size // 1024) }} KB</div>
+      </div>
+      <div class="d-flex gap-1">
+        <a href="{{ url_for('settings.backup_download', filename=b.name) }}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-download"></i>
+        </a>
+        <form method="POST" action="{{ url_for('settings.backup_delete', filename=b.name) }}" class="d-inline" onsubmit="return confirm('هل انت متاكد من الحذف؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<hr class="my-5">
+
+<!-- تصفير جميع البيانات -->
+<div class="card border-danger">
+  <div class="card-header bg-danger text-white">
+    <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>منطقة الخطر</h6>
+  </div>
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h6 class="text-danger">حذف جميع بيانات المنظومة و تصفيرها</h6>
+        <p class="text-muted mb-0">سيتم حذف جميع البيانات (اوامر التشغيل، العقود، الجهات، السائقين، المركبات، الموارد البشرية، العملاء، المراسلات، المخازن). سيتم انشاء نسخة احتياطية تلقائياً قبل الحذف.</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetAllModal">
+          <i class="bi bi-trash me-1"></i>تصفير جميع البيانات
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال تصفير البيانات -->
+<div class="modal fade" id="resetAllModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>تصفير جميع بيانات المنظومة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('settings.reset_all_data') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-diamond-fill me-1"></i>
+            <strong>تحذير:</strong> سيتم حذف جميع بيانات المنظومة نهائياً. سيتم انشاء نسخة احتياطية تلقائياً قبل الحذف.
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ادخل كلمة المرور للتأكيد <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" required placeholder="كلمة المرور">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i>تصفير جميع البيانات
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

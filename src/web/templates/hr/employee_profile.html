@@ -1,0 +1,308 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الملف الشخصي - {{ employee.full_name_ar | default('') }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الملف الشخصي للموظف</h4>
+  <a href="{{ url_for('hr.employees_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة الموظفين
+  </a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          {% if employee.photo %}
+          <img src="{{ employee.photo }}" alt="صورة الموظف" class="rounded-circle" style="width:120px;height:120px;object-fit:cover;">
+          {% else %}
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:120px;height:120px;background:var(--accent-primary);color:#fff;font-size:2.5rem;">
+            {{ employee.full_name_ar[0] | default('?') }}
+          </div>
+          {% endif %}
+        </div>
+        <h5 class="mb-1">{{ employee.full_name_ar | default('') }}</h5>
+        <p class="text-muted mb-2">{{ employee.employee_number | default('') }}</p>
+        <span class="badge {% if employee.status == 'active' %}bg-success{% elif employee.status == 'inactive' %}bg-secondary{% else %}bg-warning{% endif %}">
+          {% if employee.status == 'active' %}نشط{% elif employee.status == 'inactive' %}غير نشط{% else %}{{ employee.status }}{% endif %}
+        </span>
+        <div class="mt-3 text-end">
+          <p class="mb-1"><i class="bi bi-building me-2"></i>{{ employee.department.name_ar | default('-') }}</p>
+          <p class="mb-1"><i class="bi bi-person-badge me-2"></i>{{ employee.position | default('-') }}</p>
+          <p class="mb-0"><i class="bi bi-telephone me-2"></i>{{ employee.phone | default('-') }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-personal">البيانات الشخصية</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-job">الوظيفة</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-attendance">الحضور</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-leaves">الإجازات</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-documents">المستندات</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-contracts">العقود</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-disciplinary">الجزاءات</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-qualifications">المؤهلات</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-health">الصحة</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-log">سجل العمليات</a></li>
+    </ul>
+
+    <div class="tab-content pt-3">
+      <div class="tab-pane fade show active" id="tab-personal">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4"><strong>الاسم بالعربي:</strong><p>{{ employee.full_name_ar | default('-') }}</p></div>
+              <div class="col-md-4"><strong>الاسم بالإنجليزي:</strong><p>{{ employee.full_name_en | default('-') }}</p></div>
+              <div class="col-md-4"><strong>رقم الموظف:</strong><p>{{ employee.employee_number | default('-') }}</p></div>
+              <div class="col-md-4"><strong>رقم الهوية:</strong><p>{{ employee.national_id | default('-') }}</p></div>
+              <div class="col-md-4"><strong>تاريخ الميلاد:</strong><p>{{ employee.date_of_birth.strftime('%Y-%m-%d') if employee.date_of_birth else '-' }}</p></div>
+              <div class="col-md-4"><strong>الجنس:</strong><p>{{ 'ذكر' if employee.gender == 'M' else 'أنثى' if employee.gender == 'F' else '-' }}</p></div>
+              <div class="col-md-4"><strong>الحالة الاجتماعية:</strong><p>{{ employee.marital_status or '-' }}</p></div>
+              <div class="col-md-4"><strong>الجنسية:</strong><p>{{ employee.nationality or '-' }}</p></div>
+              <div class="col-md-4"><strong>الدين:</strong><p>{{ employee.religion or '-' }}</p></div>
+              <div class="col-md-6"><strong>العنوان:</strong><p>{{ employee.address or '-' }}</p></div>
+              <div class="col-md-6"><strong>البريد الإلكتروني:</strong><p>{{ employee.email or '-' }}</p></div>
+              <div class="col-md-4"><strong>هاتف شخصي:</strong><p>{{ employee.phone or '-' }}</p></div>
+              <div class="col-md-4"><strong>هاتف العمل:</strong><p>{{ employee.work_phone or '-' }}</p></div>
+              <div class="col-md-4"><strong>جهة الاتصال الطارئ:</strong><p>{{ employee.emergency_contact or '-' }}</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-job">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4"><strong>القسم:</strong><p>{{ employee.department.name_ar | default('-') }}</p></div>
+              <div class="col-md-4"><strong>المسمى الوظيفي:</strong><p>{{ employee.position or '-' }}</p></div>
+              <div class="col-md-4"><strong>الدرجة الوظيفية:</strong><p>{{ employee.grade or '-' }}</p></div>
+              <div class="col-md-4"><strong>تاريخ التعيين:</strong><p>{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '-' }}</p></div>
+              <div class="col-md-4"><strong>نوع العقد:</strong><p>{{ employee.contract_type or '-' }}</p></div>
+              <div class="col-md-4"><strong>المدير المباشر:</strong><p>{{ employee.direct_manager or '-' }}</p></div>
+              <div class="col-md-4"><strong>الراتب الأساسي:</strong><p>{{ '{:,.2f}'.format(employee.basic_salary) if employee.basic_salary else '-' }}</p></div>
+              <div class="col-md-4"><strong>الحافز:</strong><p>{{ '{:,.2f}'.format(employee.allowance) if employee.allowance else '-' }}</p></div>
+              <div class="col-md-4"><strong>الحالة:</strong>
+                <p><span class="badge {% if employee.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">{{ 'نشط' if employee.status == 'active' else 'غير نشط' }}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-attendance">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>التاريخ</th><th>اليوم</th><th>الدخول</th><th>الخروج</th><th>الحالة</th><th>تأخير</th></tr>
+                </thead>
+                <tbody>
+                  {% for rec in attendance_records %}
+                  <tr>
+                    <td>{{ rec.date.strftime('%Y-%m-%d') if rec.date else '-' }}</td>
+                    <td>{{ rec.day_name or '-' }}</td>
+                    <td>{{ rec.check_in.strftime('%H:%M') if rec.check_in else '-' }}</td>
+                    <td>{{ rec.check_out.strftime('%H:%M') if rec.check_out else '-' }}</td>
+                    <td><span class="badge bg-{{ 'success' if rec.status == 'present' else 'danger' if rec.status == 'absent' else 'warning' }}">{{ rec.status_ar | default(rec.status) }}</span></td>
+                    <td>{{ rec.late_minutes | default(0) }} دقيقة</td>
+                  </tr>
+                  {% endfor %}
+                  {% if not attendance_records %}
+                  <tr><td colspan="6" class="text-center text-muted py-3">لا توجد سجلات حضور</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-leaves">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>النوع</th><th>من</th><th>إلى</th><th>الأيام</th><th>الحالة</th></tr>
+                </thead>
+                <tbody>
+                  {% for leave in leave_records %}
+                  <tr>
+                    <td>{{ leave.leave_type.name_ar | default('-') }}</td>
+                    <td>{{ leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '-' }}</td>
+                    <td>{{ leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '-' }}</td>
+                    <td>{{ leave.days }}</td>
+                    <td><span class="badge bg-{{ 'success' if leave.status == 'approved' else 'warning' if leave.status == 'pending' else 'danger' }}">{{ leave.status_ar | default(leave.status) }}</span></td>
+                  </tr>
+                  {% endfor %}
+                  {% if not leave_records %}
+                  <tr><td colspan="5" class="text-center text-muted py-3">لا توجد طلبات إجازة</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-documents">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>اسم المستند</th><th>النوع</th><th>تاريخ الرفع</th><th>تاريخ الانتهاء</th><th>الحالة</th></tr>
+                </thead>
+                <tbody>
+                  {% for doc in documents %}
+                  <tr>
+                    <td><a href="{{ url_for('hr.document_download', id=doc.id) }}">{{ doc.name }}</a></td>
+                    <td>{{ doc.document_type.name_ar | default('-') }}</td>
+                    <td>{{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else '-' }}</td>
+                    <td>{{ doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else '-' }}</td>
+                    <td><span class="badge bg-{{ 'success' if doc.status == 'valid' else 'danger' }}">{{ doc.status_ar | default(doc.status) }}</span></td>
+                  </tr>
+                  {% endfor %}
+                  {% if not documents %}
+                  <tr><td colspan="5" class="text-center text-muted py-3">لا توجد مستندات</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-contracts">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>رقم العقد</th><th>النوع</th><th>من</th><th>إلى</th><th>الحالة</th></tr>
+                </thead>
+                <tbody>
+                  {% for contract in contracts %}
+                  <tr>
+                    <td><a href="{{ url_for('hr.contract_detail', id=contract.id) }}">{{ contract.contract_number }}</a></td>
+                    <td>{{ contract.contract_type or '-' }}</td>
+                    <td>{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '-' }}</td>
+                    <td>{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '-' }}</td>
+                    <td><span class="badge bg-{{ 'success' if contract.status == 'active' else 'secondary' }}">{{ contract.status_ar | default(contract.status) }}</span></td>
+                  </tr>
+                  {% endfor %}
+                  {% if not contracts %}
+                  <tr><td colspan="5" class="text-center text-muted py-3">لا توجد عقود</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-disciplinary">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>التاريخ</th><th>النوع</th><th>النوع الفرعي</th><th>المخالفة</th><th>القرار</th></tr>
+                </thead>
+                <tbody>
+                  {% for action in disciplinary_records %}
+                  <tr>
+                    <td>{{ action.date.strftime('%Y-%m-%d') if action.date else '-' }}</td>
+                    <td>{{ action.action_type.name_ar | default('-') }}</td>
+                    <td>{{ action.sub_type or '-' }}</td>
+                    <td>{{ action.violation or '-' }}</td>
+                    <td>{{ action.decision or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% if not disciplinary_records %}
+                  <tr><td colspan="5" class="text-center text-muted py-3">لا توجد إجراءات تأديبية</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-qualifications">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>المؤهل</th><th>التخصص</th><th>الجامعة/المعهد</th><th>سنة التخرج</th><th>الشهادة</th></tr>
+                </thead>
+                <tbody>
+                  {% for qual in qualifications %}
+                  <tr>
+                    <td>{{ qual.degree or '-' }}</td>
+                    <td>{{ qual.major or '-' }}</td>
+                    <td>{{ qual.institution or '-' }}</td>
+                    <td>{{ qual.graduation_year or '-' }}</td>
+                    <td>{{ qual.certificate or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% if not qualifications %}
+                  <tr><td colspan="5" class="text-center text-muted py-3">لا توجد بيانات مؤهلات</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-health">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6"><strong>فgroup الدم:</strong><p>{{ employee.blood_type or '-' }}</p></div>
+              <div class="col-md-6"><strong>الطول:</strong><p>{{ employee.height or '-' }} سم</p></div>
+              <div class="col-md-6"><strong>الوزن:</strong><p>{{ employee.weight or '-' }} كجم</p></div>
+              <div class="col-md-6"><strong>حالة الإعاقة:</strong><p>{{ employee.disability or 'لا' }}</p></div>
+              <div class="col-md-12"><strong>أمراض مزمنة:</strong><p>{{ employee.chronic_diseases or 'لا يوجد' }}</p></div>
+              <div class="col-md-12"><strong>ملاحظات صحية:</strong><p>{{ employee.health_notes or '-' }}</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-log">
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr><th>التاريخ والوقت</th><th>العملية</th><th>المستخدم</th><th>التفاصيل</th></tr>
+                </thead>
+                <tbody>
+                  {% for log in activity_logs %}
+                  <tr>
+                    <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '-' }}</td>
+                    <td>{{ log.action_type or '-' }}</td>
+                    <td>{{ log.user or '-' }}</td>
+                    <td>{{ log.details or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                  {% if not activity_logs %}
+                  <tr><td colspan="4" class="text-center text-muted py-3">لا توجد سجلات عمليات</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

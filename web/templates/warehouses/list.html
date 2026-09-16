@@ -1,0 +1,48 @@
+{% extends "layouts/base.html" %}
+{% block title %}المخازن | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">المخازن</h4>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link active" href="{{ url_for('warehouses.warehouses_list') }}">المخازن</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_items') }}">الأصناف</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_transactions') }}">المعاملات</a></li>
+</ul>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الاسم بالعربي</th>
+            <th>الموقع</th>
+            <th>عدد الأصناف</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for wh in warehouses %}
+          <tr>
+            <td>{{ wh.code }}</td>
+            <td>{{ wh.name_ar }}</td>
+            <td>{{ wh.location or '-' }}</td>
+            <td>{{ wh.items|length if wh.items else 0 }}</td>
+            <td>
+              {% if wh.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% else %}<span class="badge bg-secondary">{{ wh.status }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not warehouses %}
+          <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد مخازن</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

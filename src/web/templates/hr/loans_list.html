@@ -1,0 +1,207 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+    border-radius: 25px; text-decoration: none; font-weight: 500;
+  }
+  .back-btn:hover { transform: translateY(-2px); color: #fff; }
+  .stat-card {
+    background: var(--bs-body-bg, #fff); border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px;
+  }
+  .stat-icon {
+    width: 50px; height: 50px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i> لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-wallet2"></i> {{ page_title }}</h1>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('hr.loan_add') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>اضافة سلفة
+    </a>
+  </div>
+</div>
+
+<!-- ملخص -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="bi bi-wallet2"></i></div>
+      <div>
+        <div class="fs-4 fw-bold">{{ loans|length }}</div>
+        <div class="text-muted">اجمالي السلف</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="bi bi-check-circle"></i></div>
+      <div>
+        <div class="fs-4 fw-bold text-success">{{ active_loans }}</div>
+        <div class="text-muted">سلف نشطة</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fff3e0;color:#e65100;"><i class="bi bi-cash-stack"></i></div>
+      <div>
+        <div class="fs-4 fw-bold">{{ "{:,.0f}".format(total_amount) }}</div>
+        <div class="text-muted">اجمالي المبالغ</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fce4ec;color:#c62828;"><i class="bi bi-hourglass-half"></i></div>
+      <div>
+        <div class="fs-4 fw-bold text-danger">{{ "{:,.0f}".format(total_remaining) }}</div>
+        <div class="text-muted">المتبقي</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- فلتر الحالة -->
+{% if current_status %}
+<div class="mb-3">
+  <span class="badge bg-primary fs-6">
+    {% if current_status == 'active' %}نشطة{% elif current_status == 'completed' %}مكتملة{% elif current_status == 'cancelled' %}ملغاة{% else %}{{ current_status }}{% endif %}
+  </span>
+  <a href="{{ url_for('hr.loans_list') }}" class="btn btn-sm btn-outline-secondary ms-2">
+    <i class="bi bi-x-circle"></i> عرض الكل
+  </a>
+</div>
+{% endif %}
+
+<!-- جدول السلف -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم السلفة</th>
+            <th>اسم الموظف</th>
+            <th>الرقم الوظيفي</th>
+            <th>نوع السلفة</th>
+            <th>المبلغ</th>
+            <th>المتبقي</th>
+            <th>الاقساط الشهرية</th>
+            <th>تاريخ السلفة</th>
+            <th>الحالة</th>
+            <th>الاعمال</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in loans %}
+          <tr>
+            <td><strong>{{ loan.loan_number }}</strong></td>
+            <td>{{ loan.employee.full_name_ar if loan.employee else '-' }}</td>
+            <td>{{ loan.employee.employee_number if loan.employee else '-' }}</td>
+            <td>
+              {% if loan.loan_type == 'advance' %}
+                <span class="badge bg-info">سلفة مقدمة</span>
+              {% elif loan.loan_type == 'personal' %}
+                <span class="badge bg-primary">شخصية</span>
+              {% elif loan.loan_type == 'emergency' %}
+                <span class="badge bg-danger">طوارئ</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ loan.loan_type }}</span>
+              {% endif %}
+            </td>
+            <td>{{ "{:,.0f}".format(loan.amount) }} د.ل</td>
+            <td class="{% if loan.remaining_amount > 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
+              {{ "{:,.0f}".format(loan.remaining_amount) }} د.ل
+            </td>
+            <td>{{ "{:,.0f}".format(loan.monthly_deduction) }} د.ل</td>
+            <td>{{ loan.loan_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+              {% if loan.status == 'active' %}
+                <span class="badge bg-success">نشطة</span>
+              {% elif loan.status == 'completed' %}
+                <span class="badge bg-secondary">مكتملة</span>
+              {% elif loan.status == 'cancelled' %}
+                <span class="badge bg-danger">ملغاة</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('hr.loan_edit', loan_id=loan.id) }}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if loan.status == 'active' and loan.remaining_amount > 0 %}
+              <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paymentModal{{ loop.index }}" title="تسجيل دفعة">
+                <i class="bi bi-cash"></i>
+              </button>
+              {% endif %}
+              <form method="POST" action="{{ url_for('hr.loan_delete', loan_id=loan.id) }}" class="d-inline" onsubmit="return confirm('هل انت متاكد من حذف السلفة؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+
+          <!-- مودال الدفع -->
+          {% if loan.status == 'active' and loan.remaining_amount > 0 %}
+          <div class="modal fade" id="paymentModal{{ loop.index }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                  <h5 class="modal-title">تسجيل دفعة - {{ loan.loan_number }}</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('hr.loan_payment', loan_id=loan.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-body">
+                    <div class="alert alert-info">
+                      المتبقي: <strong>{{ "{:,.0f}".format(loan.remaining_amount) }} د.ل</strong>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">المبلغ <span class="text-danger">*</span></label>
+                      <input type="number" name="amount" class="form-control" required min="1" max="{{ loan.remaining_amount }}" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">التاريخ <span class="text-danger">*</span></label>
+                      <input type="date" name="payment_date" class="form-control" value="{{ today }}" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">ملاحظات</label>
+                      <input type="text" name="notes" class="form-control">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+                    <button type="submit" class="btn btn-success">تسجيل الدفعة</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+          {% if not loans %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-4">لا توجد سلف</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

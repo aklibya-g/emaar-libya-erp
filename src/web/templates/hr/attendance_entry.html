@@ -1,0 +1,317 @@
+{% extends "layouts/base.html" %}
+{% block title %}ادخال الحضور اليومي | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #059669 0%, #10b981 50%, #059669 100%); border-radius: 16px; padding: 24px 28px; color: #fff; margin-bottom: 20px; }
+  .page-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .page-header .breadcrumb { margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.7); font-size: 12px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: #fff; }
+
+  .stat-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; text-align: center; }
+  .stat-card .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 8px; }
+  .stat-card .stat-number { font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 11px; color: var(--text-secondary, #64748b); font-weight: 500; }
+
+  .att-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .att-table thead th { background: #f8fafc; color: var(--text-secondary, #64748b); padding: 12px 14px; font-size: 11px; font-weight: 600; text-align: right; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .att-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 13px; vertical-align: middle; }
+  .att-table tbody tr { transition: all 0.15s; }
+  .att-table tbody tr:hover { background: #f0fdf4; }
+  .att-table tbody tr:last-child td { border-bottom: none; }
+
+  .emp-name { font-weight: 600; color: var(--text-primary, #1e293b); }
+  .emp-dept { font-size: 11px; color: var(--text-secondary, #64748b); }
+
+  .time-input { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 13px; width: 100%; max-width: 120px; text-align: center; transition: all 0.15s; }
+  .time-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); outline: none; }
+
+  .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .status-present { background: #d1fae5; color: #065f46; }
+  .status-absent { background: #fee2e2; color: #991b1b; }
+  .status-leave { background: #fef3c7; color: #92400e; }
+
+  .notes-input { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 12px; width: 100%; max-width: 150px; transition: all 0.15s; }
+  .notes-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); outline: none; }
+
+  .time-cell { display: flex; align-items: center; gap: 4px; }
+  .time-cell .time-input { flex: 1; min-width: 0; }
+  .time-btn { width: 28px; height: 28px; border: 1px solid #d1d5db; border-radius: 6px; background: var(--bg-card, #fff); color: var(--text-secondary, #64748b); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .time-btn:hover { background: #10b981; color: #fff; border-color: #10b981; }
+  .time-btn:active { transform: scale(0.9); }
+
+  .manual-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .manual-toggle input { display: none; }
+  .manual-toggle .toggle-track { width: 36px; height: 20px; border-radius: 10px; background: #d1d5db; transition: all 0.2s; position: relative; }
+  .manual-toggle input:checked + .toggle-track { background: #10b981; }
+  .manual-toggle .toggle-track::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 2px; right: 2px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .manual-toggle input:checked + .toggle-track::after { right: 18px; }
+  .manual-toggle .toggle-label { font-size: 11px; color: var(--text-secondary, #64748b); font-weight: 500; }
+
+  .row-num { width: 30px; text-align: center; color: var(--text-secondary, #94a3b8); font-size: 12px; }
+
+  .save-btn { background: linear-gradient(135deg, #059669 0%, #10b981 100%); border: none; padding: 10px 24px; border-radius: 10px; color: #fff; font-weight: 600; transition: all 0.2s; }
+  .save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); color: #fff; }
+
+  .form-check-input:checked { background-color: #10b981; border-color: #10b981; }
+
+  .type-tabs { display: flex; gap: 0; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-top: 12px; }
+  .type-tab { flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--text-secondary, #64748b); background: transparent; border: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+  .type-tab:hover { color: var(--text-primary, #1e293b); background: rgba(255,255,255,0.5); }
+  .type-tab.active { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+
+  .filter-select { border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px; font-size: 12px; width: 100%; background: var(--bg-card, #fff); transition: all 0.15s; }
+  .filter-select:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); outline: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">ادخال الحضور اليومي</h4>
+  <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<!-- Date Selector & Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card" style="border-radius:12px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-body">
+        <label class="form-label fw-bold" style="font-size:12px;color:var(--text-secondary,#64748b)">التاريخ</label>
+        <input type="date" id="dateInput" class="form-control mb-3" value="{{ target_date.isoformat() }}" style="border-radius:8px">
+        
+        <div class="type-tabs">
+          <a href="#" class="type-tab {% if person_type == 'employees' %}active{% endif %}" onclick="switchType('employees')">
+            <i class="bi bi-people"></i>الموظفين
+          </a>
+          <a href="#" class="type-tab {% if person_type == 'drivers' %}active{% endif %}" onclick="switchType('drivers')">
+            <i class="bi bi-truck"></i>السائقين
+          </a>
+        </div>
+
+        <div class="mt-3">
+          {% if person_type == 'employees' %}
+          <select id="deptFilter" class="filter-select" onchange="applyFilter()">
+            <option value="all" {% if dept_filter == 'all' %}selected{% endif %}>جميع الأقسام</option>
+            {% for dept in departments_list %}
+            <option value="{{ dept.id }}" {% if dept_filter == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <select id="contractFilter" class="filter-select" onchange="applyFilter()">
+            <option value="all" {% if contract_filter == 'all' %}selected{% endif %}>جميع الانواع</option>
+            <option value="موسمي" {% if contract_filter == 'موسمي' %}selected{% endif %}>موسمي</option>
+            <option value="احتياطي" {% if contract_filter == 'احتياطي' %}selected{% endif %}>احتياطي</option>
+            <option value="ايجار لغرض التمليك" {% if contract_filter == 'ايجار لغرض التمليك' %}selected{% endif %}>ايجار لغرض التمليك</option>
+          </select>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-people"></i></div>
+      <div class="stat-number" style="color:#10b981">{{ employees|length }}</div>
+      <div class="stat-label">اجمالي الموظفين</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6"><i class="bi bi-person-check"></i></div>
+      <div class="stat-number" style="color:#3b82f6" id="presentCount">0</div>
+      <div class="stat-label">الحاضرون</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="bi bi-person-x"></i></div>
+      <div class="stat-number" style="color:#ef4444" id="absentCount">0</div>
+      <div class="stat-label">الغائدون</div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<form method="POST" action="{{ url_for('hr.attendance_entry_save') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="date" value="{{ target_date.isoformat() }}">
+  <input type="hidden" name="type" value="{{ person_type }}">
+
+  <div class="card" style="border-radius:12px;border:1px solid var(--border-color,#e2e8f0)">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--border-color,#e2e8f0)">
+      <h6 class="mb-0" style="font-weight:700">
+        <i class="bi bi-table me-2" style="color:#10b981"></i>
+        {% if person_type == 'drivers' %}
+          قائمة السائقين - {{ target_date.strftime('%Y-%m-%d') }}
+        {% else %}
+          قائمة الموظفين - {{ target_date.strftime('%Y-%m-%d') }}
+        {% endif %}
+      </h6>
+      <button type="submit" class="save-btn">
+        <i class="bi bi-check-circle me-1"></i>حفظ سجل الحضور
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="att-table mb-0">
+          <thead>
+            <tr>
+              <th class="row-num">#</th>
+              <th>{% if person_type == 'drivers' %}اسم السائق{% else %}اسم الموظف{% endif %}</th>
+              <th>{% if person_type == 'drivers' %}رقم السائق{% else %}القسم{% endif %}</th>
+              <th style="width:130px">ساعة الحضور</th>
+              <th style="width:130px">ساعة الانصراف</th>
+              <th style="width:100px">الحالة</th>
+              <th style="width:160px">ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in persons %}
+            {% set rec = existing_records.get(p.id) %}
+            {% set is_leave = p.id in leave_employee_ids %}
+            <tr id="row_{{ p.id }}">
+              <td class="row-num">{{ loop.index }}</td>
+              <td>
+                <div class="emp-name">{{ p.full_name_ar or p.full_name_en or '-' }}</div>
+              </td>
+              <td>
+                <div class="emp-dept">{% if person_type == 'drivers' %}{{ p.driver_number }}{% else %}{{ departments.get(p.id, '-') }}{% endif %}</div>
+              </td>
+              <td>
+                {% if is_leave %}
+                  <input type="hidden" name="check_in_{{ p.id }}" value="">
+                {% else %}
+                  <div class="time-cell">
+                    <button type="button" class="time-btn" onclick="shiftTime('check_in_{{ p.id }}', -30)" title=" decrement 30 دقيقة">-</button>
+                    <input type="time" name="check_in_{{ p.id }}" id="check_in_{{ p.id }}" class="time-input"
+                           value="{{ rec.check_in_time.strftime('%H:%M') if rec and rec.check_in_time else '' }}"
+                           onchange="updateStatus('{{ p.id }}', this.value)">
+                    <button type="button" class="time-btn" onclick="shiftTime('check_in_{{ p.id }}', 30)" title=" اضافة 30 دقيقة">+</button>
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                {% if is_leave %}
+                  <input type="hidden" name="check_out_{{ p.id }}" value="">
+                {% else %}
+                  <div class="time-cell">
+                    <button type="button" class="time-btn" onclick="shiftTime('check_out_{{ p.id }}', -30)" title=" decrement 30 دقيقة">-</button>
+                    <input type="time" name="check_out_{{ p.id }}" id="check_out_{{ p.id }}" class="time-input"
+                           value="{{ rec.check_out_time.strftime('%H:%M') if rec and rec.check_out_time else '' }}">
+                    <button type="button" class="time-btn" onclick="shiftTime('check_out_{{ p.id }}', 30)" title=" اضافة 30 دقيقة">+</button>
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                <input type="hidden" name="employee_id" value="{{ p.id }}">
+                {% if is_leave %}
+                  <span class="status-badge status-leave"><i class="bi bi-calendar-minus me-1"></i>اجازة</span>
+                {% elif rec and rec.check_in_time %}
+                  <span class="status-badge status-present" id="status_{{ p.id }}"><i class="bi bi-check-circle me-1"></i>حاضر</span>
+                {% else %}
+                  <span class="status-badge status-absent" id="status_{{ p.id }}"><i class="bi bi-x-circle me-1"></i>غائب</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if not is_leave %}
+                <input type="text" name="notes_{{ p.id }}" class="notes-input" placeholder="ملاحظات..."
+                       value="{{ rec.notes if rec and rec.notes else '' }}">
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Save -->
+  <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <div style="font-size:13px;color:var(--text-secondary,#64748b)">
+      <i class="bi bi-info-circle me-1"></i>
+      ادخل ساعة الحضور فقط để تحديث الحالة تلقائياً إلى "حاضر"
+    </div>
+    <button type="submit" class="save-btn">
+      <i class="bi bi-check-circle me-1"></i>حفظ سجل الحضور
+    </button>
+  </div>
+</form>
+
+<script>
+function shiftTime(inputId, deltaMinutes) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var val = input.value;
+  if (!val) {
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    m = Math.round(m / 30) * 30;
+    if (m >= 60) { h++; m = 0; }
+    val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    input.value = val;
+  }
+  var parts = val.split(':');
+  var totalMin = parseInt(parts[0]) * 60 + parseInt(parts[1]) + deltaMinutes;
+  if (totalMin < 0) totalMin = 0;
+  if (totalMin > 23 * 60 + 59) totalMin = 23 * 60 + 59;
+  var nh = Math.floor(totalMin / 60);
+  var nm = totalMin % 60;
+  input.value = String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
+  input.dispatchEvent(new Event('change'));
+}
+
+function switchType(type) {
+  var date = document.getElementById('dateInput').value;
+  window.location.href = '{{ url_for("hr.attendance_entry") }}?date=' + date + '&type=' + type;
+}
+
+function applyFilter() {
+  var date = document.getElementById('dateInput').value;
+  var url = '{{ url_for("hr.attendance_entry") }}?date=' + date + '&type={{ person_type }}';
+  {% if person_type == 'employees' %}
+  var dept = document.getElementById('deptFilter').value;
+  if (dept !== 'all') url += '&dept=' + dept;
+  {% else %}
+  var contract = document.getElementById('contractFilter').value;
+  if (contract !== 'all') url += '&contract=' + contract;
+  {% endif %}
+  window.location.href = url;
+}
+
+function updateStatus(empId, checkInValue) {
+  var statusEl = document.getElementById('status_' + empId);
+  if (!statusEl) return;
+  if (checkInValue) {
+    statusEl.className = 'status-badge status-present';
+    statusEl.innerHTML = '<i class="bi bi-check-circle me-1"></i>حاضر';
+  } else {
+    statusEl.className = 'status-badge status-absent';
+    statusEl.innerHTML = '<i class="bi bi-x-circle me-1"></i>غائب';
+  }
+  updateCounts();
+}
+
+function updateCounts() {
+  var presents = document.querySelectorAll('.status-present').length;
+  var absents = document.querySelectorAll('.status-absent').length;
+  document.getElementById('presentCount').textContent = presents;
+  document.getElementById('absentCount').textContent = absents;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateCounts();
+  document.getElementById('dateInput').addEventListener('change', function() {
+    var url = new URL(window.location);
+    url.searchParams.set('date', this.value);
+    window.location.href = url.toString();
+  });
+});
+</script>
+{% endblock %}

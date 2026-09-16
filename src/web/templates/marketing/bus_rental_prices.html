@@ -1,0 +1,172 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">التسويق التجاري</a></li>
+            <li class="breadcrumb-item active">اسعار ايجار الحافلات</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-cash-stack me-2"></i>اسعار ايجار الحافلات</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <button type="button" class="btn btn-new" data-bs-toggle="modal" data-bs-target="#addPriceModal">
+        <i class="bi bi-plus-circle me-1"></i>اضافة سعر جديد
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Info -->
+<div class="card mb-4" style="border-radius:14px;border:1px solid #e0f2fe;background:linear-gradient(135deg,#f0f9ff,#e0f2fe)">
+  <div class="card-body d-flex align-items-center gap-3" style="padding:16px 20px">
+    <i class="bi bi-info-circle" style="font-size:20px;color:#0369a1"></i>
+    <div style="font-size:13px;color:#0c4a6e">
+      هذه الصفحة لادارة اسعار ايجار الحافلات اليومية حسب نوع السيارة. عند اختيار حافلة في امر التشغيل، <strong>ينزل السعر تلقائياً</strong> حسب النوع المسجل هنا.
+    </div>
+  </div>
+</div>
+
+<!-- Prices Table -->
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body p-0">
+    {% if prices %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:13px">
+        <thead>
+          <tr style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff">
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">#</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">نوع السيارة</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">عدد الركاب</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">سعر الايجار اليومي (د.ل)</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">ملاحظات</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in prices %}
+          <tr style="border-bottom:1px solid var(--border-color,#f1f5f9)">
+            <td style="padding:12px;text-align:center;color:#64748b;font-weight:600">{{ loop.index }}</td>
+            <td style="padding:12px;text-align:center;font-weight:700;color:#1e40af;font-size:14px">
+              {{ p.vehicle_type.name_ar if p.vehicle_type else '-' }}
+            </td>
+            <td style="padding:12px;text-align:center">
+              {% if p.seats_count %}
+              <span style="background:#eff6ff;color:#1e40af;padding:4px 12px;border-radius:20px;font-weight:600;font-size:12px">{{ p.seats_count }} راكب</span>
+              {% else %}
+              <span style="color:#94a3b8">-</span>
+              {% endif %}
+            </td>
+            <td style="padding:12px;text-align:center">
+              <span style="font-weight:800;color:#059669;font-size:18px">{{ "{:,.0f}".format(p.daily_price) }}</span>
+              <span style="font-size:10px;color:#64748b">د.ل</span>
+            </td>
+            <td style="padding:12px;text-align:center;font-size:12px;color:#64748b">{{ p.notes or '-' }}</td>
+            <td style="padding:12px;text-align:center">
+              <form method="POST" action="{{ url_for('marketing.bus_rental_price_delete', price_id=p.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا السعر؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:60px 20px">
+      <i class="bi bi-cash-stack" style="font-size:48px;color:#cbd5e1;margin-bottom:16px;display:block"></i>
+      <h5 style="color:#64748b;font-weight:600;margin-bottom:8px">لا توجد اسعار مسجلة</h5>
+      <p style="color:#94a3b8;font-size:13px">اضغط "اضافة سعر جديد" لبدء تسجيل اسعار ايجار الحافلات</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Price Modal -->
+<div class="modal fade" id="addPriceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;border:2px solid #3182ce">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;border-radius:14px 14px 0 0">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>اضافة سعر ايجار جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('marketing.bus_rental_price_add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label fw-bold">نوع السيارة <span class="text-danger">*</span></label>
+              <select class="form-select" name="vehicle_type_id" id="rentalVehicleType" required style="border-radius:10px" onchange="onRentalTypeChange()">
+                <option value="">اختر النوع</option>
+                {% for vt in vehicle_types %}
+                <option value="{{ vt.id }}" data-name="{{ vt.name_ar }}" data-seats="{{ seats_map.get(vt.id, '') }}">{{ vt.name_ar }} ({{ vt.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">عدد الركاب</label>
+              <input type="number" class="form-control" name="seats_count" id="rentalSeatsCount" placeholder="يملأ تلقائياً من النوع" style="border-radius:10px" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">سعر الايجار اليومي (د.ل) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="daily_price" id="rentalDailyPrice" required step="0.01" min="0" placeholder="0" style="border-radius:10px;font-weight:700;font-size:16px;color:#059669">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold">ملاحظات</label>
+              <textarea class="form-control" name="notes" rows="2" placeholder="ملاحظات اختيارية..." style="border-radius:10px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">الغاء</button>
+          <button type="submit" class="btn btn-primary" style="border-radius:10px;padding:10px 24px">
+            <i class="bi bi-check-lg me-1"></i>حفظ السعر
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onRentalTypeChange() {
+  var sel = document.getElementById('rentalVehicleType');
+  var seatsInput = document.getElementById('rentalSeatsCount');
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) {
+    seatsInput.value = '';
+    return;
+  }
+  var seats = opt.getAttribute('data-seats');
+  if (seats && parseInt(seats) > 0) {
+    seatsInput.value = seats;
+    return;
+  }
+  fetch('/marketing/api/vehicle-type-seats/' + opt.value)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success && data.seats_count > 0) {
+        seatsInput.value = data.seats_count;
+      } else {
+        seatsInput.value = '';
+      }
+    })
+    .catch(function() { seatsInput.value = ''; });
+}
+</script>
+{% endblock %}

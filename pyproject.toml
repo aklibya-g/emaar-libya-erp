@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "emaar-libya-erp"
+version = "1.0.0"
+description = "Emaar Libya Passenger Transport Management System"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Emaar Libya", email = "dev@emaarlibya.com"}
+]
+keywords = ["erp", "transport", "libya", "management"]
+
+dependencies = [
+    "PySide6>=6.6.0",
+    "SQLAlchemy>=2.0.25",
+    "alembic>=1.13.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "bcrypt>=4.1.0",
+    "cryptography>=41.0.0",
+    "weasyprint>=60.0",
+    "reportlab>=4.0",
+    "openpyxl>=3.1.0",
+    "Pillow>=10.0.0",
+    "python-dotenv>=1.0.0",
+    "jinja2>=3.1.0",
+    "qrcode[pil]>=7.4",
+    "pyjwt>=2.8.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-qt>=4.2.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
+
+[project.scripts]
+emaar-erp = "src.app.main:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"

@@ -1,0 +1,114 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .back-btn i {
+    transition: transform 0.3s ease;
+  }
+  .back-btn:hover i {
+    transform: translateX(-3px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i>
+      لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-file-earmark-plus"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- بيانات أمر التشغيل -->
+      <div class="alert alert-info mb-4">
+        <strong>أمر التشغيل:</strong> رقم {{ order.order_number }} - {{ order.destination }}
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">عنوان الملحق <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="title" required placeholder="مثال: اضافة ايام / تعديل الحافلة">
+        </div>
+
+        <!-- التعديلات -->
+        <div class="col-md-12">
+          <h6 class="text-muted mb-3">التعديلات</h6>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ايام اضافية</label>
+          <input type="number" class="form-control" name="extended_days" value="0" min="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">عدد حافلات جديد</label>
+          <input type="number" class="form-control" name="new_bus_count" value="0" min="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ايام تقليل</label>
+          <input type="number" class="form-control" name="reduction_days" value="0" min="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">قيمة التقليل (د.ل)</label>
+          <input type="number" class="form-control" name="reduction_value" value="0" step="0.01">
+        </div>
+
+        <!-- الحافلة البديلة -->
+        <div class="col-md-12">
+          <h6 class="text-muted mb-3">الحافلة البديلة (عند النقل)</h6>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">رقم الحافلة البديلة</label>
+          <input type="text" class="form-control" name="replacement_bus_number" placeholder="رقم الحافلة الجديدة">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">اسم السائق البديل</label>
+          <input type="text" class="form-control" name="replacement_driver_name" placeholder="اسم السائق الجديد">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">القيمة الاجمالية للملحق (د.ل)</label>
+          <input type="number" class="form-control" name="total_value" value="0" step="0.01">
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" name="notes" rows="3" placeholder=" اي ملاحظات اضافية..."></textarea>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) }}" class="btn btn-outline-secondary">الغاء</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> حفظ الملحق
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

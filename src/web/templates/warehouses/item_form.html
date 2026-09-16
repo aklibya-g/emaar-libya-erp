@@ -1,0 +1,99 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل صنف' if item else 'إضافة صنف' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">{{ 'تعديل الصنف' if item else 'إضافة صنف جديد' }}</h4>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">كود الصنف <span class="text-danger">*</span></label>
+          <input type="text" name="code" class="form-control" value="{{ item.code if item else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="name_ar" class="form-control" value="{{ item.name_ar if item else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="name_en" class="form-control" value="{{ item.name_en if item and item.name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المخزن</label>
+          <select name="warehouse_id" class="form-select">
+            <option value="">اختر المخزن</option>
+            {% for wh in warehouses %}
+            <option value="{{ wh.id }}" {% if item and item.warehouse_id == wh.id %}selected{% endif %}>{{ wh.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الفئة</label>
+          <select name="category_id" class="form-select">
+            <option value="">اختر الفئة</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if item and item.category_id == cat.id %}selected{% endif %}>{{ cat.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">وحدة القياس</label>
+          <select name="unit_id" class="form-select">
+            <option value="">اختر الوحدة</option>
+            {% for u in units %}
+            <option value="{{ u.id }}" {% if item and item.unit_id == u.id %}selected{% endif %}>{{ u.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الكمية الحالية</label>
+          <input type="number" step="0.01" name="current_quantity" class="form-control" value="{{ item.current_quantity if item else '0' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الحد الأدنى</label>
+          <input type="number" step="0.01" name="min_quantity" class="form-control" value="{{ item.min_quantity if item else '0' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الحد الأقصى</label>
+          <input type="number" step="0.01" name="max_quantity" class="form-control" value="{{ item.max_quantity if item else '0' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">سعر الوحدة</label>
+          <input type="number" step="0.01" name="unit_price" class="form-control" value="{{ item.unit_price if item and item.unit_price else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">موقع التخزين</label>
+          <input type="text" name="storage_location" class="form-control" value="{{ item.storage_location if item and item.storage_location else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الرف</label>
+          <input type="text" name="shelf_number" class="form-control" value="{{ item.shelf_number if item and item.shelf_number else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if item and item.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="inactive" {% if item and item.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المورد</label>
+          <input type="text" name="supplier_id" class="form-control" value="{{ item.supplier_id if item and item.supplier_id else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ item.notes if item and item.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if item else 'إضافة الصنف' }}</button>
+        <a href="{{ url_for('warehouses.warehouses_items') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

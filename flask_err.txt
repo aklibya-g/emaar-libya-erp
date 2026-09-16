@@ -1,0 +1,151 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.43.251:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 887-531-607
+ * Detected change in 'E:\\EmarrCoSys\\test_pages.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 887-531-607
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 12
+    def dashboard():    with get_web_session() as session:        today = date.today()        current_month = today.month        current_year = today.year        # «·≈Õ’«∆Ì«         total_orders = session.query(WorkOrder).count()        active_orders = session.query(WorkOrder).filter(WorkOrder.status == "active").count()        draft_orders = session.query(WorkOrder).filter(WorkOrder.status == "draft").count()        total_contracts = session.query(MarketingContract).count()        total_clients = session.query(MarketingClient).count()        # ≈Õ’«∆Ì«  «·‘Â— «·Õ«·Ì        month_trips = session.query(Trip).filter(            extract('month', Trip.trip_date) == current_month,            extract('year', Trip.trip_date) == current_year        ).count()        month_value = session.query(func.sum(Trip.value)).filter(            extract('month', Trip.trip_date) == current_month,            extract('year', Trip.trip_date) == current_year        ).scalar() or 0      
+                        ^^^^
+SyntaxError: invalid syntax
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 12
+    """ Ê·Ìœ —ﬁ„ √„— «· ‘€Ì· «· «·Ì „⁄ „‰⁄ «· ﬂ—«—"""    from sqlalchemy import func    max_num = session.query(func.max(WorkOrder.order_number)).scalar()    if max_num and max_num.isdigit():
+IndentationError: unexpected indent
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 14
+    def generate_next_order_number(session): """ Ê·Ìœ —ﬁ„ √„— «· ‘€Ì· «· «·Ì „⁄ „‰⁄ «· ﬂ—«—"""    from sqlalchemy import func    max_num = session.query(func.max(WorkOrder.order_number)).scalar()    if max_num and max_num.isdigit(): num = int(max_num) + 1    else: num = 1201    order_number = str(num)    # «· Õﬁﬁ „‰ ⁄œ„ «· ﬂ—«—    while session.query(WorkOrder).filter(WorkOrder.order_number == order_number).first(): num += 1        order_number = str(num)    return order_number
+                                                                                                  ^^^^
+SyntaxError: invalid syntax
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 13
+    def generate_next_order_number(session): """ Ê·Ìœ —ﬁ„ √„— «· ‘€Ì· «· «·Ì „⁄ „‰⁄ «· ﬂ—«—"""    from sqlalchemy import func    max_num = session.query(func.max(WorkOrder.order_number)).scalar()    if max_num and max_num.isdigit(): num = int(max_num) + 1    else: num = 1201    order_number = str(num)    # «· Õﬁﬁ „‰ ⁄œ„ «· ﬂ—«—    while session.query(WorkOrder).filter(WorkOrder.order_number == order_number).first(): num += 1        order_number = str(num)    return order_number
+                                                                                                  ^^^^
+SyntaxError: invalid syntax
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 13
+    order_number = str(num)    return order_numberdef check_driver_availability(session, driver_name, start_date, end_date, exclude_order_id=None): """    «· Õﬁﬁ „‰ Õ«·… «·”«∆ﬁ (Active/Free) ·ÕŸ… «Œ Ì«— «”„Â    Ì Õﬁﬁ „‰ ⁄œ„ ÊÃÊœ  ⁄«—÷ „⁄ «Ê«„— «· ‘€Ì· «·‰‘ÿ…    """    if not driver_name or not start_date or not end_date: return True, ""    # «·»ÕÀ ⁄‰ «Ê«„—  ‘€Ì· ‰‘ÿ…  Õ ÊÌ ⁄·Ï Â–« «·”«∆ﬁ    query = session.query(WorkOrder).join(WorkOrderBus).filter(
+IndentationError: unexpected indent
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 963, in run_command
+    app: WSGIApplication = info.load_app()  # pyright: ignore
+                           ^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 349, in load_app
+    app = locate_app(import_name, name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 264, in locate_app
+    return find_app_by_string(module, app_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ak_ly\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\cli.py", line 178, in find_app_by_string
+    app = attr(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\EmarrCoSys\src\web\app.py", line 89, in create_app
+    from src.web.routes.marketing import marketing_bp
+  File "E:\EmarrCoSys\src\web\routes\marketing.py", line 13
+    order_number = str(num)    return order_numberdef check_driver_availability(session, driver_name, start_date, end_date, exclude_order_id=None): """    «· Õﬁﬁ „‰ Õ«·… «·”«∆ﬁ (Active/Free) ·ÕŸ… «Œ Ì«— «”„Â    Ì Õﬁﬁ „‰ ⁄œ„ ÊÃÊœ  ⁄«—÷ „⁄ «Ê«„— «· ‘€Ì· «·‰‘ÿ…    """    if not driver_name or not start_date or not end_date: return True, ""    # «·»ÕÀ ⁄‰ «Ê«„—  ‘€Ì· ‰‘ÿ…  Õ ÊÌ ⁄·Ï Â–« «·”«∆ﬁ    query = session.query(WorkOrder).join(WorkOrderBus).filter(
+IndentationError: unexpected indent
+ * Debugger is active!
+ * Debugger PIN: 922-369-808
+ * Detected change in 'E:\\EmarrCoSys\\src\\web\\routes\\marketing.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 887-531-607

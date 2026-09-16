@@ -1,0 +1,51 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الإجراءات التأديبية | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الإجراءات التأديبية</h4>
+  <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الرقم</th>
+            <th>الموظف</th>
+            <th>رقم القرار</th>
+            <th>تاريخ المخالفة</th>
+            <th>المخالفة</th>
+            <th>القرار</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for action in actions %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+              {{ action.employee.full_name_ar | default('-') }}
+              <small class="text-muted d-block">{{ action.employee.employee_number | default('') }}</small>
+            </td>
+            <td>{{ action.decision_number or '-' }}</td>
+            <td>{{ action.violation_date.strftime('%Y-%m-%d') if action.violation_date else '-' }}</td>
+            <td>{{ action.violation_description[:40] | default('-') }}{% if action.violation_description and action.violation_description|length > 40 %}...{% endif %}</td>
+            <td>{{ action.decision or '-' }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ action.deduction_days or 0 }} يوم خصم</span>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not actions %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا توجد إجراءات تأديبية</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

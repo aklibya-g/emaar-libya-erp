@@ -1,0 +1,74 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل عميل' if customer else 'إضافة عميل' }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">{{ 'تعديل بيانات العميل' if customer else 'إضافة عميل جديد' }}</h4>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">رقم العميل <span class="text-danger">*</span></label>
+          <input type="text" name="customer_number" class="form-control" value="{{ customer.customer_number if customer else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="name_ar" class="form-control" value="{{ customer.name_ar if customer else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="name_en" class="form-control" value="{{ customer.name_en if customer and customer.name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">اسم الشركة</label>
+          <input type="text" name="company_name" class="form-control" value="{{ customer.company_name if customer and customer.company_name else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع العميل</label>
+          <select name="customer_type" class="form-select">
+            <option value="individual" {% if customer and customer.customer_type == 'individual' %}selected{% endif %}>فرد</option>
+            <option value="company" {% if customer and customer.customer_type == 'company' %}selected{% endif %}>شركة</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" name="phone" class="form-control" value="{{ customer.phone if customer and customer.phone else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input type="email" name="email" class="form-control" value="{{ customer.email if customer and customer.email else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المدينة</label>
+          <input type="text" name="city" class="form-control" value="{{ customer.city if customer and customer.city else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الدولة</label>
+          <input type="text" name="country" class="form-control" value="{{ customer.country if customer and customer.country else 'Libya' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">العنوان</label>
+          <textarea name="address" class="form-control" rows="2">{{ customer.address if customer and customer.address else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if customer and customer.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="inactive" {% if customer and customer.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ customer.notes if customer and customer.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if customer else 'إضافة العميل' }}</button>
+        <a href="{{ url_for('customers.customers_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

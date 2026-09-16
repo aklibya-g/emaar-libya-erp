@@ -1,0 +1,424 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الملف الوظيفي - {{ employee.full_name_ar | default('') }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الملف الوظيفي</h4>
+  <a href="{{ url_for('hr.employees_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة الموظفين
+  </a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-3 col-md-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body text-center">
+        {% if employee.photo %}
+        <img src="{{ employee.photo }}" alt="" class="rounded-circle mb-3" style="width:80px;height:80px;object-fit:cover;border:3px solid var(--accent)">
+        {% else %}
+        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px;background:var(--accent);color:#fff;font-size:2rem;font-weight:600;border:3px solid var(--accent)">
+          {{ employee.full_name_ar[0] if employee.full_name_ar else '?' }}
+        </div>
+        {% endif %}
+        <h6 class="mb-1" style="color:var(--text-primary)">{{ employee.full_name_ar | default('') }}</h6>
+        <small class="text-muted">{{ employee.position | default('') }}</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="stat-icon" style="background:rgba(var(--accent-rgb),0.12);color:var(--accent);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-building"></i></div>
+          <span class="text-muted small">القسم</span>
+        </div>
+        <p class="mb-0 fw-bold" style="color:var(--text-primary)">{{ employee.department.name_ar | default('-') }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="stat-icon" style="background:rgba(72,187,120,0.12);color:var(--accent-green);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-person-badge"></i></div>
+          <span class="text-muted small">الحالة</span>
+        </div>
+        <p class="mb-0">
+          {% if employee.status == 'active' %}
+          <span class="badge" style="background:rgba(72,187,120,0.15);color:var(--accent-green);font-size:13px">نشط</span>
+          {% elif employee.status == 'inactive' %}
+          <span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted);font-size:13px">غير نشط</span>
+          {% else %}
+          <span class="badge bg-secondary" style="font-size:13px">{{ employee.status }}</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="stat-icon" style="background:rgba(246,224,94,0.12);color:var(--accent-yellow);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-calendar-check"></i></div>
+          <span class="text-muted small">تاريخ التعيين</span>
+        </div>
+        <p class="mb-0 fw-bold" style="color:var(--text-primary)">{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '-' }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-0" role="tablist" style="border-color:var(--border-color)">
+  {% set tabs = [
+    ('profile', 'البيانات الشخصية', 'bi-person'),
+    ('job', 'الوظيفة', 'bi-briefcase'),
+    ('attendance', 'الحضور', 'bi-calendar-check'),
+    ('leave_requests', 'الإجازات', 'bi-calendar-minus'),
+    ('documents', 'المستندات', 'bi-file-earmark'),
+    ('contracts', 'العقود', 'bi-file-earmark-text'),
+    ('disciplinary', 'الجزاءات', 'bi-exclamation-triangle'),
+    ('leave_balances', 'أرصدة الإجازات', 'bi-wallet2')
+  ] %}
+  {% for key, label, icon in tabs %}
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == key %}active{% endif %}" data-bs-toggle="tab" href="#tab-{{ key }}" style="color:{% if active_tab == key %}var(--accent){% else %}var(--text-muted){% endif %};border-color:{% if active_tab == key %}var(--accent){% else %}transparent{% endif %}">
+      <i class="bi {{ icon }} me-1"></i>{{ label }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+
+<div class="tab-content pt-3">
+  <!-- البيانات الشخصية -->
+  <div class="tab-pane fade {% if active_tab == 'profile' or not active_tab %}show active{% endif %}" id="tab-profile">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--border-color)">
+        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-person me-2"></i>البيانات الشخصية</h6>
+        <a href="{{ url_for('employees.employees_edit', id=employee.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i>تعديل</a>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% if profile %}
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الاسم بالعربي:</strong><p style="color:var(--text-primary)">{{ profile.full_name_ar | default(employee.full_name_ar | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الاسم بالإنجليزي:</strong><p style="color:var(--text-primary)">{{ profile.full_name_en | default(employee.full_name_en | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">رقم الهوية:</strong><p style="color:var(--text-primary)">{{ profile.national_id | default(employee.national_id | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">تاريخ الميلاد:</strong><p style="color:var(--text-primary)">{{ profile.date_of_birth.strftime('%Y-%m-%d') if profile and profile.date_of_birth else (employee.date_of_birth.strftime('%Y-%m-%d') if employee.date_of_birth else '-') }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الجنس:</strong><p style="color:var(--text-primary)">{{ 'ذكر' if (profile or employee).gender == 'M' else 'أنثى' if (profile or employee).gender == 'F' else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الحالة الاجتماعية:</strong><p style="color:var(--text-primary)">{{ profile.marital_status | default(employee.marital_status | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الجنسية:</strong><p style="color:var(--text-primary)">{{ profile.nationality | default(employee.nationality | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الدين:</strong><p style="color:var(--text-primary)">{{ profile.religion | default(employee.religion | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الblood_type:</strong><p style="color:var(--text-primary)">{{ profile.blood_type | default(employee.blood_type | default('-')) }}</p></div>
+          <div class="col-md-6"><strong style="color:var(--text-secondary)">العنوان:</strong><p style="color:var(--text-primary)">{{ profile.address | default(employee.address | default('-')) }}</p></div>
+          <div class="col-md-6"><strong style="color:var(--text-secondary)">البريد الإلكتروني:</strong><p style="color:var(--text-primary)">{{ profile.email | default(employee.email | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">هاتف شخصي:</strong><p style="color:var(--text-primary)">{{ profile.phone | default(employee.phone | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">هاتف العمل:</strong><p style="color:var(--text-primary)">{{ profile.work_phone | default(employee.work_phone | default('-')) }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">جهة الاتصال الطارئ:</strong><p style="color:var(--text-primary)">{{ profile.emergency_contact | default(employee.emergency_contact | default('-')) }}</p></div>
+          {% else %}
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الاسم بالعربي:</strong><p style="color:var(--text-primary)">{{ employee.full_name_ar | default('-') }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الاسم بالإنجليزي:</strong><p style="color:var(--text-primary)">{{ employee.full_name_en | default('-') }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">رقم الهوية:</strong><p style="color:var(--text-primary)">{{ employee.national_id | default('-') }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">تاريخ الميلاد:</strong><p style="color:var(--text-primary)">{{ employee.date_of_birth.strftime('%Y-%m-%d') if employee.date_of_birth else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الجنس:</strong><p style="color:var(--text-primary)">{{ 'ذكر' if employee.gender == 'M' else 'أنثى' if employee.gender == 'F' else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الجنسية:</strong><p style="color:var(--text-primary)">{{ employee.nationality or '-' }}</p></div>
+          <div class="col-md-6"><strong style="color:var(--text-secondary)">العنوان:</strong><p style="color:var(--text-primary)">{{ employee.address or '-' }}</p></div>
+          <div class="col-md-6"><strong style="color:var(--text-secondary)">البريد الإلكتروني:</strong><p style="color:var(--text-primary)">{{ employee.email or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">هاتف شخصي:</strong><p style="color:var(--text-primary)">{{ employee.phone or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">هاتف العمل:</strong><p style="color:var(--text-primary)">{{ employee.work_phone or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">جهة الاتصال الطارئ:</strong><p style="color:var(--text-primary)">{{ employee.emergency_contact or '-' }}</p></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الوظيفة -->
+  <div class="tab-pane fade" id="tab-job">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">القسم:</strong><p style="color:var(--text-primary)">{{ employee.department.name_ar | default('-') }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">المسمى الوظيفي:</strong><p style="color:var(--text-primary)">{{ employee.position or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الدرجة الوظيفية:</strong><p style="color:var(--text-primary)">{{ employee.grade or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">تاريخ التعيين:</strong><p style="color:var(--text-primary)">{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">نوع العقد:</strong><p style="color:var(--text-primary)">{{ employee.contract_type or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">المدير المباشر:</strong><p style="color:var(--text-primary)">{{ employee.direct_manager or '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الراتب الأساسي:</strong><p style="color:var(--text-primary)">{{ '{:,.2f}'.format(employee.basic_salary) if employee.basic_salary else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الحافز:</strong><p style="color:var(--text-primary)">{{ '{:,.2f}'.format(employee.allowance) if employee.allowance else '-' }}</p></div>
+          <div class="col-md-4"><strong style="color:var(--text-secondary)">الحالة:</strong>
+            <p><span class="badge {% if employee.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">{{ 'نشط' if employee.status == 'active' else 'غير نشط' }}</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الحضور -->
+  <div class="tab-pane fade" id="tab-attendance">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">التاريخ</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">اليوم</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الدخول</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الخروج</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الحالة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">التأخير</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rec in attendance %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-primary)">{{ rec.date.strftime('%Y-%m-%d') if rec.date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ rec.day_name or '-' }}</td>
+                <td style="color:var(--text-primary)">{{ rec.check_in.strftime('%H:%M') if rec.check_in else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ rec.check_out.strftime('%H:%M') if rec.check_out else '-' }}</td>
+                <td><span class="badge" style="background:rgba({% if rec.status == 'present' %}72,187,120{% elif rec.status == 'absent' %}252,129,129{% else %}246,224,94{% endif %},0.15);color:{% if rec.status == 'present' %}var(--accent-green){% elif rec.status == 'absent' %}var(--accent-red){% else %}var(--accent-yellow){% endif %}">{{ rec.status_ar | default(rec.status) }}</span></td>
+                <td style="color:var(--text-primary)">{{ rec.late_minutes | default(0) }} دقيقة</td>
+              </tr>
+              {% endfor %}
+              {% if not attendance %}
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">لا توجد سجلات حضور</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الإجازات -->
+  <div class="tab-pane fade" id="tab-leave_requests">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">النوع</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">من</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">إلى</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الأيام</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">السبب</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for leave in leave_requests %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-primary)">{{ leave.leave_type.name_ar | default('-') }}</td>
+                <td style="color:var(--text-primary)">{{ leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ leave.days }}</td>
+                <td style="color:var(--text-primary)">{{ leave.reason[:30] | default('-') }}{% if leave.reason and leave.reason|length > 30 %}...{% endif %}</td>
+                <td><span class="badge" style="background:rgba({% if leave.status == 'approved' %}72,187,120{% elif leave.status == 'pending' %}246,224,94{% else %}252,129,129{% endif %},0.15);color:{% if leave.status == 'approved' %}var(--accent-green){% elif leave.status == 'pending' %}var(--accent-yellow){% else %}var(--accent-red){% endif %}">{{ leave.status_ar | default(leave.status) }}</span></td>
+              </tr>
+              {% endfor %}
+              {% if not leave_requests %}
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">لا توجد طلبات إجازة</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- المستندات -->
+  <div class="tab-pane fade" id="tab-documents">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent;border-color:var(--border-color)">
+        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-file-earmark me-2"></i>المستندات</h6>
+        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadModal"><i class="bi bi-cloud-upload me-1"></i>رفع مستند</button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">اسم المستند</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الفئة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">تاريخ الرفع</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">تاريخ الانتهاء</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr style="border-color:var(--border-light)">
+                <td><a href="{{ url_for('hr.document_download', id=doc.id) }}" style="color:var(--accent);text-decoration:none"><i class="bi bi-file-earmark me-1"></i>{{ doc.name }}</a></td>
+                <td style="color:var(--text-primary)">{{ doc.document_type.name_ar | default(doc.category.name_ar | default('-')) }}</td>
+                <td style="color:var(--text-primary)">{{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else '-' }}</td>
+                <td><span class="badge" style="background:rgba({% if doc.status == 'valid' %}72,187,120{% else %}252,129,129{% endif %},0.15);color:{% if doc.status == 'valid' %}var(--accent-green){% else %}var(--accent-red){% endif %}">{{ doc.status_ar | default(doc.status) }}</span></td>
+              </tr>
+              {% endfor %}
+              {% if not documents %}
+              <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted)">لا توجد مستندات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- العقود -->
+  <div class="tab-pane fade" id="tab-contracts">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">رقم العقد</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">النوع</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">من</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">إلى</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الراتب</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for contract in contracts %}
+              <tr style="border-color:var(--border-light)">
+                <td><a href="{{ url_for('hr.contract_detail', id=contract.id) }}" style="color:var(--accent);text-decoration:none">{{ contract.contract_number }}</a></td>
+                <td style="color:var(--text-primary)">
+                  {% if contract.contract_type == 'permanent' %}دائم
+                  {% elif contract.contract_type == 'temporary' %}مؤقت
+                  {% elif contract.contract_type == 'probation' %}اختبار
+                  {% else %}{{ contract.contract_type }}{% endif %}
+                </td>
+                <td style="color:var(--text-primary)">{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ '{:,.2f}'.format(contract.basic_salary) if contract.basic_salary else '-' }}</td>
+                <td><span class="badge" style="background:rgba({% if contract.status == 'active' %}72,187,120{% elif contract.status == 'expired' %}100,116,139{% else %}252,129,129{% endif %},0.15);color:{% if contract.status == 'active' %}var(--accent-green){% elif contract.status == 'expired' %}var(--text-muted){% else %}var(--accent-red){% endif %}">{{ contract.status_ar | default(contract.status) }}</span></td>
+              </tr>
+              {% endfor %}
+              {% if not contracts %}
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">لا توجد عقود</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الجزاءات -->
+  <div class="tab-pane fade" id="tab-disciplinary">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">التاريخ</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">النوع</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">النوع الفرعي</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">المخالفة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">القرار</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for action in disciplinary %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-primary)">{{ action.date.strftime('%Y-%m-%d') if action.date else '-' }}</td>
+                <td style="color:var(--text-primary)">{{ action.action_type.name_ar | default('-') }}</td>
+                <td style="color:var(--text-primary)">{{ action.sub_type or '-' }}</td>
+                <td style="color:var(--text-primary)">{{ action.violation[:40] | default('-') }}{% if action.violation and action.violation|length > 40 %}...{% endif %}</td>
+                <td style="color:var(--text-primary)">{{ action.decision or '-' }}</td>
+              </tr>
+              {% endfor %}
+              {% if not disciplinary %}
+              <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted)">لا توجد إجراءات تأديبية</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- أرصدة الإجازات -->
+  <div class="tab-pane fade" id="tab-leave_balances">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">نوع الإجازة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الرصيد السنوي</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">المستخدم</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">المتبقي</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">السنة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for balance in leave_balances %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-primary)">{{ balance.leave_type.name_ar | default('-') }}</td>
+                <td style="color:var(--text-primary)">{{ balance.annual_balance | default(0) }}</td>
+                <td style="color:var(--text-primary)">{{ balance.used | default(0) }}</td>
+                <td>
+                  {% set remaining = (balance.annual_balance | default(0)) - (balance.used | default(0)) %}
+                  <span style="color:{% if remaining > 0 %}var(--accent-green){% elif remaining == 0 %}var(--accent-yellow){% else %}var(--accent-red){% endif %};font-weight:600">{{ remaining }}</span>
+                </td>
+                <td style="color:var(--text-primary)">{{ balance.year or '-' }}</td>
+              </tr>
+              {% endfor %}
+              {% if not leave_balances %}
+              <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted)">لا توجد أرصدة إجازات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--bg-card);border-color:var(--border-color)">
+      <form method="POST" action="{{ url_for('hr.employee_documents_add', id=employee.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="employee_id" value="{{ employee.id }}">
+        <div class="modal-header" style="border-color:var(--border-color)">
+          <h5 class="modal-title" style="color:var(--text-primary)">رفع مستند جديد</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" style="color:var(--text-secondary)">فئة المستند</label>
+            <select name="category_id" class="form-select" required style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+              <option value="">اختر الفئة</option>
+              {% for cat in document_categories %}
+              <option value="{{ cat.id }}">{{ cat.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="color:var(--text-secondary)">اسم المستند</label>
+            <input type="text" name="name" class="form-control" required style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="color:var(--text-secondary)">الملف</label>
+            <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="color:var(--text-secondary)">تاريخ الانتهاء (اختياري)</label>
+            <input type="date" name="expiry_date" class="form-control" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+          </div>
+        </div>
+        <div class="modal-footer" style="border-color:var(--border-color)">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">رفع المستند</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

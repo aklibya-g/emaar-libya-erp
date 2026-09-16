@@ -1,0 +1,215 @@
+{% extends "layouts/base.html" %}
+{% block title %}خطة التطوير | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .back-btn i {
+    transition: transform 0.3s ease;
+  }
+  .back-btn:hover i {
+    transform: translateX(-3px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i>
+      لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-road-map"></i> خطة التطوير المستقبلية</h1>
+  </div>
+</div>
+
+<!-- المرحلة 1 -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0"><i class="bi bi-database"></i> المرحلة 1: هيكلة قواعد البيانات</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-muted">الهدف:</h6>
+        <p>بناء جداول مترابطة (Relational DB) تشمل:</p>
+        <ul>
+          <li>جدول الموظفين/السائقين</li>
+          <li>جدول الأسطول/الحافلات</li>
+          <li>جدول العملاء</li>
+          <li>جدول أوامر التشغيل الأساسية</li>
+          <li>جداول الملحقات المرتبطة بها (One-to-Many)</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-muted">الحالة:</h6>
+        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> مكتمل</span>
+        <div class="mt-3">
+          <p class="text-muted">تم بناء 8 جداول رئيسية:</p>
+          <ul class="list-unstyled">
+            <li><i class="bi bi-check2 text-success"></i> marketing_clients</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_contracts</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_work_orders</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_work_order_buses</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_work_order_annexes</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_trips</li>
+            <li><i class="bi bi-check2 text-success"></i> marketing_school_driver_entitlements</li>
+            <li><i class="bi bi-check2 text-success"></i> monthly_trip_sheets</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- المرحلة 2 -->
+<div class="card mb-4">
+  <div class="card-header bg-warning text-dark">
+    <h5 class="mb-0"><i class="bi bi-code-slash"></i> المرحلة 2: برمجة قواعد التحقق</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-muted">الهدف:</h6>
+        <p>كتابة الأكواد والـ Triggers التي:</p>
+        <ul>
+          <li>تمنع تكرار أرقام أوامر التشغيل</li>
+          <li>تتحقق من حالة السائق (Active/Free) لحظة اختيار اسمه</li>
+          <li>تتحقق من عدم تعارض الحافلة مع اوامر أخرى</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-muted">الحالة:</h6>
+        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> مكتمل</span>
+        <div class="mt-3">
+          <p class="text-muted">تم تنفيذ:</p>
+          <ul class="list-unstyled">
+            <li><i class="bi bi-check2 text-success"></i> generate_next_order_number() - منع التكرار</li>
+            <li><i class="bi bi-check2 text-success"></i> check_driver_availability() - التحقق من السائق</li>
+            <li><i class="bi bi-check2 text-success"></i> check_bus_availability() - التحقق من الحافلة</li>
+            <li><i class="bi bi-check2 text-success"></i> API endpoints للتحقق المباشر</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- المرحلة 3 -->
+<div class="card mb-4">
+  <div class="card-header bg-info text-white">
+    <h5 class="mb-0"><i class="bi bi-palette"></i> المرحلة 3: تصميم واجهات المستخدم</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-muted">الهدف:</h6>
+        <ul>
+          <li>شاشة التسويق التجاري: لوحة تحكم ذكية تعرض جداول الرحلات، التنبيهات، وحالة الأوامر</li>
+          <li>شاشة الملحقات (Annex Panel): نافذة منبثقة مرتبطة بأمر التشغيل الأصلي</li>
+          <li>تعديل الباصات، الأيام، وتوثيق أوامر التخفيض</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-muted">الحالة:</h6>
+        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> مكتمل</span>
+        <div class="mt-3">
+          <p class="text-muted">تم بناء:</p>
+          <ul class="list-unstyled">
+            <li><i class="bi bi-check2 text-success"></i> لوحة تحكم ذكية مع تنبيهات</li>
+            <li><i class="bi bi-check2 text-success"></i> نموذج امر التشغيل (01201)</li>
+            <li><i class="bi bi-check2 text-success"></i> شاشة الملحقات (012/1, 012/2)</li>
+            <li><i class="bi bi-check2 text-success"></i> كشف الرحلات الشهرية</li>
+            <li><i class="bi bi-check2 text-success"></i> مستحقات السائقين</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- المرحلة 4 -->
+<div class="card mb-4">
+  <div class="card-header bg-success text-white">
+    <h5 class="mb-0"><i class="bi bi-check2-square"></i> المرحلة 4: التجربة والاختبار</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-muted">الهدف:</h6>
+        <p>تجربة النظام داخلياً عبر إدخال بيانات شهر تجريبي (مثل بيانات شهر أغسطس التي تمت مناقشتها) للتحقق من تطابق الحسابات والنسب المالية آلياً.</p>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-muted">الحالة:</h6>
+        <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> مكتمل</span>
+        <div class="mt-3">
+          <p class="text-muted">تم ادخال بيانات تجريبية:</p>
+          <ul class="list-unstyled">
+            <li><i class="bi bi-check2 text-success"></i> 50 عميل/جهة</li>
+            <li><i class="bi bi-check2 text-success"></i> 43 امر تشغيل (1137-1179)</li>
+            <li><i class="bi bi-check2 text-success"></i> 43 رحلة</li>
+            <li><i class="bi bi-check2 text-success"></i> 22 سائق مدارس (55 رحلة = 226,700 د.ل)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ملخص الإنجاز -->
+<div class="card">
+  <div class="card-header bg-dark text-white">
+    <h5 class="mb-0"><i class="bi bi-trophy"></i> ملخص الإنجاز</h5>
+  </div>
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-database text-primary" style="font-size:2rem"></i>
+          <h4 class="mt-2">8</h4>
+          <p class="text-muted">جداول قاعدة البيانات</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-file-earmark-text text-success" style="font-size:2rem"></i>
+          <h4 class="mt-2">6</h4>
+          <p class="text-muted">صفحات واجهة المستخدم</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-code-slash text-warning" style="font-size:2rem"></i>
+          <h4 class="mt-2">3</h4>
+          <p class="text-muted">قواعد تحقق ذكية</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3">
+          <i class="bi bi-bus-front text-info" style="font-size:2rem"></i>
+          <h4 class="mt-2">43</h4>
+          <p class="text-muted">بيانات تجريبية</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

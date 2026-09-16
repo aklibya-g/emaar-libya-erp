@@ -1,0 +1,270 @@
+{% extends "layouts/base.html" %}
+{% block title %}كشف الحضور التلقائي | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<style>
+  .report-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .report-toolbar .form-select, .report-toolbar .form-control { max-width: 160px; }
+  .type-checks { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .type-checks .form-check { margin: 0; padding: 0; }
+  .type-checks .form-check-label { font-size: 12px; font-weight: 600; cursor: pointer; }
+  .legend-bar { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 15px; background: var(--bg-card, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; margin-bottom: 15px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary, #64748b); }
+  .legend-dot { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .att-table { font-size: 11px; border-collapse: separate; border-spacing: 0; }
+  .att-table thead th { background: #1e40af; color: #fff; padding: 6px 4px; text-align: center; font-size: 9px; font-weight: 600; white-space: nowrap; border-bottom: 2px solid #1e3a8a; position: sticky; top: 0; z-index: 2; }
+  .att-table thead th:first-child { border-radius: 8px 0 0 0; }
+  .att-table thead th:last-child { border-radius: 0 8px 0 0; }
+  .att-table thead th.name-col { text-align: right; padding-right: 10px; min-width: 160px; }
+  .att-table tbody td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--border-color, #e2e8f0); }
+  .att-table tbody td.name-col { text-align: right; padding-right: 10px; font-weight: 600; }
+  .att-table tbody tr:hover { background: var(--hover-bg, #f1f5f9); }
+  .att-table tbody tr:nth-child(even) { background: var(--stripe-bg, #f8fafc); }
+  .att-table tbody tr:nth-child(even):hover { background: var(--hover-bg, #f1f5f9); }
+  .s-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; font-size: 8px; font-weight: 700; color: #fff; line-height: 1; }
+  .s-h { background: #22c55e; } .s-g { background: #ef4444; } .s-m { background: #f59e0b; }
+  .s-i { background: #3b82f6; } .s-r { background: #6b7280; } .s-ma { background: #8b5cf6; }
+  .s-t { background: #06b6d4; } .s-id { background: #10b981; } .s-n { background: #f97316; }
+  .s-k { background: #f59e0b; } .s-a { background: #7c3aed; }
+  .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .summary-card { padding: 12px; border-radius: 10px; text-align: center; border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-card, #fff); }
+  .summary-card .num { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .summary-card .lbl { font-size: 10px; color: var(--text-secondary, #64748b); margin-top: 2px; }
+  .signatures-area { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--border-color, #e2e8f0); }
+  .sig-box { text-align: center; width: 28%; }
+  .sig-line { border-top: 1px solid #374151; margin-top: 60px; padding-top: 6px; font-size: 11px; font-weight: 600; color: var(--text-primary, #1e293b); }
+  .notes-box { min-height: 70px; border: 1px dashed var(--border-color, #cbd5e1); border-radius: 10px; padding: 12px; margin-top: 15px; background: var(--bg-card, #fafbfc); }
+  .notes-box textarea { border: none; background: transparent; width: 100%; height: 100%; resize: none; font-size: 12px; outline: none; }
+  .type-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+  .type-badge.emp { background: #dbeafe; color: #1e40af; }
+  .type-badge.drv-r { background: #fef3c7; color: #92400e; }
+  .type-badge.drv-s { background: #d1fae5; color: #065f46; }
+  .type-badge.nt { background: #ede9fe; color: #5b21b6; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .att-table thead th { background: #1e40af !important; color: #fff !important; -webkit-print-color-adjust: exact; }
+    .s-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('hr.hr_dashboard') }}">شؤون الموظفين</a></li>
+            <li class="breadcrumb-item active">كشف الحضور والغياب الشهري</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-calendar-month me-2"></i>كشف الحضور والغياب الشهري</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+    </div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="card mb-4 no-print">
+  <div class="card-body py-3">
+    <form method="GET" class="report-toolbar" id="reportForm">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-calendar3 text-primary"></i>
+        <select name="year" class="form-select form-select-sm">
+          {% for y in range(today.year - 3, today.year + 1) %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+        <select name="month" class="form-select form-select-sm">
+          {% for m_name in ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'] %}
+          <option value="{{ loop.index }}" {% if loop.index == month %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0" style="font-size:11px;white-space:nowrap">من يوم</label>
+        <select name="start_day" class="form-select form-select-sm" style="width:70px" id="startDay">
+          {% for d in range(1, total_days + 1) %}
+          <option value="{{ d }}" {% if d == start_day %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+        <label class="form-label mb-0" style="font-size:11px;white-space:nowrap">الي يوم</label>
+        <select name="end_day" class="form-select form-select-sm" style="width:70px" id="endDay">
+          {% for d in range(1, total_days + 1) %}
+          <option value="{{ d }}" {% if d == end_day %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-building text-primary"></i>
+        <select name="department_id" class="form-select form-select-sm">
+          <option value="">جميع الأقسام</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if dept.id == department_id %}selected{% endif %}>{{ dept.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Type Checkboxes -->
+      <div class="type-checks">
+        <span class="fw-bold" style="font-size:11px;color:var(--text-secondary)">النوع:</span>
+        {% if settings.get('enable_employees', 'true') == 'true' %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="person_type" value="employees" id="typeEmployees" {% if 'employees' in person_types %}checked{% endif %}>
+          <label class="form-check-label" for="typeEmployees"><i class="bi bi-people me-1"></i>الموظفين</label>
+        </div>
+        {% endif %}
+        {% if settings.get('enable_drivers_reserve', 'true') == 'true' %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="person_type" value="drivers_reserve" id="typeDrvReserve" {% if 'drivers_reserve' in person_types %}checked{% endif %}>
+          <label class="form-check-label" for="typeDrvReserve"><i class="bi bi-person me-1"></i>سائقين احتياط</label>
+        </div>
+        {% endif %}
+        {% if settings.get('enable_drivers_seasonal', 'true') == 'true' %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="person_type" value="drivers_seasonal" id="typeDrvSeasonal" {% if 'drivers_seasonal' in person_types %}checked{% endif %}>
+          <label class="form-check-label" for="typeDrvSeasonal"><i class="bi bi-person me-1"></i>سائقين موسمي</label>
+        </div>
+        {% endif %}
+        {% if settings.get('enable_national_transport', 'true') == 'true' %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="person_type" value="national_transport" id="typeNational" {% if 'national_transport' in person_types %}checked{% endif %}>
+          <label class="form-check-label" for="typeNational"><i class="bi bi-globe me-1"></i>النقل الدولي</label>
+        </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>تصفية</button>
+      <div class="me-auto d-flex gap-2">
+        <button type="button" class="btn btn-success btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>طباعة</button>
+        <a href="{{ url_for('hr.attendance_report_pdf', year=year, month=month, department_id=department_id, start_day=start_day, end_day=end_day) }}" class="btn btn-info btn-sm text-white"><i class="bi bi-file-earmark-pdf me-1"></i>تنزيل PDF</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend-bar no-print">
+  <div class="legend-item"><span class="legend-dot s-h"></span>حاضر</div>
+  <div class="legend-item"><span class="legend-dot s-g"></span>غائب</div>
+  <div class="legend-item"><span class="legend-dot s-m"></span>متأخر</div>
+  <div class="legend-item"><span class="legend-dot s-i"></span>إجازة</div>
+  <div class="legend-item"><span class="legend-dot s-a"></span>أمر</div>
+  <div class="legend-item"><span class="legend-dot s-r"></span>راحة أسبوعية</div>
+  <div class="legend-item"><span class="legend-dot s-ma"></span>مأمورية</div>
+  <div class="legend-item"><span class="legend-dot s-t"></span>تدريب</div>
+</div>
+
+<!-- Summary -->
+{% set total_present = report_data | map(attribute='stats') | map(attribute='present') | sum %}
+{% set total_absent = report_data | map(attribute='stats') | map(attribute='absent') | sum %}
+{% set total_late = report_data | map(attribute='stats') | map(attribute='late') | sum %}
+{% set total_leave = report_data | map(attribute='stats') | map(attribute='leave') | sum %}
+<div class="summary-cards">
+  <div class="summary-card"><div class="num" style="color:#22c55e">{{ total_present }}</div><div class="lbl">أيام الحضور</div></div>
+  <div class="summary-card"><div class="num" style="color:#ef4444">{{ total_absent }}</div><div class="lbl">أيام الغياب</div></div>
+  <div class="summary-card"><div class="num" style="color:#f59e0b">{{ total_late }}</div><div class="lbl">التأخيرات</div></div>
+  <div class="summary-card"><div class="num" style="color:#3b82f6">{{ total_leave }}</div><div class="lbl">الإجازات</div></div>
+  <div class="summary-card"><div class="num" style="color:#1e40af">{{ report_data | length }}</div><div class="lbl">العدد</div></div>
+  <div class="summary-card"><div class="num" style="color:#8b5cf6">{{ month_name }} {{ year }}</div><div class="lbl">الفترة: {{ start_day }} - {{ end_day }}</div></div>
+</div>
+
+<!-- Report Table -->
+<div class="card">
+  <div class="card-body p-0" style="overflow-x:auto">
+    <table class="table att-table mb-0">
+      <thead>
+        <tr>
+          <th class="name-col">#</th>
+          <th class="name-col">اسم الموظف</th>
+          <th>النوع</th>
+          <th>الرقم</th>
+          {% for day in range(start_day, end_day + 1) %}
+          <th>{{ day }}</th>
+          {% endfor %}
+          <th style="background:#16a34a">ح</th>
+          <th style="background:#dc2626">غ</th>
+          <th style="background:#d97706">م</th>
+          <th style="background:#2563eb">إ</th>
+          <th style="background:#475569">ساعات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_data %}
+        <tr>
+          <td class="name-col" style="color:var(--text-secondary,#64748b)">{{ loop.index }}</td>
+          <td class="name-col">{{ row.full_name }}</td>
+          <td>
+            {% if row.person_type == 'employees' %}
+              <span class="type-badge emp">موظف</span>
+            {% elif row.person_type == 'drivers_reserve' %}
+              <span class="type-badge drv-r">احتياط</span>
+            {% elif row.person_type == 'drivers_seasonal' %}
+              <span class="type-badge drv-s">موسمي</span>
+            {% elif row.person_type == 'national_transport' %}
+              <span class="type-badge nt">دولي</span>
+            {% endif %}
+          </td>
+          <td style="font-size:9px;color:var(--text-secondary,#64748b)">{{ row.emp_number }}</td>
+          {% for d in row.daily %}
+          <td>
+            {% if d.status_short == 'ح' %}<span class="s-badge s-h">ح</span>
+            {% elif d.status_short == 'غ' %}<span class="s-badge s-g">غ</span>
+            {% elif d.status_short == 'م' %}<span class="s-badge s-m">م</span>
+            {% elif d.status_short == 'إ' %}<span class="s-badge s-i">إ</span>
+            {% elif d.status_short == 'أ' %}<span class="s-badge s-a">أ</span>
+            {% elif d.status_short == 'ر' %}<span class="s-badge s-r">ر</span>
+            {% elif d.status_short == 'مأ' %}<span class="s-badge s-ma">مأ</span>
+            {% elif d.status_short == 'ت' %}<span class="s-badge s-t">ت</span>
+            {% elif d.status_short == 'إض' %}<span class="s-badge s-id">إض</span>
+            {% elif d.status_short == 'ن' %}<span class="s-badge s-n">ن</span>
+            {% elif d.status_short == 'خ' %}<span class="s-badge s-k">خ</span>
+            {% else %}<span style="color:var(--text-secondary,#94a3b8)">-</span>{% endif %}
+          </td>
+          {% endfor %}
+          <td style="background:#dcfce7;font-weight:700;color:#16a34a">{{ row.stats.present }}</td>
+          <td style="background:#fee2e2;font-weight:700;color:#dc2626">{{ row.stats.absent }}</td>
+          <td style="background:#fef3c7;font-weight:700;color:#d97706">{{ row.stats.late }}</td>
+          <td style="background:#dbeafe;font-weight:700;color:#2563eb">{{ row.stats.leave }}</td>
+          <td style="background:#f1f5f9;font-weight:700;color:#475569">{{ '{:.1f}'.format(row.stats.total_hours) }}</td>
+        </tr>
+        {% endfor %}
+        {% if not report_data %}
+        <tr><td colspan="{{ (end_day - start_day + 1) + 8 }}" class="text-center py-5">
+          <i class="bi bi-inbox fs-1 d-block mb-2" style="color:var(--text-secondary,#94a3b8)"></i>
+          <span style="color:var(--text-secondary,#64748b)">لا توجد بيانات حضور لهذا الشهر</span>
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Notes -->
+<div class="card mt-4">
+  <div class="card-header"><h6 class="mb-0"><i class="bi bi-journal-text me-2"></i>ملاحظات على الكشف</h6></div>
+  <div class="card-body">
+    <div class="notes-box">
+      <textarea placeholder="اكتب ملاحظاتك هنا..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Signatures -->
+<div class="signatures-area">
+  <div class="sig-box">
+    <div class="sig-line">المدير المباشر</div>
+  </div>
+  <div class="sig-box">
+    <div class="sig-line">مدير الموارد البشرية</div>
+  </div>
+  <div class="sig-box">
+    <div class="sig-line">المدير العام</div>
+  </div>
+</div>
+{% endblock %}

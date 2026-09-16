@@ -1,0 +1,349 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل سائق' if driver else 'إضافة سائق' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">{{ 'تعديل بيانات السائق' if driver else 'إضافة سائق جديد' }}</h4>
+  <a href="{{ url_for('drivers.drivers_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة السائقين
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">الرقم الوظيفي</label>
+          <input type="text" name="driver_number" class="form-control" id="driverNumber"
+                 value="{{ driver.driver_number if driver else '' }}"
+                 placeholder="بلا" onfocus="this.placeholder=''" onblur="this.placeholder='بلا'">
+          <div class="form-text">اتركه فارغاً للتوليدي تلقائياً</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="full_name_ar" class="form-control" value="{{ driver.full_name_ar if driver else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="full_name_en" class="form-control" value="{{ driver.full_name_en if driver and driver.full_name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الرقم الوطني</label>
+          <input type="text" name="national_id" class="form-control" value="{{ driver.national_id if driver and driver.national_id else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">اسم الام</label>
+          <input type="text" name="mother_name" class="form-control" value="{{ driver.mother_name if driver and driver.mother_name else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع الهوية</label>
+          <select name="id_type" class="form-select">
+            <option value="">اختر</option>
+            <option value="national_id" {% if driver and driver.id_type == 'national_id' %}selected{% endif %}>بطاقة شخصية</option>
+            <option value="passport" {% if driver and driver.id_type == 'passport' %}selected{% endif %}>جواز سفر</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الهوية</label>
+          <input type="text" name="id_number" class="form-control" value="{{ driver.id_number if driver and driver.id_number else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف (اساسي) <span class="text-danger">*</span></label>
+          <input type="text" name="phone" class="form-control" value="{{ driver.phone if driver and driver.phone else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف (بديل)</label>
+          <input type="text" name="phone2" class="form-control" value="{{ driver.phone2 if driver and driver.phone2 else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ المباشرة</label>
+          <input type="date" name="join_date" class="form-control" value="{{ driver.join_date.strftime('%Y-%m-%d') if driver and driver.join_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع العقد</label>
+          <div class="input-group">
+            <select name="contract_type" class="form-select" id="contractType">
+              <option value="">اختر</option>
+              <option value="reserve" {% if driver and driver.contract_type == 'reserve' %}selected{% endif %}>احتياط</option>
+              <option value="seasonal" {% if driver and driver.contract_type == 'seasonal' %}selected{% endif %}>موسمي</option>
+              <option value="rent_to_own" {% if driver and driver.contract_type == 'rent_to_own' %}selected{% endif %}>ايجار لغرض التمليك</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addContractTypeModal" title="إضافة نوع عقد جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">العنوان</label>
+          <textarea name="address" class="form-control" rows="1">{{ driver.address if driver and driver.address else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الرخصة</label>
+          <input type="text" name="license_number" class="form-control" value="{{ driver.license_number if driver and driver.license_number else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع الرخصة</label>
+          <div class="input-group">
+            <select name="license_type" class="form-select" id="licenseType">
+              <option value="">اختر</option>
+              <option value="اولي" {% if driver and driver.license_type == 'اولي' %}selected{% endif %}>اولي</option>
+              <option value="ثانية" {% if driver and driver.license_type == 'ثانية' %}selected{% endif %}>ثانية</option>
+              <option value="ثالثة" {% if driver and driver.license_type == 'ثالثة' %}selected{% endif %}>ثالثة</option>
+              <option value="رابعة" {% if driver and driver.license_type == 'رابعة' %}selected{% endif %}>رابعة</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addLicenseTypeModal" title="إضافة نوع رخصة جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">جهة إصدار الرخصة</label>
+          <div class="input-group">
+            <select name="license_issuing_authority" class="form-select" id="licenseAuthority">
+              <option value="">اختر</option>
+              <option value="طرابلس" {% if driver and driver.license_issuing_authority == 'طرابلس' %}selected{% endif %}>طرابلس</option>
+              <option value="بنغازي" {% if driver and driver.license_issuing_authority == 'بنغازي' %}selected{% endif %}>بنغازي</option>
+              <option value="مصراتة" {% if driver and driver.license_issuing_authority == 'مصراتة' %}selected{% endif %}>مصراتة</option>
+              <option value="خمس" {% if driver and driver.license_issuing_authority == 'خمس' %}selected{% endif %}>خمس</option>
+              <option value="زليتن" {% if driver and driver.license_issuing_authority == 'زليتن' %}selected{% endif %}>زليتن</option>
+              <option value="ترهونة" {% if driver and driver.license_issuing_authority == 'ترهونة' %}selected{% endif %}>ترهونة</option>
+              <option value="الزنتان" {% if driver and driver.license_issuing_authority == 'الزنتان' %}selected{% endif %}>الزنتان</option>
+              <option value="صبراتة" {% if driver and driver.license_issuing_authority == 'صبراتة' %}selected{% endif %}>صبراتة</option>
+              <option value="ال_NUMERIC" {% if driver and driver.license_issuing_authority == 'ال_NUMERIC' %}selected{% endif %}>ال Numeric</option>
+              <option value="الNumeric" {% if driver and driver.license_issuing_authority == 'الNumeric' %}selected{% endif %}>الNumeric</option>
+              <option value="Tokharali" {% if driver and driver.license_issuing_authority == 'Tokharali' %}selected{% endif %}>Tokharali</option>
+              <option value="Benghazi" {% if driver and driver.license_issuing_authority == 'Benghazi' %}selected{% endif %}>Benghazi (إنجليزي)</option>
+              <option value="Tobruk" {% if driver and driver.license_issuing_authority == 'Tobruk' %}selected{% endif %}>Tobruk (إنجليزي)</option>
+              <option value="Beda" {% if driver and driver.license_issuing_authority == 'Beda' %}selected{% endif %}>Beda (إنجليزي)</option>
+              <option value="Ajdabiya" {% if driver and driver.license_issuing_authority == 'Ajdabiya' %}selected{% endif %}>Ajdabiya (إنجليزي)</option>
+              <option value="Derna" {% if driver and driver.license_issuing_authority == 'Derna' %}selected{% endif %}>Derna (إنجليزي)</option>
+              <option value="Sirte" {% if driver and driver.license_issuing_authority == 'Sirte' %}selected{% endif %}>Sirte (إنجليزي)</option>
+              <option value=" Sabha" {% if driver and driver.license_issuing_authority == ' Sabha' %}selected{% endif %}> Sabha (إنجليزي)</option>
+              <option value="Murzuq" {% if driver and driver.license_issuing_authority == 'Murzuq' %}selected{% endif %}>Murzuq (إنجليزي)</option>
+              <option value="Ghat" {% if driver and driver.license_issuing_authority == 'Ghat' %}selected{% endif %}>Ghat (إنجليزي)</option>
+              <option value="Ubari" {% if driver and driver.license_issuing_authority == 'Ubari' %}selected{% endif %}>Ubari (إنجليزي)</option>
+              <option value="Zintan" {% if driver and driver.license_issuing_authority == 'Zintan' %}selected{% endif %}>Zintan (إنجليزي)</option>
+              <option value="Yefren" {% if driver and driver.license_issuing_authority == 'Yefren' %}selected{% endif %}>Yefren (إنجليزي)</option>
+              <option value="Nalut" {% if driver and driver.license_issuing_authority == 'Nalut' %}selected{% endif %}>Nalut (إنجليزي)</option>
+              <option value="Wazin" {% if driver and driver.license_issuing_authority == 'Wazin' %}selected{% endif %}>Wazin (إنجليزي)</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAuthorityModal" title="إضافة جهة جديدة">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ إصدار الرخصة</label>
+          <input type="date" name="license_issue_date" class="form-control" value="{{ driver.license_issue_date.strftime('%Y-%m-%d') if driver and driver.license_issue_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ انتهاء الرخصة</label>
+          <input type="date" name="license_expiry_date" class="form-control" value="{{ driver.license_expiry_date.strftime('%Y-%m-%d') if driver and driver.license_expiry_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <div class="input-group">
+            <select name="status" class="form-select" id="driverStatus">
+              <option value="active" {% if driver and driver.status == 'active' %}selected{% endif %}>نشط</option>
+              <option value="inactive" {% if driver and driver.status == 'inactive' %}selected{% endif %}>متوقف</option>
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addDriverStatusModal" title="إضافة حالة جديدة">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ driver.notes if driver and driver.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if driver else 'إضافة السائق' }}</button>
+        <a href="{{ url_for('drivers.drivers_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- مودال اضافة حالة جديدة -->
+<div class="modal fade" id="addDriverStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة حالة جديدة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم الحالة <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newDriverStatusName" placeholder="أدخل اسم الحالة">
+        </div>
+        <div id="driverStatusAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveDriverStatus()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال اضافة نوع عقد جديد -->
+<div class="modal fade" id="addContractTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع عقد جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم النوع <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newContractTypeName" placeholder="أدخل اسم النوع">
+        </div>
+        <div id="contractTypeAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveContractType()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال اضافة جهة اصدار جديدة -->
+<div class="modal fade" id="addAuthorityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة جهة إصدار جديدة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم الجهة <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newAuthorityName" placeholder="أدخل اسم الجهة">
+        </div>
+        <div id="authorityAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveAuthority()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال اضافة نوع رخصة جديد -->
+<div class="modal fade" id="addLicenseTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع رخصة جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم النوع <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newLicenseTypeName" placeholder="أدخل اسم النوع">
+        </div>
+        <div id="licenseTypeAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveLicenseType()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function saveDriverStatus() {
+  const name = document.getElementById('newDriverStatusName').value.trim();
+  const alertEl = document.getElementById('driverStatusAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم الحالة';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('driverStatus');
+  const value = name.replace(/\s+/g, '_');
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addDriverStatusModal'));
+  modal.hide();
+  document.getElementById('newDriverStatusName').value = '';
+  alertEl.className = 'alert d-none';
+}
+
+function saveContractType() {
+  const name = document.getElementById('newContractTypeName').value.trim();
+  const alertEl = document.getElementById('contractTypeAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم النوع';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('contractType');
+  const value = name.replace(/\s+/g, '_');
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addContractTypeModal'));
+  modal.hide();
+  document.getElementById('newContractTypeName').value = '';
+  alertEl.className = 'alert d-none';
+}
+
+function saveLicenseType() {
+  const name = document.getElementById('newLicenseTypeName').value.trim();
+  const alertEl = document.getElementById('licenseTypeAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم النوع';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('licenseType');
+  const value = name.replace(/\s+/g, '_');
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addLicenseTypeModal'));
+  modal.hide();
+  document.getElementById('newLicenseTypeName').value = '';
+  alertEl.className = 'alert d-none';
+}
+
+function saveAuthority() {
+  const name = document.getElementById('newAuthorityName').value.trim();
+  const alertEl = document.getElementById('authorityAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم الجهة';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const select = document.getElementById('licenseAuthority');
+  const value = name;
+  const opt = new Option(name, value, true, true);
+  select.appendChild(opt);
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addAuthorityModal'));
+  modal.hide();
+  document.getElementById('newAuthorityName').value = '';
+  alertEl.className = 'alert d-none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,215 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}ملف السائق | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title">{{ driver.full_name_ar }}</h4>
+    <p class="page-subtitle">{{ driver.driver_number }}</p>
+  </div>
+  <a href="{{ url_for('driver_hr.driver_hr_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة السائقين
+  </a>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'personal' %}active{% endif %}" href="{{ url_for('driver_hr.driver_file', id=driver.id, tab='personal') }}">البيانات الشخصية</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'license' %}active{% endif %}" href="{{ url_for('driver_hr.driver_file', id=driver.id, tab='license') }}">الرخص</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'documents' %}active{% endif %}" href="{{ url_for('driver_hr.driver_file', id=driver.id, tab='documents') }}">المستندات</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_tab == 'trips' %}active{% endif %}" href="{{ url_for('driver_hr.driver_file', id=driver.id, tab='trips') }}">الرحلات</a>
+  </li>
+</ul>
+
+{% if active_tab == 'personal' %}
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">البيانات الأساسية</h6></div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr><td class="text-muted" style="width:40%">الرقم الوظيفي</td><td class="fw-bold">{{ driver.driver_number }}</td></tr>
+          <tr><td class="text-muted">الاسم بالعربي</td><td class="fw-bold">{{ driver.full_name_ar }}</td></tr>
+          <tr><td class="text-muted">الاسم بالإنجليزي</td><td>{{ driver.full_name_en or '-' }}</td></tr>
+          <tr><td class="text-muted">الهوية الوطنية</td><td>{{ driver.national_id or '-' }}</td></tr>
+          <tr><td class="text-muted">الهاتف</td><td>{{ driver.phone or '-' }}</td></tr>
+          <tr><td class="text-muted">العنوان</td><td>{{ driver.address or '-' }}</td></tr>
+          <tr><td class="text-muted">تاريخ الالتحاق</td><td>{{ driver.join_date.strftime('%Y-%m-%d') if driver.join_date else '-' }}</td></tr>
+          <tr><td class="text-muted">الحالة</td><td><span class="badge {% if driver.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">{{ driver.status }}</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">بيانات الرخصة</h6></div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr><td class="text-muted" style="width:40%">رقم الرخصة</td><td class="fw-bold">{{ driver.license_number or '-' }}</td></tr>
+          <tr><td class="text-muted">نوع الرخصة</td><td>{{ driver.license_type or '-' }}</td></tr>
+          <tr><td class="text-muted">تاريخ الإصدار</td><td>{{ driver.license_issue_date.strftime('%Y-%m-%d') if driver.license_issue_date else '-' }}</td></tr>
+          <tr><td class="text-muted">تاريخ الانتهاء</td>
+            <td>
+              {% if driver.license_expiry_date %}
+                {{ driver.license_expiry_date.strftime('%Y-%m-%d') }}
+                {% if driver.license_expiry_date < today %}
+                  <span class="badge bg-danger me-1">منتهية</span>
+                {% endif %}
+              {% else %}-{% endif %}
+            </td>
+          </tr>
+          <tr><td class="text-muted">جهة الإصدار</td><td>{{ driver.license_issuing_authority or '-' }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'license' %}
+<div class="card">
+  <div class="card-header"><h6 class="mb-0">سجل الرخص</h6></div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>رقم الرخصة</th>
+          <th>النوع</th>
+          <th>تاريخ الإصدار</th>
+          <th>تاريخ الانتهاء</th>
+          <th>جهة الإصدار</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lic in licenses %}
+        <tr>
+          <td>{{ lic.license_number }}</td>
+          <td>{{ lic.license_type }}</td>
+          <td>{{ lic.issue_date.strftime('%Y-%m-%d') if lic.issue_date else '-' }}</td>
+          <td>{{ lic.expiry_date.strftime('%Y-%m-%d') if lic.expiry_date else '-' }}</td>
+          <td>{{ lic.issuing_authority or '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not licenses %}
+        <tr><td colspan="5" class="text-center text-muted py-4">لا توجد رخص مسجلة</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elif active_tab == 'documents' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>مستندات السائق</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocModal">
+    <i class="bi bi-plus-lg me-1"></i>إضافة مستند
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>العنوان</th>
+          <th>النوع</th>
+          <th>الوصف</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in documents %}
+        <tr>
+          <td>{{ doc.title }}</td>
+          <td>{{ doc.doc_type }}</td>
+          <td>{{ doc.description or '-' }}</td>
+          <td>{{ doc.created_at.strftime('%Y-%m-%d') if doc.created_at else '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not documents %}
+        <tr><td colspan="4" class="text-center text-muted py-4">لا توجد مستندات</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addDocModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('driver_hr.driver_document_add', id=driver.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title">إضافة مستند</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">النوع <span class="text-danger">*</span></label>
+            <select name="doc_type" class="form-select" required>
+              <option value="">اختر النوع</option>
+              <option value="license">رخصة</option>
+              <option value="insurance">تأمين</option>
+              <option value="contract">عقد</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">العنوان <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الوصف</label>
+            <textarea name="description" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'trips' %}
+<div class="card">
+  <div class="card-header"><h6 class="mb-0">سجل الرحلات</h6></div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>المسار</th>
+          <th>المركبة</th>
+          <th>الركاب</th>
+          <th>من</th>
+          <th>إلى</th>
+          <th>المسافة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trip in trips %}
+        <tr>
+          <td>{{ trip.trip_date.strftime('%Y-%m-%d') if trip.trip_date else '-' }}</td>
+          <td>{{ trip.route or '-' }}</td>
+          <td>{{ trip.vehicle_id or '-' }}</td>
+          <td>{{ trip.passengers_count or '-' }}</td>
+          <td>{{ trip.start_time.strftime('%H:%M') if trip.start_time else '-' }}</td>
+          <td>{{ trip.end_time.strftime('%H:%M') if trip.end_time else '-' }}</td>
+          <td>{{ trip.distance_km or '-' }} كم</td>
+        </tr>
+        {% endfor %}
+        {% if not trips %}
+        <tr><td colspan="7" class="text-center text-muted py-4">لا توجد رحلات مسجلة</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

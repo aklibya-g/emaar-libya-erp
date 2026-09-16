@@ -1,0 +1,90 @@
+{% extends "layouts/base.html" %}
+{% block title %}الموظفين | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الموظفين</h4>
+  <a href="{{ url_for('employees.employees_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة موظف</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-4">
+        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم أو الرقم..." value="{{ search }}">
+      </div>
+      <div class="col-md-3">
+        <select name="department_id" class="form-select">
+          <option value="">جميع الأقسام</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="">جميع الحالات</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+          <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>غير نشط</option>
+          <option value="on_leave" {% if status == 'on_leave' %}selected{% endif %}>إجازة</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم الموظف</th>
+            <th>الاسم بالعربي</th>
+            <th>القسم</th>
+            <th>الهاتف</th>
+            <th>تاريخ التعيين</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td>{{ emp.employee_number }}</td>
+            <td><a href="{{ url_for('employees.employees_detail', id=emp.id) }}">{{ emp.full_name_ar }}</a></td>
+            <td>{{ emp.department.name_ar if emp.department else '-' }}</td>
+            <td>{{ emp.phone or '-' }}</td>
+            <td>{{ emp.hire_date.strftime('%Y-%m-%d') if emp.hire_date else '-' }}</td>
+            <td>
+              {% if emp.status == 'active' %}
+              <span class="badge bg-success">نشط</span>
+              {% elif emp.status == 'inactive' %}
+              <span class="badge bg-secondary">غير نشط</span>
+              {% elif emp.status == 'on_leave' %}
+              <span class="badge bg-warning">إجازة</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ emp.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('employees.employees_edit', id=emp.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('employees.employees_delete', id=emp.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not employees %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا يوجد موظفين</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

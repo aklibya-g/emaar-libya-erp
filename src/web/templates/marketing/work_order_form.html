@@ -1,0 +1,1058 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.work_orders_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        اوامر التشغيل
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">{{ page_title }}</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-clipboard-plus me-2"></i>{{ page_title }}</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not order %}
+<div class="alert alert-primary d-flex align-items-center mb-4" role="alert" style="background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%); border: 1px solid #667eea55;">
+  <i class="bi bi-hash me-2 fs-4" style="color:#667eea"></i>
+  <div>
+    <strong>رقم أمر التشغيل:</strong>
+    <span class="fs-4 fw-bold" style="color:#667eea; letter-spacing:1px;">{{ next_order_number }}</span>
+  </div>
+</div>
+{% endif %}
+
+<form method="POST" id="workOrderForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% if order and order.status == 'active' %}
+  <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+    <div>
+      <strong>تنبيه:</strong> انت تقوم بتعديل أمر تشغيل <strong>نشط</strong>. سيتم <strong>اعادة ضبط جميع الاعتمادات</strong> (التسويقية، المالية، الحركة، التنفيذية) الى حالة <strong>قيد المراجعة</strong> بعد الحفظ.
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- البيانات الأساسية -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-info-circle"></i> البيانات الأساسية</h5>
+    </div>
+    <div class="card-body">
+      <!-- الصف الاول: نوع الامر + نوع الرحلة -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <label class="form-label">نوع الأمر <span class="text-danger">*</span></label>
+          <select class="form-select" name="order_type" id="orderType" required onchange="toggleRelatedOrder()">
+            <option value="new" {% if order and order.order_type == 'new' %}selected{% endif %}>جديد</option>
+            <option value="amendment" {% if order and order.order_type == 'amendment' %}selected{% endif %}>تعديل</option>
+          </select>
+        </div>
+        <div class="col-md-3" id="relatedOrderGroup" style="display:none">
+          <label class="form-label">الأمر المرجعي <span class="text-danger">*</span></label>
+          <select class="form-select" name="related_order_id" id="relatedOrderId">
+            <option value="">اختر الأمر الأصلي</option>
+            {% for ro in related_orders %}
+            <option value="{{ ro.id }}" data-client="{{ ro.client_id }}" {% if order and order.related_order_id == ro.id %}selected{% endif %}>{{ ro.order_number }} - {{ ro.client.name_ar if ro.client else '-' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">نوع الرحلة <span class="text-danger">*</span></label>
+          <div class="d-flex gap-4 align-items-center mt-1">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="trip_type" id="tripTypeExternal" value="external" checked onchange="onTripTypeChange()">
+              <label class="form-check-label fw-bold" for="tripTypeExternal" style="color:#dc2626">خارج المدينة</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="trip_type" id="tripTypeInternal" value="internal" onchange="onTripTypeChange()">
+              <label class="form-check-label fw-bold" for="tripTypeInternal" style="color:#059669">داخل المدينة</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- الصف الثاني: الجهة + العقد + رقم التليفون -->
+      <div class="row g-3">
+        <div class="col-md-4" id="relatedOrderGroup" style="display:none">
+          <label class="form-label">الأمر المرجعي <span class="text-danger">*</span></label>
+          <select class="form-select" name="related_order_id" id="relatedOrderId">
+            <option value="">اختر الأمر الأصلي</option>
+            {% for ro in related_orders %}
+            <option value="{{ ro.id }}" data-client="{{ ro.client_id }}" {% if order and order.related_order_id == ro.id %}selected{% endif %}>{{ ro.order_number }} - {{ ro.client.name_ar if ro.client else '-' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الجهة <span class="text-danger">*</span></label>
+          <select class="form-select" name="client_id" id="clientId" required onchange="loadClientPhone(); loadClientContracts(); filterRelatedOrders()">
+            <option value="">اختر الجهة</option>
+            {% for client in clients %}
+            <option value="{{ client.id }}" data-phone="{{ client.phone or '' }}" {% if order and order.client_id == client.id %}selected{% endif %}>{{ client.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">العقد المرتبط</label>
+          <select class="form-select" name="contract_id" id="contractId" onchange="showContractStatus()">
+            <option value="">بدون عقد</option>
+            {% for contract in contracts %}
+            <option value="{{ contract.id }}"
+              data-client="{{ contract.client_id }}"
+              data-start="{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '' }}"
+              data-end="{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '' }}"
+              data-status="{{ contract.status }}"
+              data-value="{{ contract.total_value }}" {% if order and order.contract_id == contract.id %}selected{% endif %}>{{ contract.contract_number }} - {{ contract.title }}</option>
+            {% endfor %}
+          </select>
+          <div id="contractStatus" class="mt-1"><span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>بدون عقد</span></div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الهاتف</label>
+          <input type="text" class="form-control" name="contact_phone" id="contactPhone" placeholder="يت ملء تلقائياً من الجهة">
+        </div>
+      </div>
+      <!-- صف التعديل (يظهر فقط عند التعديل) -->
+      <div class="row g-3 mt-1">
+        <div class="col-md-12" id="amendmentReasonGroup" style="display:none">
+          <label class="form-label">سبب التعديل <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="amendment_reason" id="amendmentReason" rows="2" placeholder="اذكر سبب التعديل على أمر التشغيل المرجعي..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- بيانات الرحلة -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-map"></i> بيانات الرحلة</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">مسار الرحلة <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <select class="form-select" name="trip_route" id="tripRoute" required>
+              <option value="">اختر المسار</option>
+              <option value="oneway" {% if order and order.trip_route == 'oneway' %}selected{% endif %}>ذهاب فقط</option>
+              <option value="roundtrip" {% if order and order.trip_route == 'roundtrip' %}selected{% endif %}>ذهاب و عودة</option>
+              <option value="return" {% if order and order.trip_route == 'return' %}selected{% endif %}>عودة فقط</option>
+            </select>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addRouteModal" title="اضافة مسار جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3 trip-col">
+          <label class="form-label">رحلة من</label>
+          <div class="input-group">
+            <select class="form-select" name="trip_from" id="tripFrom">
+              <option value="">اختر نقطة الانطلاق</option>
+              {% for loc in trip_from_locations %}
+              <option value="{{ loc }}" {% if order and order.trip_from == loc %}selected{% endif %}>{{ loc }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-success" onclick="addNewItem('tripFrom')" title="اضافة نقطة انطلاق جديدة">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3 trip-col">
+          <label class="form-label">رحلة الى</label>
+          <div class="input-group">
+            <select class="form-select" name="trip_to" id="tripTo">
+              <option value="">اختر الوجهة النهائية</option>
+              {% for loc in trip_to_locations %}
+              <option value="{{ loc }}" {% if order and order.trip_to == loc %}selected{% endif %}>{{ loc }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-success" onclick="addNewItem('tripTo')" title="اضافة وجهة جديدة">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">المسافة التقديرية (كم)</label>
+          <input type="number" class="form-control" name="estimated_distance" placeholder="المسافة بالكيلومتر" value="{{ order.estimated_distance if order and order.estimated_distance else '' }}" step="0.1">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ بداية الرحلة</label>
+          <input type="date" class="form-control" name="departure_date" id="departureDate" onchange="calculateDuration()" value="{{ order.departure_date.strftime('%Y-%m-%d') if order and order.departure_date else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ نهاية الرحلة</label>
+          <input type="date" class="form-control" name="return_date" id="returnDate" onchange="calculateDuration()" value="{{ order.return_date.strftime('%Y-%m-%d') if order and order.return_date else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">مدة الرحلة (ايام) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" name="duration_days" id="durationDays" value="{{ order.duration_days if order else 1 }}" min="1" required onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">اجمالي عدد الحافلات المطلوبة</label>
+          <input type="number" class="form-control" name="bus_count_requested" id="busCountRequested" value="{{ order.bus_count_requested if order else '' }}" min="0" readonly style="background:#e3f2fd;font-weight:bold;color:#1565c0;font-size:1.1rem">
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-12">
+          <div class="alert alert-info py-2 mb-0" id="costBreakdown" style="display:none">
+            <i class="bi bi-calculator me-1"></i>
+            <span id="costBreakdownText"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- بيانات الحافلات -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-bus-front"></i> بيانات الحافلات</h5>
+      <button type="button" class="btn btn-sm btn-success" onclick="addBus()">
+        <i class="bi bi-plus"></i> اضافة حافلة
+      </button>
+    </div>
+    <div class="card-body">
+      <input type="hidden" name="bus_count" id="busCount" value="0">
+      <div id="busesContainer">
+        <!-- سيتم اضافة الحافلات هنا ديناميكياً -->
+      </div>
+      <div id="noBuses" class="text-center text-muted py-4">
+        <i class="bi bi-bus-front" style="font-size:2rem"></i>
+        <p>لم تتم اضافة اي حافلات بعد</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- البيانات المالية -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-cash-stack"></i> البيانات المالية</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">مبيت السيارة (د.ل)</label>
+          <input type="number" class="form-control" name="bus_maintenance_value" id="busMaintenance" value="{{ order.bus_maintenance_value if order else '' }}" step="0.01" onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">اعاشة السائق (د.ل)</label>
+          <input type="number" class="form-control" name="driver_transport_value" id="driverTransport" value="{{ order.driver_transport_value if order else '' }}" step="0.01" onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">التكلفة بدون تعديل (د.ل)</label>
+          <input type="number" class="form-control" name="total_value" id="totalValue" value="{{ order.total_value if order else '' }}" step="0.01" readonly style="background:#f5f5f5;font-weight:bold;color:#666;font-size:1.1rem">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">نوع التعديل</label>
+          <div class="d-flex gap-3 align-items-center">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="adjustment_type" id="adjustmentReduce" value="reduce" onchange="calculateFinalCost()">
+              <label class="form-check-label" for="adjustmentReduce">تخفيض</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="adjustment_type" id="adjustmentIncrease" value="increase" onchange="calculateFinalCost()">
+              <label class="form-check-label" for="adjustmentIncrease">زيادة</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">نسبة التخفيض أو الزيادة (%)</label>
+          <input type="number" class="form-control" name="adjustment_percent" id="adjustmentPercent" value="{{ order.adjustment_percent if order and order.adjustment_percent else '' }}" step="1" min="0" max="100" placeholder="مثال: 10" onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">قيمة التعديل (د.ل)</label>
+          <input type="number" class="form-control" name="adjustment_value" id="adjustmentValue" value="{{ order.adjustment_value if order and order.adjustment_value else '' }}" step="0.01" onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الاجمالي بعد التعديل (د.ل)</label>
+          <input type="number" class="form-control" name="total_after_adjustment" id="totalAfterAdjustment" value="{{ order.total_value if order else '' }}" step="0.01" readonly style="background:#e8f5e9;font-weight:bold;color:#2e7d32;font-size:1.1rem">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال اضافة مسار جديد -->
+  <div class="modal fade" id="addRouteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">اضافة مسار رحلة جديد</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">اسم المسار <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="newRouteName" placeholder="مثال: رحلة مدرسية">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">القيمة</label>
+            <input type="text" class="form-control" id="newRouteValue" placeholder="مثال: roundtrip">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+          <button type="button" class="btn btn-primary" onclick="addNewRoute()">اضافة</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- معلومات رحلات السائق -->
+  <div class="card mb-4" id="driverTripInfo" style="display:none">
+    <div class="card-body" id="driverTripInfoContent"></div>
+  </div>
+
+  <!-- تنبيهات الحركة -->
+  <div class="card mb-4" id="movementAlerts" style="display:none">
+    <div class="card-header bg-warning text-dark">
+      <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>تنبيهات الحركة</h5>
+    </div>
+    <div class="card-body">
+      <div id="alertsContent"></div>
+    </div>
+  </div>
+
+  <!-- الملاحظات -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="bi bi-text-left"></i> الملاحظات</h5>
+    </div>
+    <div class="card-body">
+      <textarea class="form-control" name="notes" rows="3" placeholder=" اي ملاحظات اضافية...">{{ order.notes if order else '' }}</textarea>
+    </div>
+  </div>
+
+  <!-- زر الحفظ -->
+  <div class="d-flex justify-content-between gap-2">
+    <div>
+      {% if order %}
+      <form method="POST" action="{{ url_for('marketing.work_order_delete', order_id=order.id) }}" onsubmit="return confirm('هل انت متاكد من حذف أمر التشغيل؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash me-1"></i> حذف أمر التشغيل
+        </button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) if order else url_for('marketing.work_orders_list') }}" class="btn btn-outline-secondary">الغاء</a>
+      <button type="button" class="btn btn-primary" onclick="validateAndSubmit()" style="padding:8px 24px;border-radius:10px;font-weight:700;">
+        <i class="bi bi-check-lg me-1"></i> حفظ
+      </button>
+    </div>
+  </div>
+</form>
+
+<!-- Modal تحذير -->
+<div class="modal fade" id="warningModal" tabindex="-1" dir="rtl">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="background:#fff3cd;border-radius:14px 14px 0 0;border-bottom:none;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#ffc107;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-exclamation-triangle" style="color:white;font-size:18px;"></i>
+          </div>
+          <h5 class="modal-title" style="margin:0;font-size:15px;font-weight:700;color:#92400e;">تنبيه — بيانات ناقصة</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:20px;">
+        <div id="warningList" style="background:#fffbeb;border-radius:10px;padding:12px 16px;border:1px solid #fde68a;"></div>
+        <p style="margin:12px 0 0;font-size:12px;color:#64748b;">يمكنك الحفظ كمسودة ثم التعديل لاحقاً، أو المتابعة بالحفظ كما هو.</p>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #fde68a;padding:12px 20px;border-radius:0 0 14px 14px;">
+        <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#475569;border:none;font-weight:600;" data-bs-dismiss="modal">العودة للتعديل</button>
+        <button type="button" class="btn btn-sm btn-warning" onclick="forceSubmit()" style="font-weight:600;">
+          <i class="bi bi-arrow-left me-1"></i> تجاهل وحفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let busIndex = 0;
+let pendingSaveType = 0;
+
+function validateAndSubmit() {
+  let warnings = [];
+  let buses = document.querySelectorAll('.bus-entry');
+  let client = document.querySelector('[name="client_id"]').value;
+  let destination = document.querySelector('[name="destination"]');
+  let departure = document.querySelector('[name="departure_date"]');
+  let returnDate = document.querySelector('[name="return_date"]');
+  let tripPrice = document.querySelector('[name="trip_price"]');
+
+  if (!client) warnings.push('لم يتم اختيار الجهة/العميل');
+  if (!destination || !destination.value.trim()) warnings.push('الوجهة غير محددة');
+  if (!departure || !departure.value) warnings.push('تاريخ الخروج غير محدد');
+  if (!returnDate || !returnDate.value) warnings.push('تاريخ العودة غير محدد');
+  if (!tripPrice || !tripPrice.value || parseFloat(tripPrice.value) === 0) warnings.push('سعر الرحلة غير محدد');
+  if (buses.length === 0) warnings.push('لم يتم اضافة اي حافلات');
+
+  if (warnings.length > 0) {
+    let html = '<ul style="margin:0;padding-right:16px;font-size:13px;line-height:2;color:#92400e;">';
+    warnings.forEach(function(w) { html += '<li>' + w + '</li>'; });
+    html += '</ul>';
+    document.getElementById('warningList').innerHTML = html;
+    let modal = new bootstrap.Modal(document.getElementById('warningModal'));
+    modal.show();
+  } else {
+    document.getElementById('workOrderForm').submit();
+  }
+}
+
+function forceSubmit() {
+  document.getElementById('workOrderForm').submit();
+}
+
+function addBus() {
+  const container = document.getElementById('busesContainer');
+  const noBuses = document.getElementById('noBuses');
+  const busCount = document.getElementById('busCount');
+
+  noBuses.style.display = 'none';
+
+  const startDate = document.getElementById('departureDate') ? document.getElementById('departureDate').value : '';
+  const endDate = document.getElementById('returnDate') ? document.getElementById('returnDate').value : '';
+
+  const busHtml = `
+    <div class="card mb-3" id="bus-${busIndex}">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">حافلة #${busIndex + 1}</h6>
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeBus(${busIndex})">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">المركبة <span class="text-danger">*</span></label>
+            <select class="form-select vehicle-select" name="vehicle_id_${busIndex}" data-index="${busIndex}" required onchange="onVehicleSelect(this, ${busIndex})">
+              <option value="">اختر المركبة</option>
+            </select>
+            <input type="hidden" name="bus_number_${busIndex}" id="busNumberHidden_${busIndex}">
+            <input type="hidden" name="driver_id_${busIndex}" id="driverIdHidden_${busIndex}">
+            <input type="hidden" name="emaar_number_${busIndex}" id="emaarNumberHidden_${busIndex}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">اسم السائق</label>
+            <input type="text" class="form-control driver-name-input" name="driver_name_${busIndex}" id="driverNameHidden_${busIndex}" placeholder="اسم السائق">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">رقم اللوحة</label>
+            <input type="text" class="form-control" id="busPlateDisplay_${busIndex}" readonly style="background:#f1f5f9;font-weight:600">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">رقم اعمار</label>
+            <input type="text" class="form-control" id="busEmaarDisplay_${busIndex}" readonly style="background:#f0fdf4;font-weight:600;color:#059669">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">ملاحظات</label>
+            <input type="text" class="form-control" name="bus_notes_${busIndex}" placeholder="ملاحظات">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">سعر الحافلة باليوم (د.ل) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control bus-price" name="bus_price_${busIndex}" step="0.01" required onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+          </div>
+          <div class="col-md-3 driver-share-col">
+            <label class="form-label">نسبة السائق (%)</label>
+            <input type="number" class="form-control driver-share-pct" name="driver_share_pct_${busIndex}" value="10" step="0.1" min="0" max="100" onchange="calcDriverShare(${busIndex})" oninput="calcDriverShare(${busIndex})">
+          </div>
+          <div class="col-md-3 driver-share-col">
+            <label class="form-label">قيمة نسبة السائق (د.ل)</label>
+            <input type="number" class="form-control driver-share-value" name="driver_share_value_${busIndex}" step="0.01" readonly style="background:#f0fdf4;font-weight:bold;color:#059669">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.insertAdjacentHTML('beforeend', busHtml);
+  busIndex++;
+  busCount.value = busIndex;
+  document.getElementById('busCountRequested').value = busIndex;
+
+  loadAvailableVehicles(busIndex - 1, startDate, endDate);
+  onTripTypeChange();
+}
+
+function removeBus(index) {
+  const bus = document.getElementById(`bus-${index}`);
+  if (bus) {
+    bus.remove();
+    busIndex--;
+    document.getElementById('busCount').value = busIndex;
+    document.getElementById('busCountRequested').value = busIndex;
+    calculateFinalCost();
+    if (busIndex === 0) {
+      document.getElementById('noBuses').style.display = 'block';
+    }
+  }
+}
+
+function loadMovementAlerts() {
+  fetch('/movement/api/alerts').then(r => r.json()).then(data => {
+    const container = document.getElementById('movementAlerts');
+    const content = document.getElementById('alertsContent');
+    if (!data.ending_today && !data.ending_soon && !data.starting_today && !data.starting_soon) {
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = 'block';
+    var html = '';
+    if (data.ending_today && data.ending_today.length > 0) {
+      html += '<div class="alert alert-danger mb-2"><strong>تنتهي اليوم:</strong><ul class="mb-0 mt-1">';
+      data.ending_today.forEach(o => { html += '<li>' + o.order_number + ' - ' + o.client + ' (العودة: ' + o.return_date + ')</li>'; });
+      html += '</ul></div>';
+    }
+    if (data.ending_soon && data.ending_soon.length > 0) {
+      html += '<div class="alert alert-warning mb-2"><strong>تنتهي خلال 3 أيام:</strong><ul class="mb-0 mt-1">';
+      data.ending_soon.forEach(o => { html += '<li>' + o.order_number + ' - ' + o.client + ' (العودة: ' + o.return_date + ')</li>'; });
+      html += '</ul></div>';
+    }
+    if (data.starting_today && data.starting_today.length > 0) {
+      html += '<div class="alert alert-info mb-2"><strong>تبدأ اليوم:</strong><ul class="mb-0 mt-1">';
+      data.starting_today.forEach(o => { html += '<li>' + o.order_number + ' - ' + o.client + ' (الخروج: ' + o.departure_date + ')</li>'; });
+      html += '</ul></div>';
+    }
+    if (data.starting_soon && data.starting_soon.length > 0) {
+      html += '<div class="alert alert-primary mb-2"><strong>تبدأ خلال 3 أيام:</strong><ul class="mb-0 mt-1">';
+      data.starting_soon.forEach(o => { html += '<li>' + o.order_number + ' - ' + o.client + ' (الخروج: ' + o.departure_date + ')</li>'; });
+      html += '</ul></div>';
+    }
+    content.innerHTML = html;
+  });
+}
+loadMovementAlerts();
+
+// تحميل رقم الهاتف تلقائياً من الجهة
+function loadClientPhone() {
+  try {
+    var select = document.getElementById('clientId');
+    var phoneInput = document.getElementById('contactPhone');
+    if (!select || !phoneInput) return;
+    var clientId = select.value;
+    if (!clientId) { phoneInput.value = ''; return; }
+    // Try data attribute first
+    var opt = select.options[select.selectedIndex];
+    if (opt) {
+      var phone = opt.getAttribute('data-phone');
+      if (phone && phone !== 'None' && phone !== '') {
+        phoneInput.value = phone;
+        return;
+      }
+    }
+    // Fallback: fetch from server
+    fetch('/marketing/api/client-phone/' + clientId).then(function(r){ return r.json(); }).then(function(d){
+      phoneInput.value = d.phone || '';
+    }).catch(function(){});
+  } catch(e) { console.error('loadClientPhone error:', e); }
+}
+
+// إظهار/إخفاء حقل الأمر المرجعي حسب النوع
+function toggleRelatedOrder() {
+  const type = document.getElementById('orderType').value;
+  const relatedGroup = document.getElementById('relatedOrderGroup');
+  const reasonGroup = document.getElementById('amendmentReasonGroup');
+  const relatedSelect = document.getElementById('relatedOrderId');
+  const reasonInput = document.getElementById('amendmentReason');
+  if (type === 'amendment') {
+    relatedGroup.style.display = '';
+    reasonGroup.style.display = '';
+    relatedSelect.required = true;
+    reasonInput.required = true;
+    filterRelatedOrders();
+  } else {
+    relatedGroup.style.display = 'none';
+    reasonGroup.style.display = 'none';
+    relatedSelect.required = false;
+    reasonInput.required = false;
+    relatedSelect.value = '';
+    reasonInput.value = '';
+  }
+}
+
+// تصفية اوامر التشغيل المرجعة حسب الجهة
+function filterRelatedOrders() {
+  const clientId = document.getElementById('clientId').value;
+  const relatedSelect = document.getElementById('relatedOrderId');
+  const options = relatedSelect.options;
+  for (let i = 1; i < options.length; i++) {
+    const opt = options[i];
+    if (!clientId || opt.dataset.client === clientId) {
+      opt.style.display = '';
+    } else {
+      opt.style.display = 'none';
+    }
+  }
+}
+
+// تصفية العقود حسب الجهة المختارة
+function loadClientContracts() {
+  const clientId = document.getElementById('clientId').value;
+  const contractSelect = document.getElementById('contractId');
+  const options = contractSelect.options;
+  let firstActive = null;
+  for (let i = 1; i < options.length; i++) {
+    const opt = options[i];
+    if (!clientId || opt.dataset.client === clientId) {
+      opt.style.display = '';
+      if (!firstActive && opt.dataset.status === 'active') {
+        firstActive = opt;
+      }
+    } else {
+      opt.style.display = 'none';
+    }
+  }
+  if (firstActive) {
+    contractSelect.value = firstActive.value;
+  } else {
+    contractSelect.value = '';
+  }
+  showContractStatus();
+}
+
+// عرض حالة العقد المحدد
+function showContractStatus() {
+  const select = document.getElementById('contractId');
+  const statusDiv = document.getElementById('contractStatus');
+  const selected = select.options[select.selectedIndex];
+
+  if (!selected || !selected.value) {
+    statusDiv.innerHTML = '<span class="badge bg-secondary"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>بدون عقد</span>';
+    statusDiv.style.display = 'block';
+    return;
+  }
+
+  const status = selected.dataset.status;
+  let badge = '';
+  let label = '';
+  if (status === 'active') {
+    badge = 'bg-success';
+    label = 'فعال';
+  } else if (status === 'completed') {
+    badge = 'bg-secondary';
+    label = 'منتهي';
+  } else if (status === 'cancelled') {
+    badge = 'bg-danger';
+    label = 'ملغي';
+  } else if (status === 'renewed') {
+    badge = 'bg-info';
+    label = 'مجدد';
+  } else {
+    badge = 'bg-warning text-dark';
+    label = status;
+  }
+
+  statusDiv.style.display = 'block';
+  statusDiv.innerHTML = '<span class="badge ' + badge + ' fs-6"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>' + label + '</span>';
+}
+
+// اضافة مسار جديد
+function addNewRoute() {
+  const name = document.getElementById('newRouteName').value.trim();
+  const value = document.getElementById('newRouteValue').value.trim() || name;
+  if (!name) return;
+  const select = document.getElementById('tripRoute');
+  const option = document.createElement('option');
+  option.value = value;
+  option.textContent = name;
+  select.appendChild(option);
+  select.value = value;
+  document.getElementById('newRouteName').value = '';
+  document.getElementById('newRouteValue').value = '';
+  const modal = bootstrap.Modal.getInstance(document.getElementById('addRouteModal'));
+  modal.hide();
+}
+
+// حساب المدة تلقائياً من التواريخ
+function calculateDuration() {
+  const departure = document.getElementById('departureDate').value;
+  const returnD = document.getElementById('returnDate').value;
+  if (departure && returnD) {
+    const start = new Date(departure);
+    const end = new Date(returnD);
+    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (diff > 0) {
+      document.getElementById('durationDays').value = diff;
+      calculateFinalCost();
+    }
+  }
+  refreshBusLists();
+}
+
+// تحميل السيارات المتاحة
+function loadAvailableVehicles(index, startDate, endDate) {
+  const select = document.querySelector(`select[name="vehicle_id_${index}"]`);
+  if (!select) return;
+
+  let url = '/movement/api/available-vehicles';
+  if (startDate && endDate) url += `?start_date=${startDate}&end_date=${endDate}`;
+
+  fetch(url).then(r => r.json()).then(vehicles => {
+    select.innerHTML = '<option value="">اختر المركبة</option>';
+    vehicles.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.id;
+      opt.dataset.driverId = v.driver_id || '';
+      opt.dataset.driverName = v.driver || '';
+      opt.dataset.vehicleTypeId = v.vehicle_type_id || '';
+      opt.dataset.seatsCount = v.seats_count || '';
+      opt.dataset.plate = v.plate || '';
+      opt.dataset.emaar = v.emaar || '';
+      var text = '';
+      if (v.emaar) text += v.emaar;
+      if (v.driver) text += ' - ' + v.driver;
+      if (v.driver_phone) text += ' - ' + v.driver_phone;
+      if (v.driver_status) text += ' ⚠ ' + v.driver_status;
+      if (!text) text = v.plate + ' - ' + v.brand + ' ' + v.model;
+      opt.textContent = text;
+      if (v.driver_status) opt.style.color = '#dc3545';
+      select.appendChild(opt);
+    });
+  });
+}
+
+// تحميل السائقين المتاحين
+function loadAvailableDrivers(index, startDate, endDate) {
+  const select = document.querySelector(`select[name="driver_id_${index}"]`);
+  if (!select) return;
+
+  let url = '/movement/api/available-drivers';
+  if (startDate && endDate) url += `?start_date=${startDate}&end_date=${endDate}`;
+
+  fetch(url).then(r => r.json()).then(drivers => {
+    select.innerHTML = '<option value="">اختر السائق</option>';
+    drivers.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.name + ' (' + d.license + ')' + (d.phone ? ' - ' + d.phone : '');
+      select.appendChild(opt);
+    });
+  });
+}
+
+// عند اختيار المركبة
+function onVehicleSelect(select, index) {
+  const hidden = document.getElementById('busNumberHidden_' + index);
+  const driverHidden = document.getElementById('driverIdHidden_' + index);
+  const driverNameInput = document.getElementById('driverNameHidden_' + index);
+  const plateDisplay = document.getElementById('busPlateDisplay_' + index);
+  const emaarDisplay = document.getElementById('busEmaarDisplay_' + index);
+  if (select.options[select.selectedIndex]) {
+    var opt = select.options[select.selectedIndex];
+    if (hidden) hidden.value = opt.textContent.split(' - ')[0];
+    if (driverHidden) driverHidden.value = opt.dataset.driverId || '';
+    if (driverNameInput && opt.dataset.driverName) driverNameInput.value = opt.dataset.driverName;
+    if (plateDisplay) plateDisplay.value = opt.dataset.plate || '';
+    if (emaarDisplay) emaarDisplay.value = opt.dataset.emaar || '';
+    if (opt.dataset.driverId) {
+      loadDriverTripInfo(opt.dataset.driverId);
+    }
+    // Auto-fill bus price from rental prices
+    var vehicleTypeId = opt.dataset.vehicleTypeId || '';
+    var seatsCount = opt.dataset.seatsCount || '';
+    if (vehicleTypeId) {
+      fetch('/marketing/api/bus-rental-price/' + vehicleTypeId).then(r => r.json()).then(data => {
+        if (data.success && data.daily_price > 0) {
+          var priceInput = document.querySelector('input[name="bus_price_' + index + '"]');
+          if (priceInput) {
+            priceInput.value = data.daily_price;
+            priceInput.style.color = '#059669';
+            priceInput.style.fontWeight = '700';
+            calculateFinalCost();
+            calcDriverShare(index);
+          }
+        }
+      });
+    }
+  }
+}
+
+function loadDriverTripInfo(driverId) {
+  fetch('/movement/api/driver-trip-info/' + driverId).then(r => r.json()).then(data => {
+    var infoDiv = document.getElementById('driverTripInfo');
+    if (!infoDiv) return;
+    if (data.active_trips.length === 0 && data.upcoming_trips.length === 0) {
+      infoDiv.style.display = 'none';
+      return;
+    }
+    infoDiv.style.display = 'block';
+    var html = '<h6 class="mb-2"><i class="bi bi-info-circle me-1"></i>معلومات رحلات السائق: ' + data.driver_name + '</h6>';
+    if (data.active_trips.length > 0) {
+      html += '<div class="alert alert-danger py-2 mb-2"><strong>رحلات نشطة حالياً:</strong><ul class="mb-0 mt-1">';
+      data.active_trips.forEach(function(t) {
+        html += '<li>' + t.order_number + ' - ' + t.client + ' | من ' + t.departure_date + ' الى ' + t.return_date + ' | متبقي <strong>' + t.remaining_days + ' يوم</strong></li>';
+      });
+      html += '</ul></div>';
+    }
+    if (data.upcoming_trips.length > 0) {
+      html += '<div class="alert alert-warning py-2 mb-0"><strong>رحلات قادمة:</strong><ul class="mb-0 mt-1">';
+      data.upcoming_trips.forEach(function(t) {
+        html += '<li>' + t.order_number + ' - ' + t.client + ' | من ' + t.departure_date + ' الى ' + t.return_date + ' | تبدأ بعد <strong>' + t.days_until_start + ' يوم</strong></li>';
+      });
+      html += '</ul></div>';
+    }
+    infoDiv.innerHTML = html;
+  });
+}
+
+// عند اختيار السائق
+function onDriverSelect(select, index) {
+  const hidden = document.getElementById('driverNameHidden_' + index);
+  if (hidden && select.options[select.selectedIndex]) {
+    hidden.value = select.options[select.selectedIndex].text.split(' (')[0];
+  }
+}
+
+// تحديث القوائم عند تغيير التواريخ
+function refreshBusLists() {
+  const startDate = document.getElementById('departureDate') ? document.getElementById('departureDate').value : '';
+  const endDate = document.getElementById('returnDate') ? document.getElementById('returnDate').value : '';
+  document.querySelectorAll('.vehicle-select').forEach((sel, i) => loadAvailableVehicles(i, startDate, endDate));
+}
+
+// حساب التكلفة النهائية = مجموع (سعر الحافلة * الايام) + مبيت الحافلة + اعاشة السائق +/- التخفيض/الزيادة
+function calculateFinalCost() {
+  const days = parseInt(document.getElementById('durationDays').value) || 0;
+  const maintenance = parseFloat(document.getElementById('busMaintenance').value) || 0;
+  const transport = parseFloat(document.getElementById('driverTransport').value) || 0;
+
+  var busPrices = document.querySelectorAll('.bus-price');
+  var busTotal = 0;
+  var priceDetails = [];
+  busPrices.forEach(function(el) {
+    var p = parseFloat(el.value) || 0;
+    busTotal += p * days;
+    if (p > 0) priceDetails.push(p.toFixed(2));
+  });
+
+  var subtotal = busTotal + maintenance + transport;
+
+  // حساب التخفيض او الزيادة
+  var adjustmentPercent = parseFloat(document.getElementById('adjustmentPercent').value) || 0;
+  var adjustmentValue = parseFloat(document.getElementById('adjustmentValue').value) || 0;
+  var isReduce = document.getElementById('adjustmentReduce').checked;
+  var isIncrease = document.getElementById('adjustmentIncrease').checked;
+
+  var adjustment = 0;
+  if (adjustmentPercent > 0) {
+    adjustment = subtotal * (adjustmentPercent / 100);
+  } else if (adjustmentValue > 0) {
+    adjustment = adjustmentValue;
+  }
+
+  var total;
+  var adjustmentText = '';
+  if (isReduce && adjustment > 0) {
+    total = subtotal - adjustment;
+    adjustmentText = ' - تخفيض ' + adjustment.toFixed(2);
+  } else if (isIncrease && adjustment > 0) {
+    total = subtotal + adjustment;
+    adjustmentText = ' + زيادة ' + adjustment.toFixed(2);
+  } else {
+    total = subtotal;
+  }
+
+  document.getElementById('totalValue').value = subtotal.toFixed(2);
+  document.getElementById('totalAfterAdjustment').value = total.toFixed(2);
+
+  const breakdown = document.getElementById('costBreakdown');
+  const text = document.getElementById('costBreakdownText');
+  if (busTotal > 0 || maintenance > 0 || transport > 0) {
+    breakdown.style.display = 'block';
+    text.textContent = priceDetails.length + ' حافلة × ' + days + ' يوم = ' + busTotal.toFixed(2) +
+      (maintenance > 0 ? ' + مبيت ' + maintenance.toFixed(2) : '') +
+      (transport > 0 ? ' + اعاشة ' + transport.toFixed(2) : '') +
+      adjustmentText +
+      ' = ' + total.toFixed(2) + ' د.ل';
+  } else {
+    breakdown.style.display = 'none';
+  }
+}
+function addNewItem(inputId) {
+  var select = document.getElementById(inputId);
+  var label = inputId === 'tripFrom' ? 'نقطة الانطلاق' : 'الوجهة';
+  var val = prompt("اكتب " + label + ":");
+  if (val && val.trim() !== "") {
+    var newVal = val.trim();
+    var exists = false;
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === newVal) {
+        exists = true;
+        select.selectedIndex = i;
+        break;
+      }
+    }
+    if (!exists) {
+      var opt = document.createElement('option');
+      opt.value = newVal;
+      opt.text = newVal;
+      select.add(opt);
+      select.value = newVal;
+    }
+  }
+}
+
+// === Duplicate Detection ===
+var duplicateTimer = null;
+
+// حساب نسبة السائق لكل حافلة
+function calcDriverShare(index) {
+  var priceInput = document.querySelector('input[name="bus_price_' + index + '"]');
+  var pctInput = document.querySelector('input[name="driver_share_pct_' + index + '"]');
+  var valueInput = document.querySelector('input[name="driver_share_value_' + index + '"]');
+  if (!priceInput || !pctInput || !valueInput) return;
+  var price = parseFloat(priceInput.value) || 0;
+  var pct = parseFloat(pctInput.value) || 0;
+  var days = parseInt(document.getElementById('durationDays').value) || 0;
+  var tripType = document.querySelector('input[name="trip_type"]:checked').value;
+  if (tripType === 'internal' || pct === 0) {
+    valueInput.value = '0.00';
+  } else {
+    var shareValue = (price * days * pct) / 100;
+    valueInput.value = shareValue.toFixed(2);
+  }
+}
+
+// عند تغيير نوع الرحلة
+function onTripTypeChange() {
+  var tripType = document.querySelector('input[name="trip_type"]:checked').value;
+  var shareCols = document.querySelectorAll('.driver-share-col');
+  shareCols.forEach(function(col) {
+    col.style.display = tripType === 'external' ? '' : 'none';
+  });
+  // إعادة حساب جميع نسب السائق
+  document.querySelectorAll('.driver-share-pct').forEach(function(el) {
+    var match = el.name.match(/driver_share_pct_(\d+)/);
+    if (match) calcDriverShare(parseInt(match[1]));
+  });
+}
+
+// تطبيق نوع الرحلة عند التحميل
+document.addEventListener('DOMContentLoaded', function() {
+  {% if order and order.trip_type == 'internal' %}
+  document.getElementById('tripTypeInternal').checked = true;
+  document.getElementById('tripTypeExternal').checked = false;
+  {% endif %}
+  onTripTypeChange();
+  loadClientPhone();
+  // Backup: ensure phone fills on client change
+  var clientIdEl2 = document.getElementById('clientId');
+  if (clientIdEl2) {
+    clientIdEl2.addEventListener('change', function() {
+      try { loadClientPhone(); } catch(e) {}
+    });
+  }
+});
+var clientIdEl = document.getElementById('clientId');
+var departureDateEl = document.getElementById('departureDate');
+var returnDateEl = document.getElementById('returnDate');
+var destinationEl = document.getElementById('destination');
+
+function checkDuplicate() {
+  var clientId = clientIdEl ? clientIdEl.value : '';
+  var departureDate = departureDateEl ? departureDateEl.value : '';
+  var returnDate = returnDateEl ? returnDateEl.value : '';
+  var destination = destinationEl ? destinationEl.value : '';
+  var busRows = document.querySelectorAll('.bus-row');
+  var busCount = busRows.length;
+  var durationEl = document.getElementById('durationDays');
+  var duration = durationEl ? durationEl.value : '';
+
+  if (!clientId || !departureDate) return;
+
+  var body = {
+    client_id: clientId,
+    departure_date: departureDate,
+    return_date: returnDate,
+    destination: destination,
+    bus_count: busCount,
+    duration: duration
+  };
+  {% if order %}
+  body.exclude_id = '{{ order.id }}';
+  {% endif %}
+
+  fetch('/marketing/api/check-duplicate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
+    body: JSON.stringify(body)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.duplicates && data.duplicates.length > 0) {
+      showDuplicateWarning(data.duplicates);
+    }
+  })
+  .catch(function() {});
+}
+
+function showDuplicateWarning(duplicates) {
+  var listHtml = '';
+  duplicates.forEach(function(d) {
+    var statusBadge = d.status === 'approved' ? '<span class="badge bg-success">تم التنفيذ</span>' :
+                      d.status === 'draft' ? '<span class="badge bg-warning">مسودة</span>' :
+                      d.status === 'cancelled' ? '<span class="badge bg-secondary">ملغي</span>' :
+                      '<span class="badge bg-primary">قيد التنفيذ</span>';
+    listHtml += '<div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded" style="background:#fff3cd;border:1px solid #ffc107">' +
+      '<div>' +
+        '<strong>' + d.order_number + '</strong> ' + statusBadge +
+        '<br><small class="text-muted">الخروج: ' + d.departure_date + ' | العودة: ' + d.return_date + '</small>' +
+        '<br><small class="text-muted">الوجهة: ' + d.destination + ' | الحافلات: ' + d.buses + ' | المدة: ' + d.duration + ' يوم</small>' +
+      '</div>' +
+      '<a href="/marketing/work-orders/' + d.id + '" class="btn btn-sm btn-outline-primary">عرض</a>' +
+    '</div>';
+  });
+
+  document.getElementById('duplicateList').innerHTML = listHtml;
+  var modal = new bootstrap.Modal(document.getElementById('duplicateModal'));
+  modal.show();
+}
+
+function setupDuplicateCheck() {
+  if (clientIdEl) clientIdEl.addEventListener('change', function() { clearTimeout(duplicateTimer); duplicateTimer = setTimeout(checkDuplicate, 800); });
+  if (departureDateEl) departureDateEl.addEventListener('change', function() { clearTimeout(duplicateTimer); duplicateTimer = setTimeout(checkDuplicate, 800); });
+  if (returnDateEl) returnDateEl.addEventListener('change', function() { clearTimeout(duplicateTimer); duplicateTimer = setTimeout(checkDuplicate, 800); });
+  if (destinationEl) destinationEl.addEventListener('change', function() { clearTimeout(duplicateTimer); duplicateTimer = setTimeout(checkDuplicate, 800); });
+}
+setupDuplicateCheck();
+</script>
+
+<!-- Duplicate Warning Modal -->
+<div class="modal fade" id="duplicateModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border: 2px solid #ffc107">
+      <div class="modal-header" style="background:#fff3cd">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>تنبيه: اوامر مشابهة موجودة</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">يوجد اوامر تشغيل مشابهة لنفس الجهة:</p>
+        <div id="duplicateList"></div>
+        <div class="alert alert-info mt-3 mb-0" style="font-size:0.85em">
+          <i class="bi bi-info-circle me-1"></i>
+          يمكنك المتابعة في الإنشاء أو مراجعة الأمر المشابه
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">متابعة الإنشاء</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

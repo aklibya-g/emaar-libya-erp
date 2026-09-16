@@ -1,0 +1,86 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item active">السائقين</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-person-badge me-2"></i>السائقين</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('drivers.drivers_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة سائق</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-10">
+        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم أو الرقم أو رقم الرخصة..." value="{{ search }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم السائق</th>
+            <th>الاسم بالعربي</th>
+            <th>الهاتف</th>
+            <th>رقم الرخصة</th>
+            <th>نوع الرخصة</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for drv in drivers %}
+          <tr>
+            <td>{{ drv.driver_number }}</td>
+            <td><a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}">{{ drv.full_name_ar }}</a></td>
+            <td>{{ drv.phone or '-' }}</td>
+            <td>{{ drv.license_number or '-' }}</td>
+            <td>{{ drv.license_type or '-' }}</td>
+            <td>
+              {% if drv.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% else %}<span class="badge bg-secondary">{{ drv.status }}</span>{% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('drivers.drivers_delete', id=drv.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not drivers %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا يوجد سائقين</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

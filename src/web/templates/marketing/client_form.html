@@ -1,0 +1,211 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .back-btn i {
+    transition: transform 0.3s ease;
+  }
+  .back-btn:hover i {
+    transform: translateX(-3px);
+  }
+  .add-category-btn {
+    background: linear-gradient(135deg, #00b894 0%, #55efc4 100%);
+    border: none;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .add-category-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+  }
+  .category-input-group {
+    display: flex;
+    gap: 8px;
+  }
+  .category-input-group .form-control {
+    flex: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i>
+      لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-person-plus"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">اسم الجهة (عربي) <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="name_ar" value="{{ client.name_ar if client else '' }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">اسم الجهة (انجليزي)</label>
+          <input type="text" class="form-control" name="name_en" value="{{ client.name_en if client else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">التليفون</label>
+          <input type="text" class="form-control" name="phone" value="{{ client.phone if client else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">العنوان</label>
+          <input type="text" class="form-control" name="address" value="{{ client.address if client else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تصنيف الجهة</label>
+          <div class="category-input-group">
+            <select class="form-select" name="scope">
+              <option value="">اختر التصنيف</option>
+              <option value="قطاع عام" {{ 'selected' if client and client.scope == 'قطاع عام' }}>قطاع عام</option>
+              <option value="قطاع خاص" {{ 'selected' if client and client.scope == 'قطاع خاص' }}>قطاع خاص</option>
+            </select>
+            <button type="button" class="add-category-btn" onclick="showAddCategoryModal()">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">جهة الاتصال</label>
+          <input type="text" class="form-control" name="contact_person" value="{{ client.contact_person if client else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" name="notes" rows="3">{{ client.notes if client else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('marketing.clients_list') }}" class="btn btn-outline-secondary">الغاء</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> حفظ
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal اضافة تصنيف جديد -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addCategoryModalLabel">
+          <i class="bi bi-plus-circle text-success me-2"></i>
+          اضافة تصنيف جديد
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">اسم التصنيف الجديد</label>
+        <input type="text" class="form-control" id="newCategoryInput" placeholder="اكتب اسم التصنيف">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+        <button type="button" class="btn btn-success" onclick="addNewCategory()">
+          <i class="bi bi-check-lg"></i> اضافة
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddCategoryModal() {
+  const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+  modal.show();
+}
+
+function addNewCategory() {
+  const newCategoryInput = document.getElementById('newCategoryInput');
+  const newCategory = newCategoryInput.value.trim();
+  
+  if (newCategory) {
+    const select = document.getElementById('scopeSelect');
+    
+    // التحقق من عدم تكرار التصنيف
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === newCategory) {
+        alert('هذا التصنيف موجود بالفعل');
+        return;
+      }
+    }
+    
+    // اضافة التصنيف الجديد
+    const option = document.createElement('option');
+    option.value = newCategory;
+    option.text = newCategory;
+    option.selected = true;
+    select.appendChild(option);
+    
+    // اغلاق النموذج المنبثق
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+    modal.hide();
+    
+    // مسح حقل الادخال
+    newCategoryInput.value = '';
+    
+    // عرض رسالة نجاح
+    showToast('تم اضافة التصنيف بنجاح');
+  } else {
+    alert('الرجاء ادخال اسم التصنيف');
+  }
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'position-fixed bottom-0 end-0 p-3';
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header bg-success text-white">
+        <i class="bi bi-check-circle me-2"></i>
+        <strong class="me-auto">نجاح</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        ${message}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+</script>
+{% endblock %}

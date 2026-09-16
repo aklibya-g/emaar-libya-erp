@@ -1,0 +1,78 @@
+{% extends "layouts/base.html" %}
+{% block title %}المستخدمون | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">المستخدمون</h4>
+  <a href="{{ url_for('users.users_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة مستخدم</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>اسم المستخدم</th>
+            <th>الاسم الكامل</th>
+            <th>الدور</th>
+            <th>البريد الإلكتروني</th>
+            <th>آخر دخول</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.full_name_ar }}</td>
+            <td>{{ user.role.name_ar if user.role else '-' }}</td>
+            <td>{{ user.email or '-' }}</td>
+            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '-' }}</td>
+            <td>
+              {% if user.is_active %}<span class="badge bg-success">نشط</span>
+              {% else %}<span class="badge bg-secondary">غير نشط</span>{% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('users.users_edit', id=user.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <button class="btn btn-outline-warning" title="إعادة تعيين كلمة المرور" data-bs-toggle="modal" data-bs-target="#resetModal{{ user.id }}"><i class="bi bi-key"></i></button>
+                <form method="POST" action="{{ url_for('users.users_delete', id=user.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+          <div class="modal fade" id="resetModal{{ user.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="POST" action="{{ url_for('users.users_reset_password', id=user.id) }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title">إعادة تعيين كلمة المرور - {{ user.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">كلمة المرور الجديدة</label>
+                      <input type="password" name="new_password" class="form-control" required minlength="6">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-warning">إعادة التعيين</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% if not users %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا يوجد مستخدمين</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

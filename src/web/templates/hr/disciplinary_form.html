@@ -1,0 +1,82 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}إضافة إجراء تأديبي | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">إضافة إجراء تأديبي</h4>
+  <a href="{{ url_for('hr.disciplinary_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> الانضباط
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('hr.disciplinary_add') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">الموظف <span class="text-danger">*</span></label>
+          <select name="employee_id" class="form-select" required>
+            <option value="">اختر الموظف</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.full_name_ar }} - {{ emp.employee_number }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">نوع الإجراء <span class="text-danger">*</span></label>
+          <select name="disciplinary_type_id" class="form-select" required>
+            <option value="">اختر النوع</option>
+            {% for dt in disciplinary_types %}
+            <option value="{{ dt.id }}">{{ dt.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">رقم القرار <span class="text-danger">*</span></label>
+          <input type="text" name="decision_number" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">تاريخ المخالفة <span class="text-danger">*</span></label>
+          <input type="date" name="violation_date" class="form-control" required>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">وصف المخالفة <span class="text-danger">*</span></label>
+          <textarea name="violation_description" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">القرار <span class="text-danger">*</span></label>
+          <textarea name="decision" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ التنفيذ <span class="text-danger">*</span></label>
+          <input type="date" name="effective_date" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المرجع القانوني</label>
+          <input type="text" name="article_reference" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">عدد أيام الخصم</label>
+          <input type="number" name="deduction_days" class="form-control" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">مبلغ الخصم</label>
+          <input type="number" name="deduction_amount" class="form-control" step="0.01" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">صدر الأمر من</label>
+          <input type="text" name="issued_by" class="form-control">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>إضافة</button>
+        <a href="{{ url_for('hr.disciplinary_list') }}" class="btn btn-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

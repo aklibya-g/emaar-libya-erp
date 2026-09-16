@@ -1,0 +1,105 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}قائمة السيارات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('vehicles.vehicle_dashboard') }}">إدارة السيارات</a></li>
+            <li class="breadcrumb-item active">قائمة السيارات</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-list-ul me-2"></i>قائمة السيارات</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('vehicles.vehicle_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة سيارة</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-3">
+        <input type="text" name="search" class="form-control" placeholder="بحث في رقم اللوحة أو الماركة..." value="{{ search }}">
+      </div>
+      <div class="col-md-2">
+        <select name="type_id" class="form-select">
+          <option value="">جميع الأنواع</option>
+          {% for vt in vehicle_types %}
+          <option value="{{ vt.id }}" {% if type_id == vt.id %}selected{% endif %}>{{ vt.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">جميع الحالات</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+          <option value="maintenance" {% if status == 'maintenance' %}selected{% endif %}>تحت الصيانة</option>
+          <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>متوقف</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم اللوحة</th>
+            <th>رقم اعمار</th>
+            <th>النوع</th>
+            <th>الماركة</th>
+            <th>الموديل</th>
+            <th>السنة</th>
+            <th>المقاعد</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vehicles %}
+          <tr>
+            <td class="fw-bold">{{ v.plate_number }}</td>
+            <td>{{ v.emaar_number or '-' }}</td>
+            <td>{{ v.vehicle_type.name_ar if v.vehicle_type else '-' }}</td>
+            <td>{{ v.brand or '-' }}</td>
+            <td>{{ v.model or '-' }}</td>
+            <td>{{ v.year or '-' }}</td>
+            <td>{{ v.seats_count or '-' }}</td>
+            <td>
+              {% if v.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% elif v.status == 'maintenance' %}<span class="badge bg-warning text-dark">صيانة</span>
+              {% else %}<span class="badge bg-secondary">متوقف</span>{% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('vehicles.vehicle_detail', id=v.id) }}" class="btn btn-outline-info" title="تفاصيل"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('vehicles.vehicle_edit', id=v.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not vehicles %}
+          <tr><td colspan="9" class="text-center text-muted py-4">لا توجد سيارات</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

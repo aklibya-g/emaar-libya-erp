@@ -1,0 +1,146 @@
+{% extends "layouts/base.html" %}
+{% block title %}تقرير المراسلات | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">تقرير المراسلات</h4>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label">من تاريخ</label>
+        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">إلى تاريخ</label>
+        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">القسم</label>
+        <select name="department_id" class="form-select">
+          <option value="">جميع الأقسام</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>عرض</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-primary">{{ summary.total }}</h3>
+        <small class="text-muted">إجمالي المراسلات</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-info">{{ summary.by_direction.get('IN', 0) }}</h3>
+        <small class="text-muted">الواردة</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-success">{{ summary.by_direction.get('OUT', 0) }}</h3>
+        <small class="text-muted">الصادرة</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-danger">{{ summary.overdue }}</h3>
+        <small class="text-muted">المتأخرة</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><h6 class="mb-0">المراسلات حسب القسم</h6></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>القسم</th><th>مرسل</th><th>مستلم</th><th>الإجمالي</th></tr></thead>
+            <tbody>
+              {% for ds in dept_stats %}
+              <tr>
+                <td>{{ ds.department }}</td>
+                <td>{{ ds.sent }}</td>
+                <td>{{ ds.received }}</td>
+                <td><strong>{{ ds.total }}</strong></td>
+              </tr>
+              {% endfor %}
+              {% if not dept_stats %}
+              <tr><td colspan="4" class="text-center text-muted">لا توجد بيانات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header"><h6 class="mb-0">负荷 العمل حسب الموظف</h6></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>الموظف</th><th>مكلف</th><th>متأخر</th></tr></thead>
+            <tbody>
+              {% for ew in emp_workload %}
+              <tr>
+                <td>{{ ew.employee }}</td>
+                <td>{{ ew.assigned }}</td>
+                <td>{% if ew.overdue > 0 %}<span class="text-danger">{{ ew.overdue }}</span>{% else %}0{% endif %}</td>
+              </tr>
+              {% endfor %}
+              {% if not emp_workload %}
+              <tr><td colspan="3" class="text-center text-muted">لا توجد بيانات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if overdue %}
+<div class="card mt-4">
+  <div class="card-header"><h6 class="mb-0">المراسلات المتأخرة</h6></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>الرقم</th><th>الموضوع</th><th>تاريخ الاستحقاق</th><th>الحالة</th><th>المسؤول</th></tr></thead>
+        <tbody>
+          {% for item in overdue %}
+          <tr>
+            <td>{{ item.reference }}</td>
+            <td>{{ item.subject[:40] }}</td>
+            <td>{{ item.due_date }}</td>
+            <td>{{ item.status }}</td>
+            <td>{{ item.responsible }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

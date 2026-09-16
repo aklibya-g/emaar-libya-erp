@@ -1,0 +1,104 @@
+{% extends "layouts/base.html" %}
+{% block title %}المراسلات | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">المراسلات</h4>
+  <a href="{{ url_for('correspondence.correspondence_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إنشاء مراسلة</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if tab == 'all' %}active{% endif %}" href="{{ url_for('correspondence.correspondence_list', tab='all') }}">الكل</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'inbox' %}active{% endif %}" href="{{ url_for('correspondence.correspondence_list', tab='inbox') }}">الواردة</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'outbox' %}active{% endif %}" href="{{ url_for('correspondence.correspondence_list', tab='outbox') }}">الصادرة</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'pending' %}active{% endif %}" href="{{ url_for('correspondence.correspondence_list', tab='pending') }}">المعلقة</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'archived' %}active{% endif %}" href="{{ url_for('correspondence.correspondence_list', tab='archived') }}">المؤرشفة</a></li>
+</ul>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <div class="col-md-3">
+        <input type="text" name="search" class="form-control" placeholder="بحث في الموضوع أو الرقم..." value="{{ search }}">
+      </div>
+      <div class="col-md-2">
+        <select name="direction" class="form-select">
+          <option value="">الاتجاه</option>
+          <option value="IN" {% if direction == 'IN' %}selected{% endif %}>وارد</option>
+          <option value="OUT" {% if direction == 'OUT' %}selected{% endif %}>صادار</option>
+          <option value="INT" {% if direction == 'INT' %}selected{% endif %}>داخلي</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="type_code" class="form-select">
+          <option value="">النوع</option>
+          {% for ct in cor_types %}
+          <option value="{{ ct.code }}" {% if type_code == ct.code %}selected{% endif %}>{{ ct.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status_code" class="form-select">
+          <option value="">الحالة</option>
+          {% for st in statuses %}
+          <option value="{{ st.code }}" {% if status_code == st.code %}selected{% endif %}>{{ st.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الرقم الإشاري</th>
+            <th>التاريخ</th>
+            <th>الموضوع</th>
+            <th>النوع</th>
+            <th>الاتجاه</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cor in items %}
+          <tr>
+            <td><a href="{{ url_for('correspondence.correspondence_detail', id=cor.id) }}">{{ cor.reference_number }}</a></td>
+            <td>{{ cor.date.strftime('%Y-%m-%d') if cor.date else '-' }}</td>
+            <td>{{ cor.subject[:40] }}{% if cor.subject|length > 40 %}...{% endif %}</td>
+            <td>{{ cor.cor_type.name_ar if cor.cor_type else '-' }}</td>
+            <td>
+              {% if cor.direction == 'IN' %}<span class="badge bg-primary">وارد</span>
+              {% elif cor.direction == 'OUT' %}<span class="badge bg-success">صادار</span>
+              {% elif cor.direction == 'INT' %}<span class="badge bg-info">داخلي</span>
+              {% else %}<span class="badge bg-secondary">{{ cor.direction }}</span>{% endif %}
+            </td>
+            <td><span class="badge" style="background:{{ workflow.get_status_color(cor.status.code) if cor.status else '#6b7280' }}">{{ cor.status.name_ar if cor.status else '-' }}</span></td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('correspondence.correspondence_detail', id=cor.id) }}" class="btn btn-outline-info" title="عرض"><i class="bi bi-eye"></i></a>
+                {% if cor.status and cor.status.code == 'DRAFT' %}
+                <form method="POST" action="{{ url_for('correspondence.correspondence_delete', id=cor.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not items %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا توجد مراسلات</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

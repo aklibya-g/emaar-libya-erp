@@ -1,0 +1,149 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .back-btn i {
+    transition: transform 0.3s ease;
+  }
+  .back-btn:hover i {
+    transform: translateX(-3px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i>
+      لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-file-earmark-plus"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">نوع العقد <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <select class="form-select" name="title" id="contractTypeSelect" required>
+              <option value="">اختر نوع العقد</option>
+              <option value="موسمي بسائق" {{ 'selected' if contract and contract.title == 'موسمي بسائق' }}>موسمي بسائق</option>
+              <option value="موسمي بغير سائق" {{ 'selected' if contract and contract.title == 'موسمي بغير سائق' }}>موسمي بغير سائق</option>
+            </select>
+            <button type="button" class="btn btn-outline-success" onclick="addNewType()" title="اضافة نوع جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">الجهة <span class="text-danger">*</span></label>
+          <select class="form-select" name="client_id" required>
+            <option value="">اختر الجهة</option>
+            {% for client in clients %}
+            <option value="{{ client.id }}" {{ 'selected' if contract and contract.client_id == client.id }}>{{ client.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ البدء <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="start_date" value="{{ contract.start_date.strftime('%Y-%m-%d') if contract else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="end_date" value="{{ contract.end_date.strftime('%Y-%m-%d') if contract else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">القيمة (د.ل)</label>
+          <input type="number" class="form-control" name="total_value" value="{{ contract.total_value if contract else 0 }}" step="0.01">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">عدد الحافلات</label>
+          <input type="number" class="form-control" name="bus_count" value="{{ contract.bus_count if contract and contract.bus_count else '' }}" min="0" placeholder="عدد الحافلات المطلوبة">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">اسم المسؤول</label>
+          <input type="text" class="form-control" name="responsible_name" value="{{ contract.responsible_name if contract and contract.responsible_name else '' }}" placeholder="اسم المسؤول عن العقد">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">الوصف</label>
+          <textarea class="form-control" name="description" rows="3">{{ contract.description if contract else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" name="notes" rows="3">{{ contract.notes if contract and contract.notes else '' }}</textarea>
+        </div>
+        <div class="col-12 mt-3">
+          <hr>
+          <h6 class="mb-3"><i class="bi bi-file-earmark-plus me-1"></i> ملحق تعديل</h6>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">عدد الحافلات المعدلة</label>
+          <input type="number" class="form-control" name="amendment_bus_count" value="{{ contract.amendment_bus_count if contract and contract.amendment_bus_count else '' }}" min="0" placeholder="عدد الحافلات بعد التعديل">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">القيمة المعدلة (د.ل)</label>
+          <input type="number" class="form-control" name="amendment_value" value="{{ contract.amendment_value if contract and contract.amendment_value else '' }}" step="0.01" placeholder="القيمة بعد التعديل">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">وصف الملحق</label>
+          <input type="text" class="form-control" name="amendment_description" value="{{ contract.amendment_description if contract and contract.amendment_description else '' }}" placeholder="وصف التعديل">
+        </div>
+        {% if contract %}
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select class="form-select" name="status">
+            <option value="active" {{ 'selected' if contract.status == 'active' }}>نشط</option>
+            <option value="renewed" {{ 'selected' if contract.status == 'renewed' }}>مجدد</option>
+            <option value="completed" {{ 'selected' if contract.status == 'completed' }}>منتهي</option>
+            <option value="cancelled" {{ 'selected' if contract.status == 'cancelled' }}>ملغي</option>
+          </select>
+        </div>
+        {% endif %}
+      </div>
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('marketing.contracts_list') }}" class="btn btn-outline-secondary">الغاء</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> حفظ
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function addNewType() {
+  var type = prompt("اكتب نوع العقد الجديد:");
+  if (type && type.trim() !== "") {
+    var select = document.getElementById("contractTypeSelect");
+    var option = document.createElement("option");
+    option.value = type.trim();
+    option.text = type.trim();
+    option.selected = true;
+    select.appendChild(option);
+  }
+}
+</script>
+{% endblock %}

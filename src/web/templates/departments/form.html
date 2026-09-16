@@ -1,0 +1,95 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل قسم' if department else 'إضافة قسم' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:0 auto;">
+  <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px 16px 0 0;padding:20px 24px;color:#fff;">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2"></i>{{ 'تعديل القسم' if department else 'إضافة قسم جديد' }}</h5>
+  </div>
+  <div style="background:var(--bg-card,#fff);border:1px solid var(--border-color,#e2e8f0);border-top:none;border-radius:0 0 16px 16px;padding:24px;">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">اسم القسم بالعربي <span class="text-danger">*</span></label>
+        <input type="text" name="name_ar" class="form-control" value="{{ department.name_ar if department else '' }}" required placeholder="مثال: ادارة الموارد البشرية" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">كود القسم <span class="text-danger">*</span></label>
+        {% if department %}
+        <input type="text" name="code" class="form-control" value="{{ department.code }}" required style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+        {% else %}
+        <input type="text" name="code" class="form-control" value="{{ next_code }}" readonly style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;background:#f1f5f9;font-weight:700;">
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">الشركة <span class="text-danger">*</span></label>
+        <div class="d-flex gap-2">
+          <select name="company_id" class="form-select flex-grow-1" required id="companySelect" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+            <option value="">اختر الشركة</option>
+            {% for comp in companies %}
+            <option value="{{ comp.id }}" {% if department and department.company_id == comp.id %}selected{% endif %}>{{ comp.name_ar }}</option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn" id="addCompanyBtn" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:10px;width:42px;min-width:42px;display:flex;align-items:center;justify-content:center;" title="إضافة شركة جديدة">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn flex-grow-1" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:10px;padding:10px;font-weight:700;">
+          <i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if department else 'إضافة القسم' }}
+        </button>
+        <a href="{{ url_for('departments.departments_list') }}" class="btn" style="background:#f1f5f9;color:#475569;border:none;border-radius:10px;padding:10px 20px;font-weight:600;">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- مودال إضافة شركة -->
+<div class="modal fade" id="addCompanyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:14px 18px;border-radius:14px 14px 0 0;color:#fff;">
+        <h6 class="modal-title fw-bold mb-0"><i class="bi bi-building me-1"></i>إضافة شركة</h6>
+      </div>
+      <div class="modal-body" style="padding:16px;">
+        <input type="text" class="form-control" id="newCompanyName" placeholder="اسم الشركة" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+        <div id="companyAlert" class="alert d-none mt-2 mb-0" style="font-size:11px;"></div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #e2e8f0;padding:10px 16px;border-radius:0 0 14px 14px;">
+        <button type="button" class="btn btn-sm" data-bs-dismiss="modal" style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;">إلغاء</button>
+        <button type="button" class="btn btn-sm btn-primary" id="saveCompanyBtn" onclick="saveNewCompany()" style="border-radius:8px;font-weight:600;">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('addCompanyBtn').addEventListener('click', function(e) {
+  e.preventDefault(); e.stopPropagation();
+  new bootstrap.Modal(document.getElementById('addCompanyModal')).show();
+});
+
+function saveNewCompany() {
+  const name = document.getElementById('newCompanyName').value.trim();
+  const alertEl = document.getElementById('companyAlert');
+  const btn = document.getElementById('saveCompanyBtn');
+  if (!name) { alertEl.className='alert alert-danger mt-2 mb-0'; alertEl.textContent='أدخل اسم الشركة'; alertEl.classList.remove('d-none'); return; }
+  btn.disabled=true; btn.textContent='جاري...';
+  fetch('{{ url_for("departments.departments_quick_add_company") }}', {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token() }}'},
+    body:JSON.stringify({name_ar:name})
+  }).then(r=>r.json()).then(data=>{
+    if(data.success){
+      const sel=document.getElementById('companySelect');
+      sel.appendChild(new Option(data.name_ar,data.id,true,true));
+      bootstrap.Modal.getInstance(document.getElementById('addCompanyModal')).hide();
+      document.getElementById('newCompanyName').value='';
+      alertEl.className='alert d-none mt-2 mb-0';
+    } else { alertEl.className='alert alert-danger mt-2 mb-0'; alertEl.textContent=data.message||'خطأ'; alertEl.classList.remove('d-none'); }
+  }).catch(()=>{ alertEl.className='alert alert-danger mt-2 mb-0'; alertEl.textContent='خطأ في الاتصال'; alertEl.classList.remove('d-none'); })
+  .finally(()=>{ btn.disabled=false; btn.textContent='حفظ'; });
+}
+</script>
+{% endblock %}

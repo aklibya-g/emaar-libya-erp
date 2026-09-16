@@ -1,0 +1,67 @@
+{% extends "layouts/base.html" %}
+{% block title %}عقود السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">عقود السائقين</h4>
+  <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم العقد</th>
+            <th>السائق</th>
+            <th>النوع</th>
+            <th>تاريخ البدء</th>
+            <th>تاريخ الانتهاء</th>
+            <th>الراتب</th>
+            <th>الحالة</th>
+            <th>الاعمال</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for contract in contracts %}
+          <tr>
+            <td>{{ contract.contract_number }}</td>
+            <td>
+              {{ contract.driver.full_name_ar if contract.driver else '-' }}
+              <small class="text-muted d-block">{{ contract.driver.driver_number if contract.driver else '' }}</small>
+            </td>
+            <td>
+              {% if contract.contract_type == 'permanent' %}دائم
+              {% elif contract.contract_type == 'temporary' %}مؤقت
+              {% elif contract.contract_type == 'reserve' %}احتياط
+              {% elif contract.contract_type == 'seasonal' %}موسمي
+              {% elif contract.contract_type == 'rent_to_own' %}ايجار لغرض التمليك
+              {% else %}{{ contract.contract_type }}{% endif %}
+            </td>
+            <td>{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '-' }}</td>
+            <td>{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '-' }}</td>
+            <td>{{ '{:,.2f}'.format(contract.salary) if contract.salary else '-' }}</td>
+            <td>
+              {% if contract.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% elif contract.status == 'expired' %}<span class="badge bg-secondary">منتهي</span>
+              {% elif contract.status == 'terminated' %}<span class="badge bg-danger">ملغي</span>
+              {% else %}<span class="badge bg-secondary">{{ contract.status }}</span>{% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('hr.driver_contracts_edit', id=contract.id) }}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not contracts %}
+          <tr><td colspan="8" class="text-center text-muted py-4">لا توجد عقود سائقين</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

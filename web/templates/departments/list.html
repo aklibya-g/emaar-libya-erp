@@ -1,0 +1,49 @@
+{% extends "layouts/base.html" %}
+{% block title %}الأقسام | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الأقسام</h4>
+  <a href="{{ url_for('departments.departments_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة قسم</a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الاسم بالعربي</th>
+            <th>الشركة</th>
+            <th>المدير</th>
+            <th>الموقع</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+          <tr>
+            <td>{{ dept.code }}</td>
+            <td>{{ dept.name_ar }}</td>
+            <td>{{ dept.company.name_ar if dept.company else '-' }}</td>
+            <td>{{ dept.manager.full_name_ar if dept.manager else '-' }}</td>
+            <td>{{ dept.location or '-' }}</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('departments.departments_edit', id=dept.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('departments.departments_delete', id=dept.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not departments %}
+          <tr><td colspan="6" class="text-center text-muted py-4">لا يوجد أقسام</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

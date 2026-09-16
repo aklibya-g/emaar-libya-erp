@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>طباعة أمر التشغيل رقم {{ order.order_number }}</title>
+  <style>
+    @page { size: A4; margin: 8mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Arial', sans-serif; font-size: 10pt; color: #333; line-height: 1.3; }
+    .page { width: 210mm; margin: 0 auto; padding: 8mm; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1a5276; padding-bottom: 6px; margin-bottom: 8px; }
+    .company-name { font-size: 15pt; font-weight: bold; color: #1a5276; }
+    .company-sub { font-size: 9pt; color: #666; }
+    .order-num-box { background: #1a5276; color: white; padding: 5px 14px; border-radius: 6px; text-align: center; }
+    .order-num-box .num { font-size: 14pt; font-weight: bold; }
+    .order-num-box .label { font-size: 8pt; }
+    
+    .section { margin-bottom: 6px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+    .section-title { background: #1a5276; color: white; padding: 3px 8px; font-size: 10pt; font-weight: bold; }
+    .section-body { padding: 5px 8px; }
+    
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+    .info-item { display: flex; gap: 6px; font-size: 10pt; }
+    .info-label { font-weight: bold; min-width: 80px; color: #555; }
+    .info-value { flex: 1; }
+    
+    .cost-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; }
+    .cost-box { padding: 4px; border-radius: 4px; background: #f8f9fa; }
+    .cost-box .label { font-size: 8pt; color: #666; }
+    .cost-box .value { font-size: 11pt; font-weight: bold; color: #1a5276; }
+    .cost-box.total { background: #1a5276; color: white; }
+    .cost-box.total .label { color: #ddd; }
+    .cost-box.total .value { color: white; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    th { background: #e9ecef; padding: 3px 6px; text-align: right; font-weight: bold; border: 1px solid #ddd; }
+    td { padding: 2px 6px; border: 1px solid #ddd; }
+    
+    .approvals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+    .approval-box { text-align: center; padding: 4px; border: 1px solid #ddd; border-radius: 4px; }
+    .approval-box .dept { font-weight: bold; font-size: 9pt; margin-bottom: 14px; }
+    .approval-box .line { border-top: 1px solid #333; width: 80%; margin: 0 auto; }
+    .approval-box .check { margin-top: 3px; font-size: 8pt; color: #666; }
+    .approved { background: #d4edda; }
+    .approved .check { color: #155724; font-weight: bold; }
+    
+    .footer { margin-top: 8px; padding-top: 5px; border-top: 2px solid #1a5276; display: flex; justify-content: space-between; font-size: 8pt; color: #666; }
+    
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="company-name">شركة اعمار ليبيا لنقل الركاب</div>
+        <div class="company-sub">شركة اعمار ليبيا القابضة</div>
+      </div>
+      <div class="order-num-box">
+        <div class="label">رقم أمر التشغيل</div>
+        <div class="num">{{ order.order_number }}</div>
+      </div>
+    </div>
+
+    <!-- البيانات الأساسية -->
+    <div class="section">
+      <div class="section-title">البيانات الأساسية</div>
+      <div class="section-body">
+        <div class="info-grid">
+          <div class="info-item"><span class="info-label">الجهة:</span><span class="info-value">{{ order.client.name_ar if order.client else '-' }}</span></div>
+          <div class="info-item"><span class="info-label">العقد:</span><span class="info-value">{{ order.contract.contract_number if order.contract else 'بدون عقد' }}</span></div>
+          <div class="info-item"><span class="info-label">رقم الهاتف:</span><span class="info-value">{{ order.contact_phone or '-' }}</span></div>
+          <div class="info-item"><span class="info-label">الحالة:</span><span class="info-value">{{ 'نشط' if order.status == 'active' else 'مسودة' if order.status == 'draft' else order.status }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الرحلة -->
+    <div class="section">
+      <div class="section-title">بيانات الرحلة</div>
+      <div class="section-body">
+        <div class="info-grid">
+          <div class="info-item"><span class="info-label">مسار الرحلة:</span><span class="info-value">{% if order.trip_route == 'oneway' %}ذهاب فقط{% elif order.trip_route == 'roundtrip' %}ذهاب و عودة{% elif order.trip_route == 'return' %}عودة فقط{% else %}{{ order.trip_route or '-' }}{% endif %}</span></div>
+          <div class="info-item"><span class="info-label">رحلة من:</span><span class="info-value">{{ order.trip_from or '-' }}</span></div>
+          <div class="info-item"><span class="info-label">رحلة الى:</span><span class="info-value">{{ order.trip_to or '-' }}</span></div>
+          <div class="info-item"><span class="info-label">المسافة التقديرية:</span><span class="info-value">{{ order.estimated_distance if order.estimated_distance else '-' }} كم</span></div>
+          <div class="info-item"><span class="info-label">تاريخ الخروج:</span><span class="info-value">{{ order.departure_date.strftime('%Y-%m-%d') if order.departure_date else '-' }}</span></div>
+          <div class="info-item"><span class="info-label">تاريخ العودة:</span><span class="info-value">{{ order.return_date.strftime('%Y-%m-%d') if order.return_date else '-' }}</span></div>
+          <div class="info-item"><span class="info-label">المدة:</span><span class="info-value">{{ order.duration_days }} يوم</span></div>
+          <div class="info-item"><span class="info-label">عدد الحافلات:</span><span class="info-value">{{ order.bus_count_requested }}</span></div>
+          <div class="info-item"><span class="info-label">نوع الرحلة:</span><span class="info-value">{% if order.trip_type == 'external' %}خارج المدينة{% else %}داخل المدينة{% endif %}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- البيانات المالية -->
+    <div class="section">
+      <div class="section-title">البيانات المالية</div>
+      <div class="section-body">
+        <div class="cost-grid">
+          <div class="cost-box">
+            <div class="label">اجمالي الحافلات</div>
+            <div class="value">{{ "{:,.2f}".format(order.bus_rental_value) }} د.ل</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">مبيت الحافلة</div>
+            <div class="value">{{ "{:,.2f}".format(order.bus_maintenance_value) }} د.ل</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">اعاشة السائق</div>
+            <div class="value">{{ "{:,.2f}".format(order.driver_transport_value) }} د.ل</div>
+          </div>
+          {% if order.adjustment_type %}
+          <div class="cost-box">
+            <div class="label">نوع التعديل</div>
+            <div class="value">{{ 'تخفيض' if order.adjustment_type == 'reduce' else 'زيادة' }}</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">نسبة/قيمة التعديل</div>
+            <div class="value">{% if order.adjustment_percent %}{{ order.adjustment_percent }}%{% elif order.adjustment_value %}{{ "{:,.2f}".format(order.adjustment_value) }} د.ل{% else %}-{% endif %}</div>
+          </div>
+          {% endif %}
+          <div class="cost-box total">
+            <div class="label">الاجمالي</div>
+            <div class="value">{{ "{:,.2f}".format(order.total_value) }} د.ل</div>
+          </div>
+        </div>
+        {% if order.executive_discount_value and order.executive_discount_value > 0 %}
+        <div style="margin-top:10px;padding:10px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;">
+          <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="bi bi-percent me-1"></i>التخفيضات</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <div style="text-align:center;background:#fff;border-radius:6px;padding:6px;border:1px solid #fde68a;">
+              <div style="font-size:9px;color:#64748b;">نسبة التخفيض</div>
+              <div style="font-size:14px;font-weight:800;color:#dc2626;">{% if order.total_value > 0 %}{{ "%.0f"|format((order.executive_discount_value / order.total_value) * 100) }}%{% else %}-{% endif %}</div>
+            </div>
+            <div style="text-align:center;background:#fff;border-radius:6px;padding:6px;border:1px solid #fde68a;">
+              <div style="font-size:9px;color:#64748b;">قيمة التخفيض</div>
+              <div style="font-size:14px;font-weight:800;color:#dc2626;">-{{ "{:,.0f}".format(order.executive_discount_value) }} د.ل</div>
+            </div>
+            <div style="text-align:center;background:#f0fdf4;border-radius:6px;padding:6px;border:1px solid #bbf7d0;">
+              <div style="font-size:9px;color:#64748b;">القيمة النهائية</div>
+              <div style="font-size:16px;font-weight:900;color:#166534;">{{ "{:,.0f}".format(order.final_value or order.total_value) }} د.ل</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:9px;color:#64748b;display:flex;justify-content:space-between;">
+            <span>السبب: {{ order.executive_discount_reason or '-' }}</span>
+            <span>{{ order.executive_discount_by or '' }} | {{ order.executive_discount_at.strftime('%Y-%m-%d') if order.executive_discount_at else '' }}</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- الحافلات -->
+    <div class="section">
+      <div class="section-title">بيانات الحافلات ({{ order.buses|length }})</div>
+      <div class="section-body" style="padding:3px 8px;">
+        {% if order.buses %}
+        <table>
+          <thead>
+            <tr>
+              <th style="padding:2px 6px;">#</th>
+              <th style="padding:2px 6px;">رقم الحافلة</th>
+              <th style="padding:2px 6px;">رقم اعمار</th>
+              <th style="padding:2px 6px;">السائق</th>
+              <th style="padding:2px 6px;">سعر اليوم (د.ل)</th>
+              {% if order.trip_type == 'external' %}
+              <th style="padding:2px 6px;">نسبة السائق %</th>
+              <th style="padding:2px 6px;">قيمة النسبة (د.ل)</th>
+              {% endif %}
+              <th style="padding:2px 6px;">ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bus in order.buses %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ bus.bus_number or '-' }}</td>
+              <td>{{ bus.vehicle.emaar_number if bus.vehicle and bus.vehicle.emaar_number else '-' }}</td>
+              <td>{{ bus.driver_name or '-' }}</td>
+              <td>{{ "{:,.2f}".format(bus.bus_price) if bus.bus_price else '-' }}</td>
+              {% if order.trip_type == 'external' %}
+              <td>{{ bus.driver_share_pct or '-' }}%</td>
+              <td>{{ "{:,.2f}".format(bus.driver_share_value) if bus.driver_share_value else '-' }}</td>
+              {% endif %}
+              <td>{{ bus.notes or '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted" style="padding:4px;">لا توجد حافلات مسجلة</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if order.order_type == 'amendment' and order.related_order %}
+    <!-- معلومات التعديل -->
+    <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-weight:700;color:#92400e;font-size:13px;margin-bottom:6px;">
+        <i class="bi bi-link-45deg"></i> هذا أمر تشغيل تعديل على أمر سابق
+      </div>
+      <div style="font-size:12px;color:#374151;">
+        <strong>الأمر الأصلي:</strong> {{ order.related_order.order_number }}
+        &nbsp;|&nbsp;
+        <strong>الجهة:</strong> {{ order.related_order.client.name_ar if order.related_order.client else '-' }}
+      </div>
+      {% if order.amendment_reason %}
+      <div style="font-size:11px;color:#78350f;margin-top:4px;">
+        <strong>سبب التعديل:</strong> {{ order.amendment_reason }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if order.order_type == 'new' %}
+    {% set ns = namespace(found=[]) %}
+    {% for ao in all_orders if ao.order_type == 'amendment' and ao.related_order_id == order.id %}
+      {% set ns.found = ns.found + [ao] %}
+    {% endfor %}
+    {% if ns.found %}
+    <div style="background:#d1fae5;border:2px solid #10b981;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-weight:700;color:#065f46;font-size:13px;margin-bottom:6px;">
+        <i class="bi bi-list-ul"></i> التعديلات المرتبطة ({{ ns.found|length }})
+      </div>
+      {% for am in ns.found %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:#fff;border:1px solid #bbf7d0;border-radius:6px;margin-bottom:3px;font-size:11px;">
+        <div>
+          <strong style="color:#1e40af;">{{ am.order_number }}</strong>
+          <span style="color:#374151;margin:0 4px;">|</span>
+          <span style="color:#374151;">{{ am.created_at.strftime('%d/%m/%Y') if am.created_at else '' }}</span>
+        </div>
+        <div>
+          {% if am.status == 'approved' or am.status == 'active' %}
+            <span style="color:#065f46;font-weight:600;">تم التنفيذ</span>
+          {% elif am.status == 'cancelled' %}
+            <span style="color:#991b1b;font-weight:600;">ملغي</span>
+          {% else %}
+            <span style="color:#1e40af;font-weight:600;">قيد التنفيذ</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if am.amendment_reason %}
+      <div style="font-size:10px;color:#78350f;padding:2px 8px;">سبب التعديل: {{ am.amendment_reason }}</div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- الاعتمادات -->
+    <div class="approvals">
+      <div class="approval-box {% if order.marketing_approved %}approved{% endif %}">
+        <div class="dept">1. قسم التسويق</div>
+        <div class="line"></div>
+        <div class="check">{% if order.marketing_approved %}✓ معتمد{% else %}بانتظار الاعتماد{% endif %}</div>
+      </div>
+      <div class="approval-box {% if order.movement_approved %}approved{% endif %}">
+        <div class="dept">2. قسم الحركة</div>
+        <div class="line"></div>
+        <div class="check">{% if order.movement_approved %}✓ معتمد{% else %}بانتظار الاعتماد{% endif %}</div>
+      </div>
+      <div class="approval-box {% if order.finance_approved %}approved{% endif %}">
+        <div class="dept">3. القسم المالي</div>
+        <div class="line"></div>
+        <div class="check">{% if order.finance_approved %}✓ معتمد{% else %}بانتظار الاعتماد{% endif %}</div>
+      </div>
+      <div class="approval-box {% if order.executive_approved %}approved{% endif %}">
+        <div class="dept">4. المدير التنفيذي</div>
+        <div class="line"></div>
+        <div class="check">{% if order.executive_approved %}✓ معتمد{% else %}بانتظار الاعتماد{% endif %}</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>تاريخ الطباعة: {{ today }}</span>
+      {% if current_user.is_authenticated %}
+      <span>محرر المستند: {{ current_user.full_name_ar }} ({{ current_user.username }})</span>
+      {% elif order.edited_by_name %}
+      <span>محرر المستند: {{ order.edited_by_name }}</span>
+      {% endif %}
+      <span>شركة اعمار ليبيا لنقل الركاب</span>
+    </div>
+  </div>
+
+  <div class="no-print" style="text-align:center; padding:10px;">
+    <button onclick="window.print()" style="padding:8px 24px; font-size:12pt; background:#1a5276; color:white; border:none; border-radius:6px; cursor:pointer;">
+      <i class="bi bi-printer"></i> طباعة
+    </button>
+    <button onclick="window.close()" style="padding:8px 24px; font-size:12pt; background:#666; color:white; border:none; border-radius:6px; cursor:pointer; margin-right:10px;">
+      اغلاق
+    </button>
+  </div>
+</body>
+</html>

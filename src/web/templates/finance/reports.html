@@ -1,0 +1,215 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}التقارير المالية | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .stat-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 20px; text-align: center; transition: all 0.2s; }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .stat-card .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+  .stat-card .stat-number { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+
+  .finance-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .finance-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .finance-table tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .finance-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .finance-table tbody tr:last-child td { border-bottom: none; }
+
+  .chart-bar { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding: 20px 0; }
+  .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart-col .bars { display: flex; gap: 3px; align-items: flex-end; width: 100%; justify-content: center; }
+  .chart-col .bar { width: 14px; border-radius: 4px 4px 0 0; transition: height 0.3s; min-height: 2px; }
+  .chart-col .m-label { font-size: 10px; color: var(--text-secondary, #64748b); font-weight: 500; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('finance.finance_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة المالية
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">المالية</a></li>
+            <li class="breadcrumb-item active">التقارير المالية</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-graph-up me-2"></i>التقارير المالية</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6"><i class="bi bi-arrow-down-left"></i></div>
+      <div class="stat-number" style="color:#3b82f6">{{ "{:,.0f}".format(total_revenue|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="stat-label">اجمالي الإيرادات</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-number" style="color:#10b981">{{ "{:,.0f}".format(total_received|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="stat-label">اجمالي المحصل</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="bi bi-arrow-up-right"></i></div>
+      <div class="stat-number" style="color:#ef4444">{{ "{:,.0f}".format(total_payouts|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="stat-label">اجمالي المصروفات</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-number" style="color:#8b5cf6">{{ "{:,.0f}".format(total_profit|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="stat-label">صافي الربح</div>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly Chart -->
+<div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0" style="font-weight:700"><i class="bi bi-bar-chart-line me-2" style="color:#3b82f6"></i>المقارنة الشهرية</h6>
+      <div class="d-flex gap-3" style="font-size:11px">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-left:4px"></span>الإيرادات</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#10b981;margin-left:4px"></span>المحصل</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-left:4px"></span>المصروفات</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#8b5cf6;margin-left:4px"></span>صافي الربح</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if monthly_data %}
+    {% set max_val = [1] %}
+    {% for m in monthly_data %}
+      {% if m.revenue > max_val[0] %}{% set _ = max_val.__setitem__(0, m.revenue) %}{% endif %}
+      {% if m.received > max_val[0] %}{% set _ = max_val.__setitem__(0, m.received) %}{% endif %}
+      {% if m.payouts > max_val[0] %}{% set _ = max_val.__setitem__(0, m.payouts) %}{% endif %}
+    {% endfor %}
+    <div class="chart-bar">
+      {% for m in monthly_data %}
+      {% set max_v = max_val[0] if max_val[0] > 0 else 1 %}
+      <div class="chart-col">
+        <div class="bars">
+          <div class="bar" style="height:{{ (m.revenue / max_v * 100)|int }}%;background:#3b82f6" title="الإيرادات: {{ '{:,.0f}'.format(m.revenue) }}"></div>
+          <div class="bar" style="height:{{ (m.received / max_v * 100)|int }}%;background:#10b981" title="المحصل: {{ '{:,.0f}'.format(m.received) }}"></div>
+          <div class="bar" style="height:{{ (m.payouts / max_v * 100)|int }}%;background:#ef4444" title="المصروفات: {{ '{:,.0f}'.format(m.payouts) }}"></div>
+          {% if m.profit is defined %}
+          <div class="bar" style="height:{{ (m.profit / max_v * 100)|int }}%;background:#8b5cf6" title="صافي الربح: {{ '{:,.0f}'.format(m.profit) }}"></div>
+          {% endif %}
+        </div>
+        <div class="m-label">{{ m.name }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="color:var(--text-secondary,#94a3b8)">
+      <i class="bi bi-bar-chart fs-3 d-block mb-2"></i>
+      لا توجد بيانات شهرية بعد
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- Monthly Table -->
+  <div class="col-lg-8">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-calendar3 me-2" style="color:#f59e0b"></i>البيانات الشهرية</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="finance-table mb-0">
+            <thead>
+              <tr>
+                <th>الشهر</th>
+                <th>الإيرادات</th>
+                <th>المحصل</th>
+                <th>المصروفات</th>
+                <th>صافي الربح</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if monthly_data %}
+              {% for m in monthly_data %}
+              <tr>
+                <td><span style="font-weight:700;font-size:12px">{{ m.name }}</span></td>
+                <td><span style="font-weight:600;color:#3b82f6">{{ "{:,.0f}".format(m.revenue) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+                <td><span style="font-weight:600;color:#10b981">{{ "{:,.0f}".format(m.received) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+                <td><span style="font-weight:600;color:#ef4444">{{ "{:,.0f}".format(m.payouts) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+                <td><span style="font-weight:700;color:{% if m.profit is defined and m.profit >= 0 %}#10b981{% else %}#ef4444{% endif %}">{{ "{:,.0f}".format(m.profit if m.profit is defined else (m.received - m.payouts)) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr><td colspan="5" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-inbox fs-3 d-block mb-2"></i>لا توجد بيانات شهرية</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Shares -->
+  <div class="col-lg-4">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-person-bus me-2" style="color:#8b5cf6"></i>حصص السائقين</h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="finance-table mb-0">
+            <thead>
+              <tr>
+                <th>اسم السائق</th>
+                <th>المبلغ</th>
+                <th>عدد الرحلات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if driver_shares %}
+              {% for ds in driver_shares %}
+              <tr>
+                <td><span style="font-weight:600;font-size:11px">{{ ds.driver_name }}</span></td>
+                <td><span style="font-weight:700;color:#8b5cf6">{{ "{:,.0f}".format(ds.total_amount) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+                <td><span style="font-weight:600;color:#3b82f6">{{ ds.trip_count }}</span></td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr><td colspan="3" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-inbox fs-3 d-block mb-2"></i>لا توجد بيانات</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

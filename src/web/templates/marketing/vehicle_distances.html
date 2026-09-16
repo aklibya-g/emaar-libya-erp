@@ -1,0 +1,245 @@
+{% extends "layouts/base.html" %}
+{% block title %}المسافات المقطوعة للسيارات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: #fff !important; }
+    .page-header { background: #1a365d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .card { border: 1px solid #ddd !important; box-shadow: none !important; break-inside: avoid; }
+    .table { font-size: 12px !important; }
+    .table th, .table td { padding: 8px 6px !important; border: 1px solid #dee2e6 !important; }
+    .print-logo { display: block !important; text-align: center; margin-bottom: 10px; }
+    .print-header { display: block !important; text-align: center; margin-bottom: 15px; border-bottom: 3px solid #1a365d; padding-bottom: 10px; }
+    .print-footer { display: block !important; margin-top: 20px; border-top: 2px solid #1a365d; padding-top: 10px; text-align: center; font-size: 11px; color: #64748b; }
+    .status-badge-print { border: 1px solid #ccc; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+    @page { margin: 15mm; size: landscape; }
+  }
+  .print-only { display: none; }
+  .print-logo { display: none; }
+  .print-header { display: none; }
+  .print-footer { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Print Header -->
+<div class="print-logo" style="margin-bottom:10px;">
+  <img src="{{ url_for('static', filename='images/logo.png') }}" style="height:80px;" onerror="this.style.display='none'">
+</div>
+<div class="print-header">
+  <h3 style="margin:0;color:#1a365d;font-weight:800;">شركة اعمار ليبيا لنقل الركاب</h3>
+  <h5 style="margin:4px 0 0;color:#64748b;font-weight:500;">تقرير المسافات المقطوعة للسيارات</h5>
+  {% if filter_month or filter_year or search %}
+  <div style="margin-top:6px;font-size:12px;color:#374151;">
+    {% if filter_month %}<span style="background:#eff6ff;color:#1e40af;padding:2px 10px;border-radius:12px;font-weight:600;">الشهر: {% for m_num, m_name in months %}{% if m_num == filter_month %}{{ m_name }}{% endif %}{% endfor %}</span>{% endif %}
+    {% if filter_year %}<span style="background:#f0fdf4;color:#166534;padding:2px 10px;border-radius:12px;font-weight:600;margin-right:4px;">السنة: {{ filter_year }}</span>{% endif %}
+    {% if search %}<span style="background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:12px;font-weight:600;margin-right:4px;">بحث: {{ search }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Page Header -->
+<div class="page-header no-print">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">التسويق التجاري</a></li>
+            <li class="breadcrumb-item active">المسافات المقطوعة</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-speedometer me-2"></i>المسافات المقطوعة للسيارات</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <button onclick="window.print()" class="btn btn-new">
+        <i class="bi bi-printer me-1"></i>طباعة التقرير
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="no-print card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body">
+    <form method="GET" class="d-flex gap-3 align-items-center flex-wrap">
+      <div class="input-group" style="max-width:350px">
+        <span class="input-group-text" style="border-radius:0 12px 12px 0;background:var(--bg-card,#fff)"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="بحث برقم اعمار / رقم اللوحة / الماركة / الطراز...">
+      </div>
+      <div style="min-width:150px">
+        <select class="form-select" name="month" style="border-radius:12px;padding:10px 14px">
+          <option value="">جميع الشهور</option>
+          {% for m_num, m_name in months %}
+          <option value="{{ m_num }}" {% if filter_month == m_num %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="min-width:120px">
+        <select class="form-select" name="year" style="border-radius:12px;padding:10px 14px">
+          <option value="">جميع السنوات</option>
+          {% for y in years %}
+          <option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="border-radius:12px;padding:10px 24px">
+        <i class="bi bi-funnel me-1"></i>تصفية
+      </button>
+      {% if search or filter_month or filter_year %}
+      <a href="{{ url_for('marketing.vehicle_distances') }}" class="btn btn-outline-secondary" style="border-radius:12px">
+        <i class="bi bi-x-circle me-1"></i>مسح الفلتر
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Stats Summary -->
+<div class="no-print row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0);padding:16px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:#3b82f6;">{{ vehicles|length }}</div>
+      <div style="font-size:12px;color:#64748b;">عدد السيارات</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0);padding:16px;text-align:center;">
+      {% set total_est = namespace(val=0) %}
+      {% for v in vehicles %}{% set total_est.val = total_est.val + v.total_estimated_km|float %}{% endfor %}
+      <div style="font-size:28px;font-weight:800;color:#2563eb;">{{ "{:,.0f}".format(total_est.val) }}</div>
+      <div style="font-size:12px;color:#64748b;">اجمالي المسافة التقديرية (كم)</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0);padding:16px;text-align:center;">
+      {% set total_curr = namespace(val=0) %}
+      {% for v in vehicles %}{% set total_curr.val = total_curr.val + v.current_km|float %}{% endfor %}
+      <div style="font-size:28px;font-weight:800;color:#7c3aed;">{{ "{:,.0f}".format(total_curr.val) }}</div>
+      <div style="font-size:12px;color:#64748b;">اجمالي العداد الحالي (كم)</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0);padding:16px;text-align:center;">
+      {% set total_orders = namespace(val=0) %}
+      {% for v in vehicles %}{% set total_orders.val = total_orders.val + v.order_count|int %}{% endfor %}
+      <div style="font-size:28px;font-weight:800;color:#10b981;">{{ total_orders.val }}</div>
+      <div style="font-size:12px;color:#64748b;">اجمالي اوامر التشغيل</div>
+    </div>
+  </div>
+</div>
+
+<!-- Distances Table -->
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body p-0">
+    {% if vehicles %}
+    <div class="table-responsive">
+      <table class="table mb-0" style="font-size:13px">
+        <thead>
+          <tr style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff">
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">#</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">رقم اللوحة</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">رقم اعمار</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الماركة / الطراز</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">اوامر التشغيل</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">المسافة التقديرية (كم)</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">العداد الحالي (كم)</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الفرق (كم)</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vehicles %}
+          {% set estimated = v.total_estimated_km|float %}
+          {% set current = v.current_km|float %}
+          {% set diff = current - estimated %}
+          <tr style="transition:all 0.15s;border-bottom:1px solid var(--border-color,#f1f5f9)">
+            <td style="padding:12px;text-align:center;color:#64748b;font-weight:600">{{ loop.index }}</td>
+            <td style="padding:12px;text-align:center;font-weight:700;color:#1e40af;font-size:14px">{{ v.plate_number }}</td>
+            <td style="padding:12px;text-align:center;font-weight:600;color:#7c3aed">{{ v.emaar_number or '-' }}</td>
+            <td style="padding:12px;text-align:center">
+              <div style="font-weight:600;color:var(--text-primary,#1e293b)">{{ v.brand or '-' }}</div>
+              <div style="font-size:11px;color:var(--text-secondary,#64748b)">{{ v.model or '' }}</div>
+            </td>
+            <td style="padding:12px;text-align:center">
+              <span style="background:#eff6ff;color:#1e40af;padding:4px 12px;border-radius:20px;font-weight:600;font-size:12px">{{ v.order_count }}</span>
+            </td>
+            <td style="padding:12px;text-align:center">
+              <span style="font-weight:700;color:#2563eb;font-size:15px">{{ "{:,.0f}".format(estimated) }}</span>
+              <span style="font-size:10px;color:#64748b">كم</span>
+            </td>
+            <td style="padding:12px;text-align:center">
+              <span style="font-weight:700;color:#7c3aed;font-size:15px">{{ "{:,.0f}".format(current) }}</span>
+              <span style="font-size:10px;color:#64748b">كم</span>
+            </td>
+            <td style="padding:12px;text-align:center">
+              {% if diff > 0 %}
+              <span style="font-weight:700;color:#dc2626;font-size:15px">+{{ "{:,.0f}".format(diff) }}</span>
+              <span style="font-size:10px;color:#dc2626">كم</span>
+              {% elif diff < 0 %}
+              <span style="font-weight:700;color:#f59e0b;font-size:15px">{{ "{:,.0f}".format(diff) }}</span>
+              <span style="font-size:10px;color:#f59e0b">كم</span>
+              {% else %}
+              <span style="font-weight:700;color:#10b981;font-size:15px">0</span>
+              {% endif %}
+            </td>
+            <td style="padding:12px;text-align:center">
+              {% if diff > 50 %}
+              <span style="background:#fef2f2;color:#dc2626;padding:4px 12px;border-radius:20px;font-weight:600;font-size:11px;border:1px solid #fecaca">
+                <i class="bi bi-exclamation-triangle me-1 no-print"></i>فوق التقدير
+              </span>
+              {% elif diff < -50 %}
+              <span style="background:#fffbeb;color:#92400e;padding:4px 12px;border-radius:20px;font-weight:600;font-size:11px;border:1px solid #fde68a">
+                <i class="bi bi-info-circle me-1 no-print"></i>أقل من التقدير
+              </span>
+              {% elif estimated == 0 and current == 0 %}
+              <span style="background:#f1f5f9;color:#64748b;padding:4px 12px;border-radius:20px;font-weight:600;font-size:11px">
+                <i class="bi bi-dash-circle me-1 no-print"></i>لا توجد بيانات
+              </span>
+              {% else %}
+              <span style="background:#f0fdf4;color:#166534;padding:4px 12px;border-radius:20px;font-weight:600;font-size:11px;border:1px solid #bbf7d0">
+                <i class="bi bi-check-circle me-1 no-print"></i>مطابق
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc;font-weight:700;border-top:2px solid #e2e8f0">
+            <td colspan="5" style="padding:12px;text-align:center;font-size:13px;color:#1e293b">الاجمالي</td>
+            <td style="padding:12px;text-align:center;color:#2563eb;font-size:15px">{{ "{:,.0f}".format(total_est.val) }} <span style="font-size:10px;color:#64748b">كم</span></td>
+            <td style="padding:12px;text-align:center;color:#7c3aed;font-size:15px">{{ "{:,.0f}".format(total_curr.val) }} <span style="font-size:10px;color:#64748b">كم</span></td>
+            <td style="padding:12px;text-align:center;color:#dc2626;font-size:15px">{{ "{:,.0f}".format(total_curr.val - total_est.val) }} <span style="font-size:10px;color:#64748b">كم</span></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:60px 20px">
+      <i class="bi bi-truck" style="font-size:48px;color:#cbd5e1;margin-bottom:16px;display:block"></i>
+      <h5 style="color:#64748b;font-weight:600;margin-bottom:8px">لا توجد سيارات</h5>
+      <p style="color:#94a3b8;font-size:13px">لم يتم العثور على سيارات مطابقة للبحث</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Print Footer -->
+<div class="print-footer">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>تاريخ الطباعة: {{ today }}</div>
+    <div>شركة اعمار ليبيا لنقل الركاب - جميع الحقوق محفوظة</div>
+    <div>توقيع المسؤول: ________________</div>
+  </div>
+</div>
+{% endblock %}

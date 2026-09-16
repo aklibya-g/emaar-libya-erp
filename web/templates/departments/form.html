@@ -1,0 +1,74 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل قسم' if department else 'إضافة قسم' }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">{{ 'تعديل القسم' if department else 'إضافة قسم جديد' }}</h4>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">اسم القسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="name_ar" class="form-control" value="{{ department.name_ar if department else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">اسم القسم بالإنجليزي</label>
+          <input type="text" name="name_en" class="form-control" value="{{ department.name_en if department and department.name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">كود القسم <span class="text-danger">*</span></label>
+          <input type="text" name="code" class="form-control" value="{{ department.code if department else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الشركة <span class="text-danger">*</span></label>
+          <select name="company_id" class="form-select" required>
+            <option value="">اختر الشركة</option>
+            {% for comp in companies %}
+            <option value="{{ comp.id }}" {% if department and department.company_id == comp.id %}selected{% endif %}>{{ comp.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">القسم الأب</label>
+          <select name="parent_department_id" class="form-select">
+            <option value="">لا يوجد</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if department and department.parent_department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المدير</label>
+          <input type="text" name="manager_id" class="form-control" value="{{ department.manager_id if department and department.manager_id else '' }}" placeholder="رقم الموظف">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الموقع</label>
+          <input type="text" name="location" class="form-control" value="{{ department.location if department and department.location else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" name="phone" class="form-control" value="{{ department.phone if department and department.phone else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input type="email" name="email" class="form-control" value="{{ department.email if department and department.email else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ترتيب العرض</label>
+          <input type="number" name="sort_order" class="form-control" value="{{ department.sort_order if department else '0' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">الوصف</label>
+          <textarea name="description" class="form-control" rows="2">{{ department.description if department and department.description else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if department else 'إضافة القسم' }}</button>
+        <a href="{{ url_for('departments.departments_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

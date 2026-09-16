@@ -1,0 +1,349 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; letter-spacing: -0.5px; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 400; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; transition: color 0.2s; }
+  .page-header .breadcrumb-item a:hover { color: #fff; text-decoration: underline; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .header-actions .btn { padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; transition: all 0.25s ease; }
+  .header-actions .btn-new { background: #fff; color: #1a365d; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .header-actions .btn-new:hover { background: #f0f9ff; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+  .header-actions .btn-delete { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(10px); }
+  .header-actions .btn-delete:hover { background: rgba(239,68,68,0.8); border-color: rgba(239,68,68,0.6); }
+
+  .stat-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; text-align: center; transition: all 0.2s; cursor: pointer; }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .stat-card .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 8px; }
+  .stat-card .stat-number { font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 11px; color: var(--text-secondary, #64748b); font-weight: 500; }
+
+  .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-tab { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-decoration: none; color: var(--text-secondary, #64748b); background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); transition: all 0.2s; }
+  .filter-tab:hover { background: #f1f5f9; color: var(--text-primary, #1e293b); }
+  .filter-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-color: transparent; }
+  .filter-tab .count { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-right: 4px; }
+  .filter-tab.active .count { background: rgba(255,255,255,0.3); }
+
+  .orders-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .orders-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; letter-spacing: 0.3px; text-transform: uppercase; }
+  .orders-table tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .orders-table tbody tr { transition: all 0.15s; }
+  .orders-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .orders-table tbody tr:last-child td { border-bottom: none; }
+
+  .order-num { font-weight: 700; color: #1e40af; text-decoration: none; font-size: 13px; background: #eff6ff; padding: 3px 8px; border-radius: 6px; display: inline-block; }
+  .order-num:hover { background: #dbeafe; text-decoration: none; }
+
+  .client-name { font-weight: 600; color: var(--text-primary, #1e293b); max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .dest-name { color: var(--text-primary, #1e293b); max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+
+  .badge-stage { padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
+  .badge-status { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+
+  .discount-badge { font-size: 11px; font-weight: 700; color: #dc2626; }
+  .discount-pct { font-size: 9px; font-weight: 600; color: #92400e; display: block; }
+
+  .final-value-box { font-size: 11px; font-weight: 700; color: #065f46; }
+
+  .no-discount { color: var(--text-secondary, #94a3b8); font-size: 11px; font-style: italic; }
+
+  .action-btn { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 12px; transition: all 0.15s; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state i { font-size: 48px; color: #cbd5e1; margin-bottom: 16px; }
+  .empty-state h5 { color: var(--text-secondary, #64748b); font-weight: 600; margin-bottom: 8px; }
+  .empty-state p { color: var(--text-secondary, #94a3b8); font-size: 13px; }
+
+  @media (max-width: 1200px) {
+    .orders-table { font-size: 12px; }
+    .orders-table thead th, .orders-table tbody td { padding: 10px 8px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">اوامر التشغيل</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-clipboard-data me-2"></i>اوامر التشغيل</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('marketing.work_order_add') }}" class="btn btn-new">
+        <i class="bi bi-plus-circle me-1"></i>امر تشغيل جديد
+      </a>
+      {% if orders %}
+      <button type="button" class="btn btn-delete" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+        <i class="bi bi-trash me-1"></i>حذف الكل
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-number" style="color:#3b82f6">{{ total_orders }}</div>
+        <div class="stat-label">الكل</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list', status='draft') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(107,114,128,0.1);color:#6b7280"><i class="bi bi-pencil-square"></i></div>
+        <div class="stat-number" style="color:#6b7280">{{ draft_count }}</div>
+        <div class="stat-label">مسودة</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list', status='marketing_approved') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(6,182,212,0.1);color:#06b6d4"><i class="bi bi-arrow-right-circle"></i></div>
+        <div class="stat-number" style="color:#06b6d4">{{ marketing_approved_count }}</div>
+        <div class="stat-label">بانتظار الحركة</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list', status='movement_approved') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-number" style="color:#f59e0b">{{ movement_approved_count }}</div>
+        <div class="stat-label">بانتظار المالي</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list', status='finance_approved') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-person-check"></i></div>
+        <div class="stat-number" style="color:#8b5cf6">{{ finance_approved_count }}</div>
+        <div class="stat-label">بانتظار المدير</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2">
+    <a href="{{ url_for('marketing.work_orders_list', status='approved') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="stat-number" style="color:#10b981">{{ approved_count }}</div>
+        <div class="stat-label">تم التنفيذ</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs">
+  <a href="{{ url_for('marketing.work_orders_list') }}" class="filter-tab {% if not current_status %}active{% endif %}">
+    <i class="bi bi-grid me-1"></i>الكل
+  </a>
+  <a href="{{ url_for('marketing.work_orders_list', status='draft') }}" class="filter-tab {% if current_status == 'draft' %}active{% endif %}">
+    <i class="bi bi-pencil me-1"></i>مسودة
+  </a>
+  <a href="{{ url_for('marketing.work_orders_list', status='marketing_approved') }}" class="filter-tab {% if current_status == 'marketing_approved' %}active{% endif %}">
+    <i class="bi bi-arrow-right me-1"></i>الحركة
+  </a>
+  <a href="{{ url_for('marketing.work_orders_list', status='movement_approved') }}" class="filter-tab {% if current_status == 'movement_approved' %}active{% endif %}">
+    <i class="bi bi-hourglass me-1"></i>المالي
+  </a>
+  <a href="{{ url_for('marketing.work_orders_list', status='finance_approved') }}" class="filter-tab {% if current_status == 'finance_approved' %}active{% endif %}">
+    <i class="bi bi-person me-1"></i>المدير التنفيذي
+  </a>
+  <a href="{{ url_for('marketing.work_orders_list', status='approved') }}" class="filter-tab {% if current_status == 'approved' %}active{% endif %}">
+    <i class="bi bi-check-circle me-1"></i>تم التنفيذ
+  </a>
+</div>
+
+<!-- Orders Table -->
+<div class="card" style="border-radius:12px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body p-0">
+    {% if orders %}
+    <div class="table-responsive">
+      <table class="orders-table mb-0">
+        <thead>
+          <tr>
+            <th style="width:60px">رقم</th>
+            <th style="width:130px">الجهة</th>
+            <th style="width:90px">الوجهة</th>
+            <th style="width:50px">المدة</th>
+            <th style="width:80px">الخروج</th>
+            <th style="width:80px">العودة</th>
+            <th style="width:100px">مرحلة الاعتماد</th>
+            <th style="width:90px">القيمة</th>
+            <th style="width:90px">التخفيض</th>
+            <th style="width:90px">النهائية</th>
+            <th style="width:80px">الحالة</th>
+            <th style="width:60px">العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>
+              <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) }}" class="order-num">{{ order.order_number }}</a>
+              {% if order.order_type == 'amendment' %}
+              <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;margin-right:4px;">تعديل</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="client-name" title="{{ order.client.name_ar if order.client else '-' }}">
+                {{ order.client.name_ar if order.client else '-' }}
+              </div>
+            </td>
+            <td>
+              <div class="dest-name" title="{{ order.destination or '-' }}">
+                {{ order.destination or '-' }}
+              </div>
+            </td>
+            <td>
+              <span style="font-weight:600">{{ order.duration_days or 0 }}</span> <span style="font-size:10px;color:var(--text-secondary,#64748b)">يوم</span>
+            </td>
+            <td>
+              <span style="font-size:11px">{{ order.departure_date.strftime('%d/%m') if order.departure_date else '-' }}</span>
+            </td>
+            <td>
+              <span style="font-size:11px">{{ order.return_date.strftime('%d/%m') if order.return_date else '-' }}</span>
+            </td>
+            <td>
+              {% if order.executive_approved %}
+                <span class="badge-stage" style="background:#d1fae5;color:#065f46"><i class="bi bi-check-circle-fill"></i>اعتماد</span>
+              {% elif order.finance_approved %}
+                <span class="badge-stage" style="background:#ede9fe;color:#6d28d9"><i class="bi bi-person-check"></i>المدير التنفيذي</span>
+              {% elif order.movement_approved %}
+                <span class="badge-stage" style="background:#fef3c7;color:#92400e"><i class="bi bi-hourglass-split"></i>المالي</span>
+              {% elif order.marketing_approved %}
+                <span class="badge-stage" style="background:#e0f2fe;color:#0369a1"><i class="bi bi-arrow-right-circle"></i>الحركة</span>
+              {% else %}
+                <span class="badge-stage" style="background:#f3f4f6;color:#374151"><i class="bi bi-pencil-square"></i>التسويق</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-weight:700;color:#1e40af;font-size:12px">{{ "{:,.0f}".format(order.total_value) }}</span>
+              <span style="font-size:9px;color:var(--text-secondary,#64748b)">د.ل</span>
+            </td>
+            <td>
+              {% if order.executive_discount_value and order.executive_discount_value > 0 %}
+              <span class="discount-badge">-{{ "{:,.0f}".format(order.executive_discount_value) }}</span>
+              <span class="discount-pct">{% if order.total_value > 0 %}{{ "%.0f"|format((order.executive_discount_value / order.total_value) * 100) }}%{% endif %}</span>
+              {% else %}
+              <span class="no-discount">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% set fv = order.final_value if order.final_value else (order.total_value - (order.executive_discount_value or 0)) %}
+              {% if order.executive_discount_value and order.executive_discount_value > 0 %}
+              <span class="final-value-box">{{ "{:,.0f}".format(fv) }} د.ل</span>
+              {% else %}
+              <span style="font-weight:700;color:#1e40af;font-size:12px">{{ "{:,.0f}".format(order.total_value) }} د.ل</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if order.status == 'approved' or order.status == 'active' %}
+                <span class="badge-status" style="background:#d1fae5;color:#065f46">تم التنفيذ</span>
+              {% elif order.status in ['marketing_approved', 'movement_approved', 'finance_approved'] %}
+                <span class="badge-status" style="background:#dbeafe;color:#1e40af">قيد التنفيذ</span>
+              {% elif order.status == 'draft' %}
+                <span class="badge-status" style="background:#fef3c7;color:#92400e">مسودة</span>
+              {% elif order.status == 'cancelled' %}
+                <span class="badge-status" style="background:#fee2e2;color:#991b1b">ملغي</span>
+              {% else %}
+                <span class="badge-status" style="background:#f3f4f6;color:#374151">{{ order.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 justify-content-center">
+                <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) }}" class="btn action-btn btn-outline-primary" title="عرض">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if current_user.is_admin and order.status != 'cancelled' %}
+                <form method="POST" action="{{ url_for('marketing.work_order_cancel', order_id=order.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من إلغاء أمر التشغيل رقم {{ order.order_number }}؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn action-btn btn-outline-danger" title="إلغاء">
+                    <i class="bi bi-x-circle"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-clipboard-x d-block"></i>
+      <h5>لا توجد اوامر تشغيل</h5>
+      <p>لم يتم انشاء اي اوامر تشغيل بعد</p>
+      <a href="{{ url_for('marketing.work_order_add') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-circle me-1"></i>انشاء امر تشغيل جديد
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- مودال حذف الكل -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:2px solid #dc3545">
+      <div class="modal-header" style="background:#fef2f2;border-radius:10px 10px 0 0">
+        <h5 class="modal-title" style="color:#dc3545"><i class="bi bi-exclamation-triangle me-2"></i>حذف جميع اوامر التشغيل</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('marketing.work_order_delete_all') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="alert alert-warning" style="border-radius:8px">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            سيتم حذف <strong>{{ orders|length }}</strong> امر تشغيل. يمكن استعادتها من سلة المحذوفات.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">ادخل كلمة المرور للتأكيد <span class="text-danger">*</span></label>
+            <input type="password" name="password" class="form-control" required placeholder="كلمة المرور">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">الغاء</button>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i>حذف الكل
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

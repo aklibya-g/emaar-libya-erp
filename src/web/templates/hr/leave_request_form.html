@@ -1,0 +1,178 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}طلب إجازة جديد | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">طلب إجازة جديد</h4>
+  <a href="{{ url_for('hr.leave_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> طلبات الإجازة
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">بيانات طلب الإجازة</h6></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('hr.leave_request_form') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الموظف <span class="text-danger">*</span></label>
+              <select name="employee_id" class="form-select" id="employeeSelect" required>
+                <option value="">اختر الموظف</option>
+                {% for emp in employees %}
+                <option value="{{ emp.id }}">{{ emp.full_name_ar }} - {{ emp.employee_number }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نوع الإجازة <span class="text-danger">*</span></label>
+              <select name="leave_type_id" class="form-select" id="leaveTypeSelect" required>
+                <option value="">اختر النوع</option>
+                {% for lt in leave_types %}
+                <option value="{{ lt.id }}" data-type-name="{{ lt.name_ar }}">{{ lt.name_ar }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">من تاريخ <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" class="form-control" id="startDate" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">إلى تاريخ <span class="text-danger">*</span></label>
+              <input type="date" name="end_date" class="form-control" id="endDate" required>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">سبب الإجازة</label>
+              <textarea name="reason" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">المرفقات</label>
+              <input type="file" name="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+          </div>
+
+          <!-- Remaining Balance Preview -->
+          <div id="balancePreview" class="mt-3" style="display:none">
+            <div class="alert alert-info py-2 px-3 mb-0" style="border-radius:8px;font-size:13px">
+              <i class="bi bi-info-circle me-1"></i>
+              <span id="balancePreviewText"></span>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>إرسال الطلب</button>
+            <a href="{{ url_for('hr.leave_list') }}" class="btn btn-secondary">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">رصيد الإجازات (أيام)</h6></div>
+      <div class="card-body" id="leaveBalances">
+        <div class="text-center text-muted py-3">
+          <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
+          <p>اختر الموظف لعرض أرصدة الإجازات</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header"><h6 class="mb-0">ملاحظات</h6></div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>يجب تقديم الطلب قبل موعد الإجازة بيوم واحد على الأقل</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>الإجازة المرضية تتطلب شهادة طبية</li>
+          <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>الإجازة المستحقة خلال السنتين القادمتين متاحة</li>
+          <li><i class="bi bi-exclamation-triangle text-warning me-2"></i>الإجازة بدون راتب تحتاج موافقة المدير المباشر</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var leaveBalancesData = {{ leave_balances_all | tojson }};
+
+document.getElementById('employeeSelect')?.addEventListener('change', function() {
+  var empId = this.value;
+  var container = document.getElementById('leaveBalances');
+  var preview = document.getElementById('balancePreview');
+
+  if (!empId) {
+    container.innerHTML = '<div class="text-center text-muted py-3"><p>اختر الموظف لعرض أرصدة الإجازات</p></div>';
+    preview.style.display = 'none';
+    return;
+  }
+
+  var balances = leaveBalancesData[empId] || {};
+  if (Object.keys(balances).length === 0) {
+    container.innerHTML = '<div class="text-center text-muted py-3"><p>لا توجد أرصدة مسجلة لهذا الموظف</p></div>';
+    preview.style.display = 'none';
+    return;
+  }
+
+  var html = '<table class="table table-sm mb-0">';
+  html += '<thead><tr><th>النوع</th><th>المستحق</th><th>المستخدم</th><th class="text-success">المتبقي</th></tr></thead><tbody>';
+  for (var type in balances) {
+    var d = balances[type];
+    html += '<tr>';
+    html += '<td style="font-size:12px">' + type + '</td>';
+    html += '<td>' + d.total + '</td>';
+    html += '<td>' + d.used + '</td>';
+    html += '<td class="fw-bold text-success">' + d.remaining + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  updateBalancePreview();
+});
+
+document.getElementById('leaveTypeSelect')?.addEventListener('change', updateBalancePreview);
+document.getElementById('startDate')?.addEventListener('change', updateBalancePreview);
+document.getElementById('endDate')?.addEventListener('change', updateBalancePreview);
+
+function updateBalancePreview() {
+  var empId = document.getElementById('employeeSelect').value;
+  var leaveTypeSelect = document.getElementById('leaveTypeSelect');
+  var selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
+  var typeName = selectedOption.getAttribute('data-type-name') || '';
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+  var preview = document.getElementById('balancePreview');
+  var previewText = document.getElementById('balancePreviewText');
+
+  if (!empId || !typeName || !startDate || !endDate) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  var balances = leaveBalancesData[empId] || {};
+  var typeData = balances[typeName];
+  if (!typeData) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  var days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+  if (days < 1) { preview.style.display = 'none'; return; }
+
+  var remainingAfter = typeData.remaining - days;
+  var color = remainingAfter >= 0 ? '#0d6efd' : '#dc3545';
+  var icon = remainingAfter >= 0 ? 'bi-check-circle' : 'bi-exclamation-triangle';
+
+  previewText.innerHTML = '<i class="bi ' + icon + ' me-1" style="color:' + color + '"></i>' +
+    'النوع: <strong>' + typeName + '</strong> | ' +
+    'المتبقي الحالي: <strong>' + typeData.remaining + '</strong> يوم | ' +
+    'أيام الطلب: <strong>' + days + '</strong> | ' +
+    'المتبقي بعد الخصم: <strong style="color:' + color + '">' + remainingAfter + '</strong> يوم';
+  preview.style.display = 'block';
+}
+</script>
+{% endblock %}

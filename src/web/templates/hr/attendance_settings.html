@@ -1,0 +1,165 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-gear me-2"></i>إعدادات سجلات الحضور والانصراف</h4>
+    <a href="{{ url_for('hr.hr_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-right me-1"></i>العودة
+    </a>
+  </div>
+
+  <form method="POST" action="{{ url_for('hr.attendance_settings_save') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- نطاق التاريخ -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <i class="bi bi-calendar3 me-2"></i>نطاق التاريخ
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">تحديد يوم البداية والنهاية للكشف الشهري (من يوم X في الشهر الحالي إلى يوم Y في الشهر القادم)</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">من يوم</label>
+            <select name="start_day" class="form-select">
+              {% for d in range(1, 32) %}
+              <option value="{{ d }}" {% if settings.get('start_day', '26')|string == d|string %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">إلى يوم</label>
+            <select name="end_day" class="form-select">
+              {% for d in range(1, 32) %}
+              <option value="{{ d }}" {% if settings.get('end_day', '25')|string == d|string %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- أنواع الموظفين -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-success text-white">
+        <i class="bi bi-people me-2"></i>أنواع الموظفين (تفعيل/تعطيل التبويبات)
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">تحديد التبويبات التي تظهر في كشف الحضور الشهري</p>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="enable_employees" id="enable_employees" value="true" {% if settings.get('enable_employees', 'true') == 'true' %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="enable_employees">الموظفين</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="enable_drivers_reserve" id="enable_drivers_reserve" value="true" {% if settings.get('enable_drivers_reserve', 'true') == 'true' %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="enable_drivers_reserve">السائقين - احتياط</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="enable_drivers_seasonal" id="enable_drivers_seasonal" value="true" {% if settings.get('enable_drivers_seasonal', 'true') == 'true' %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="enable_drivers_seasonal">السائقين - موسمي</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="enable_national_transport" id="enable_national_transport" value="true" {% if settings.get('enable_national_transport', 'true') == 'true' %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="enable_national_transport">النقل الدولي</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- القيمة الافتراضية -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-warning text-dark">
+        <i class="bi bi-check2-square me-2"></i>القيمة الافتراضية
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">ما يظهر افتراضياً في خلايا الجدول (قبل أي تعديل)</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">الحالة الافتراضية</label>
+            <select name="default_attendance" class="form-select">
+              <option value="present" {% if settings.get('default_attendance', 'present') == 'present' %}selected{% endif %}>✓ حضور</option>
+              <option value="absent" {% if settings.get('default_attendance') == 'absent' %}selected{% endif %}>— غياب</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- أرصدة الإجازات الافتراضية -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header" style="background:#7c3aed;color:#fff">
+        <i class="bi bi-wallet2 me-2"></i>أرصدة الإجازات الافتراضية (أيام / سنة)
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">الرصيد الافتراضي لكل موظف في السنة. يُطبق على جميع الموظفين تلقائياً.</p>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة سنوية</label>
+            <input type="number" name="leave_annual" class="form-control" value="{{ settings.get('leave_annual', '30') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة مرضية</label>
+            <input type="number" name="leave_sick" class="form-control" value="{{ settings.get('leave_sick', '15') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة طارئة</label>
+            <input type="number" name="leave_emergency" class="form-control" value="{{ settings.get('leave_emergency', '7') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة بدون راتب</label>
+            <input type="number" name="leave_unpaid" class="form-control" value="{{ settings.get('leave_unpaid', '30') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة حج</label>
+            <input type="number" name="leave_hajj" class="form-control" value="{{ settings.get('leave_hajj', '15') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة زواج</label>
+            <input type="number" name="leave_marriage" class="form-control" value="{{ settings.get('leave_marriage', '5') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة وفاة</label>
+            <input type="number" name="leave_bereavement" class="form-control" value="{{ settings.get('leave_bereavement', '5') }}" min="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">إجازة أمومة</label>
+            <input type="number" name="leave_maternity" class="form-control" value="{{ settings.get('leave_maternity', '60') }}" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ملاحظات -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-info text-white">
+        <i class="bi bi-info-circle me-2"></i>ملاحظات
+      </div>
+      <div class="card-body">
+        <ul class="mb-0" style="line-height:2">
+          <li>الإجازات من قسم الإجازات تظهر بعلامة <strong>ء</strong> ولا يمكن تعديلها</li>
+          <li>الأوامر تظهر بعلامة <strong>أ</strong> ويمكن تغييرها من القائمة المنسدلة</li>
+          <li>الحضور يظهر بعلامة <strong>✓</strong> ويمكن تغييره لـ <strong>غ</strong> (غياب) أو <strong>أ</strong> (أمر)</li>
+          <li>عدد أيام الكشف ثابت <strong>30 يوماً</strong></li>
+          <li>boom/z-end = يوم {{ settings.get('start_day', '26') }} إلى {{ settings.get('end_day', '25') }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-lg">
+        <i class="bi bi-check-lg me-1"></i>حفظ الإعدادات
+      </button>
+      <a href="{{ url_for('hr.hr_dashboard') }}" class="btn btn-outline-secondary btn-lg">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

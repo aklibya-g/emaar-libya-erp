@@ -1,0 +1,158 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل السيارة' if vehicle else 'إضافة سيارة جديدة' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('vehicles.vehicle_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        العودة للقائمة
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('vehicles.vehicle_dashboard') }}">إدارة الأسطول</a></li>
+            <li class="breadcrumb-item active">{{ 'تعديل السيارة' if vehicle else 'إضافة سيارة جديدة' }}</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-{{ 'pencil-square' if vehicle else 'plus-circle' }} me-2"></i>{{ 'تعديل السيارة' if vehicle else 'إضافة سيارة جديدة' }}</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">رقم اللوحة <span class="text-danger">*</span></label>
+          <input type="text" name="plate_number" class="form-control" value="{{ vehicle.plate_number if vehicle else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم اعمار</label>
+          <input type="text" name="emaar_number" class="form-control" value="{{ vehicle.emaar_number if vehicle else '' }}" placeholder="رقم اعمار الداخلي">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع السيارة <span class="text-danger">*</span></label>
+          <select name="vehicle_type_id" class="form-select" required id="vehicleTypeSelect" onchange="onVehicleTypeChange()">
+            <option value="">اختر النوع</option>
+            {% for vt in vehicle_types %}
+            <option value="{{ vt.id }}" data-seats="{{ seats_map.get(vt.id, '') }}" {% if vehicle and vehicle.vehicle_type_id == vt.id %}selected{% endif %}>{{ vt.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if vehicle and vehicle.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="maintenance" {% if vehicle and vehicle.status == 'maintenance' %}selected{% endif %}>تحت الصيانة</option>
+            <option value="inactive" {% if vehicle and vehicle.status == 'inactive' %}selected{% endif %}>متوقف</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الماركة</label>
+          <input type="text" name="brand" class="form-control" value="{{ vehicle.brand if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الموديل</label>
+          <input type="text" name="model" class="form-control" value="{{ vehicle.model if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">اللون</label>
+          <div class="input-group">
+            <select name="color" class="form-select" id="colorSelect">
+              <option value="">اختر اللون</option>
+              <option value="ابيض" {% if vehicle and vehicle.color == 'ابيض' %}selected{% endif %}>ابيض</option>
+              <option value="سماوي" {% if vehicle and vehicle.color == 'سماوي' %}selected{% endif %}>سماوي</option>
+              <option value="اصفر" {% if vehicle and vehicle.color == 'اصفر' %}selected{% endif %}>اصفر</option>
+            </select>
+            <button type="button" class="btn btn-outline-success" onclick="addNewColor()" title="اضافة لون جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">رقم المحرّك</label>
+          <input type="text" name="engine_number" class="form-control" value="{{ vehicle.engine_number if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">رقم الشاصي</label>
+          <input type="text" name="chassis_number" class="form-control" value="{{ vehicle.chassis_number if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">نوع الوقود</label>
+          <select name="fuel_type" class="form-select">
+            <option value="gasoline" {% if vehicle and vehicle.fuel_type == 'gasoline' %}selected{% endif %}>بنزين</option>
+            <option value="diesel" {% if vehicle and vehicle.fuel_type == 'diesel' %}selected{% endif %}>ديزل</option>
+            <option value="electric" {% if vehicle and vehicle.fuel_type == 'electric' %}selected{% endif %}>كهربائي</option>
+            <option value="hybrid" {% if vehicle and vehicle.fuel_type == 'hybrid' %}selected{% endif %}>هايبرد</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">سعة الخزان (لتر)</label>
+          <input type="number" name="tank_capacity" class="form-control" step="0.1" value="{{ vehicle.tank_capacity if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">عدد المقاعد</label>
+          <input type="number" name="seats_count" class="form-control" value="{{ vehicle.seats_count if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الكيلومتر الحالي</label>
+          <input type="number" name="current_km" class="form-control" step="0.1" value="{{ vehicle.current_km if vehicle else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ انتهاء التأمين</label>
+          <input type="date" name="insurance_expiry" class="form-control" value="{{ vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle and vehicle.insurance_expiry else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ انتهاء التسجيل</label>
+          <input type="date" name="registration_expiry" class="form-control" value="{{ vehicle.registration_expiry.strftime('%Y-%m-%d') if vehicle and vehicle.registration_expiry else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">السائق المسؤول</label>
+          <select name="driver_id" class="form-select">
+            <option value="">اختر</option>
+            {% for drv in drivers %}
+            <option value="{{ drv.id }}" {% if vehicle and vehicle.driver_id == drv.id %}selected{% endif %}>{{ drv.full_name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ vehicle.notes if vehicle else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{{ 'تعديل' if vehicle else 'إضافة' }}</button>
+        <a href="{{ url_for('vehicles.vehicle_list') }}" class="btn btn-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function addNewColor() {
+  var color = prompt("اكتب اسم اللون الجديد:");
+  if (color && color.trim() !== "") {
+    var select = document.getElementById("colorSelect");
+    var option = document.createElement("option");
+    option.value = color.trim();
+    option.text = color.trim();
+    option.selected = true;
+    select.appendChild(option);
+  }
+}
+
+function onVehicleTypeChange() {
+  var sel = document.getElementById('vehicleTypeSelect');
+  var seatsInput = document.querySelector('input[name="seats_count"]');
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  var seats = opt.getAttribute('data-seats');
+  if (seats && parseInt(seats) > 0) {
+    seatsInput.value = seats;
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}فئات المستندات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">فئات المستندات</h4>
+  <a href="{{ url_for('hr.documents') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> المستندات
+  </a>
+</div>
+
+<div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">الكود</th>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">الاسم بالعربي</th>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">الاسم بالإنجليزي</th>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">الترتيب</th>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">الحالة</th>
+            <th style="color:var(--text-secondary);border-color:var(--border-color)">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in categories %}
+          <tr style="border-color:var(--border-light)">
+            <td><span class="fw-bold" style="color:var(--accent)">{{ cat.code | default('-') }}</span></td>
+            <td style="color:var(--text-primary)">{{ cat.name_ar | default('-') }}</td>
+            <td style="color:var(--text-primary)">{{ cat.name_en | default('-') }}</td>
+            <td style="color:var(--text-primary)">{{ cat.sort_order | default(0) }}</td>
+            <td>
+              {% if cat.is_active %}
+              <span class="badge" style="background:rgba(72,187,120,0.15);color:var(--accent-green)">نشط</span>
+              {% else %}
+              <span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted)">غير نشط</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" title="تعديل" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick='editCategory("{{ cat.id }}", "{{ cat.code | default("") }}", "{{ cat.name_ar | default("") }}", "{{ cat.name_en | default("") }}", {{ cat.sort_order or 0 }}, {{ "true" if cat.is_active else "false" }})'><i class="bi bi-pencil"></i></button>
+                <form method="POST" action="{{ url_for('hr.document_category_delete', id=cat.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذه الفئة؟ سيتم حذف جميع المستندات المرتبطة بها.')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not categories %}
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <div style="color:var(--text-muted)">
+                <i class="bi bi-folder fs-1 d-block mb-2"></i>
+                <p class="mb-0">لا توجد فئات مستندات</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--bg-card);border-color:var(--border-color)">
+      <form method="POST" action="{{ url_for('hr.document_category_save') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="id" id="categoryId">
+        <div class="modal-header" style="border-color:var(--border-color)">
+          <h5 class="modal-title" id="categoryModalTitle" style="color:var(--text-primary)">إضافة فئة جديدة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" style="color:var(--text-secondary)">الكود <span style="color:var(--accent-red)">*</span></label>
+              <input type="text" name="code" id="categoryCode" class="form-control" required placeholder="مثال: ID, PASSPORT" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="color:var(--text-secondary)">الترتيب</label>
+              <input type="number" name="sort_order" id="categorySort" class="form-control" value="0" min="0" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="color:var(--text-secondary)">الاسم بالعربي <span style="color:var(--accent-red)">*</span></label>
+              <input type="text" name="name_ar" id="categoryNameAr" class="form-control" required style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="color:var(--text-secondary)">الاسم بالإنجليزي <span style="color:var(--accent-red)">*</span></label>
+              <input type="text" name="name_en" id="categoryNameEn" class="form-control" required style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="color:var(--text-secondary)">الوصف</label>
+              <textarea name="description" id="categoryDesc" class="form-control" rows="2" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)"></textarea>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input type="checkbox" name="is_active" id="categoryActive" class="form-check-input" checked>
+                <label class="form-check-label" for="categoryActive" style="color:var(--text-secondary)">نشط</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-color:var(--border-color)">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function resetCategoryForm() {
+  document.getElementById('categoryModalTitle').textContent = 'إضافة فئة جديدة';
+  document.getElementById('categoryId').value = '';
+  document.getElementById('categoryCode').value = '';
+  document.getElementById('categoryNameAr').value = '';
+  document.getElementById('categoryNameEn').value = '';
+  document.getElementById('categorySort').value = '0';
+  document.getElementById('categoryDesc').value = '';
+  document.getElementById('categoryActive').checked = true;
+}
+
+function editCategory(id, code, nameAr, nameEn, sortOrder, isActive) {
+  document.getElementById('categoryModalTitle').textContent = 'تعديل الفئة';
+  document.getElementById('categoryId').value = id;
+  document.getElementById('categoryCode').value = code || '';
+  document.getElementById('categoryNameAr').value = nameAr || '';
+  document.getElementById('categoryNameEn').value = nameEn || '';
+  document.getElementById('categorySort').value = sortOrder || 0;
+  document.getElementById('categoryActive').checked = isActive === true;
+}
+</script>
+{% endblock %}

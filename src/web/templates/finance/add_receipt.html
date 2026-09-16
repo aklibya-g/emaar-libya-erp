@@ -1,0 +1,188 @@
+{% extends "layouts/base.html" %}
+{% block title %}إضافة ايصال | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .claim-info-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .claim-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color, #f1f5f9); }
+  .claim-info-row:last-child { border-bottom: none; }
+  .claim-info-row .cl-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+  .claim-info-row .cl-value { font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        تفاصيل المطالبة
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">المالية</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}">{{ claim.claim_number }}</a></li>
+            <li class="breadcrumb-item active">إضافة ايصال</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-receipt me-2"></i>إضافة ايصال جديد</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Add Receipt Form -->
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-pencil-square me-2" style="color:#3b82f6"></i>بيانات الإيصال</h6>
+      </div>
+      <div class="card-body">
+        <form method="POST" id="receiptForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="claim_id" value="{{ claim.id }}">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="font-size:12px">المبلغ المحصل <span class="text-danger">*</span></label>
+              <div style="position:relative">
+                <input type="number" name="amount_received" id="amountReceived" class="form-control" required min="1" max="{{ claim.remaining_amount|default(0) }}" step="100" placeholder="0" style="border-radius:10px;padding:12px 50px 12px 14px;font-size:16px;font-weight:700">
+                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#94a3b8;font-weight:600">د.ل</span>
+              </div>
+              <div id="amountError" class="mt-1" style="font-size:11px;color:#ef4444;display:none">
+                <i class="bi bi-exclamation-circle me-1"></i>المبلغ لا يجب أن يتجاوز المتبقي
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="font-size:12px">طريقة الدفع <span class="text-danger">*</span></label>
+              <select name="payment_method" class="form-select" required style="border-radius:10px;padding:12px">
+                <option value="">اختر طريقة الدفع</option>
+                <option value="cash">نقدي</option>
+                <option value="transfer">تحويل بنكي</option>
+                <option value="check">شيك</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="font-size:12px">رقم المرجع</label>
+              <input type="text" name="payment_reference" class="form-control" placeholder="رقم الشيك / رقم التحويل" style="border-radius:10px;padding:12px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="font-size:12px">البنك</label>
+              <input type="text" name="bank_name" class="form-control" placeholder="اسم البنك" style="border-radius:10px;padding:12px">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold" style="font-size:12px">ملاحظات</label>
+              <textarea name="notes" class="form-control" rows="3" placeholder="ملاحظات إضافية..." style="border-radius:10px;padding:12px;resize:none"></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-success" style="border-radius:10px;padding:12px 30px;font-weight:700">
+              <i class="bi bi-check-circle me-1"></i>حفظ الإيصال
+            </button>
+            <a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}" class="btn btn-outline-secondary" style="border-radius:10px;padding:12px 30px">
+              <i class="bi bi-x-circle me-1"></i>إلغاء
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Claim Info -->
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-info-circle me-2" style="color:#f59e0b"></i>بيانات المطالبة</h6>
+      </div>
+      <div class="card-body">
+        <div class="claim-info-row">
+          <span class="cl-label">رقم المطالبة</span>
+          <span class="cl-value">{{ claim.claim_number }}</span>
+        </div>
+        <div class="claim-info-row">
+          <span class="cl-label">الجهة</span>
+          <span class="cl-value">{{ claim.client_name or '-' }}</span>
+        </div>
+        <div class="claim-info-row">
+          <span class="cl-label">رقم أمر التشغيل</span>
+          <span class="cl-value">{{ claim.order_number or '-' }}</span>
+        </div>
+        <div class="claim-info-row">
+          <span class="cl-label">القيمة النهائية</span>
+          <span class="cl-value" style="color:#1e40af">{{ "{:,.0f}".format(claim.final_value) }} د.ل</span>
+        </div>
+        <div class="claim-info-row">
+          <span class="cl-label">تم تحصيله</span>
+          <span class="cl-value" style="color:#10b981">{{ "{:,.0f}".format(claim.received_amount|default(0)) }} د.ل</span>
+        </div>
+        <div class="claim-info-row">
+          <span class="cl-label">المتبقي</span>
+          <span class="cl-value" style="color:#ef4444;font-size:16px;font-weight:800">{{ "{:,.0f}".format(claim.remaining_amount|default(claim.final_value)) }} د.ل</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validation Info -->
+    <div class="card mt-3" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-body text-center" style="padding:20px">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.1);display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px">
+          <i class="bi bi-info-circle" style="font-size:22px;color:#f59e0b"></i>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary,#64748b);margin:0">
+          الحد الأقصى للمبلغ هو <strong style="color:#ef4444">{{ "{:,.0f}".format(claim.remaining_amount|default(claim.final_value)) }} د.ل</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const remainingAmount = {{ claim.remaining_amount|default(claim.final_value)|default(0) }};
+  const amountInput = document.getElementById('amountReceived');
+  const amountError = document.getElementById('amountError');
+
+  if (amountInput) {
+    amountInput.addEventListener('input', function() {
+      const val = parseFloat(this.value) || 0;
+      if (val > remainingAmount) {
+        amountError.style.display = 'block';
+        this.style.borderColor = '#ef4444';
+      } else {
+        amountError.style.display = 'none';
+        this.style.borderColor = '';
+      }
+    });
+
+    document.getElementById('receiptForm').addEventListener('submit', function(e) {
+      const val = parseFloat(amountInput.value) || 0;
+      if (val > remainingAmount) {
+        e.preventDefault();
+        amountError.style.display = 'block';
+        amountInput.style.borderColor = '#ef4444';
+      }
+    });
+  }
+</script>
+{% endblock %}

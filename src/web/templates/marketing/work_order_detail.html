@@ -1,0 +1,652 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.work_orders_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        اوامر التشغيل
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">{{ page_title }}</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-clipboard-data me-2"></i>{{ page_title }}</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      {% set has_approval = order.marketing_approved or order.movement_approved or order.finance_approved or order.executive_approved %}
+      {% if not has_approval and order.status in ['draft'] %}
+      <a href="{{ url_for('marketing.work_order_edit', order_id=order.id) }}" class="btn btn-new">
+        <i class="bi bi-pencil me-1"></i>تعديل
+      </a>
+      {% endif %}
+      {% if order.status != 'cancelled' %}
+      <form method="POST" action="{{ url_for('marketing.work_order_cancel', order_id=order.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من إلغاء أمر التشغيل؟\nسيتم تغيير الحالة الى ملغي مع الحفظ على التسلسل.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-delete">
+          <i class="bi bi-x-circle me-1"></i>إلغاء أمر التشغيل
+        </button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('marketing.work_order_print', order_id=order.id) }}" class="btn btn-outline-white" target="_blank">
+        <i class="bi bi-printer me-1"></i>طباعة
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- معلومات أمر التشغيل -->
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">أمر التشغيل رقم {{ order.order_number }}</h5>
+      </div>
+      <div class="card-body">
+        {% if order.order_type == 'amendment' and order.related_order %}
+        <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <i class="bi bi-link-45deg" style="font-size:18px;color:#92400e;"></i>
+            <span style="font-weight:700;color:#92400e;font-size:14px;">تعديل على أمر تشغيل سابق</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <a href="{{ url_for('marketing.work_order_detail', order_id=order.related_order.id) }}" style="font-weight:700;color:#1e40af;text-decoration:underline;font-size:13px;">
+              <i class="bi bi-arrow-left-circle me-1"></i>الأمر الأصلي: {{ order.related_order.order_number }}
+            </a>
+            <span style="font-size:12px;color:#374151;">الجهة: {{ order.related_order.client.name_ar if order.related_order.client else '-' }}</span>
+          </div>
+          {% if order.amendment_reason %}
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #d97706;font-size:12px;color:#78350f;">
+            <i class="bi bi-chat-left-text me-1"></i><strong>سبب التعديل:</strong> {{ order.amendment_reason }}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% set amendments = [] %}
+        {% if order.order_type == 'new' %}
+          {% for ao in all_orders if ao.order_type == 'amendment' and ao.related_order_id == order.id %}
+            {% set amendments = amendments + [ao] %}
+          {% endfor %}
+        {% endif %}
+        {% if amendments %}
+        <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #10b981;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <i class="bi bi-list-ul" style="font-size:16px;color:#065f46;"></i>
+            <span style="font-weight:700;color:#065f46;font-size:13px;">التعديلات المرتبطة ({{ amendments|length }})</span>
+          </div>
+          {% for am in amendments %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:4px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <i class="bi bi-pencil-square" style="color:#059669;font-size:12px;"></i>
+              <a href="{{ url_for('marketing.work_order_detail', order_id=am.id) }}" style="font-weight:700;color:#1e40af;font-size:12px;">{{ am.order_number }}</a>
+              <span style="font-size:11px;color:#374151;">{{ am.created_at.strftime('%d/%m/%Y %H:%M') if am.created_at else '' }}</span>
+            </div>
+            <div>
+              {% if am.status == 'approved' or am.status == 'active' %}
+                <span class="badge" style="background:#d1fae5;color:#065f46;font-size:10px;">تم التنفيذ</span>
+              {% elif am.status == 'cancelled' %}
+                <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;">ملغي</span>
+              {% else %}
+                <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;">قيد التنفيذ</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <strong>الجهة:</strong> {{ order.client.name_ar if order.client else '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>رقم الهاتف:</strong> {{ order.contact_phone or '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>رحلة من:</strong> {{ order.trip_from or '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>رحلة الى:</strong> {{ order.trip_to or '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>المسافة التقديرية:</strong> {{ order.estimated_distance if order.estimated_distance else '-' }} كم
+          </div>
+          <div class="col-md-6">
+            <strong>المدة:</strong> {{ order.duration_days }} يوم
+          </div>
+          <div class="col-md-6">
+            <strong>نوع الرحلة:</strong>
+            {% if order.trip_type == 'external' %}
+            <span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px">خارج المدينة</span>
+            {% else %}
+            <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px">داخل المدينة</span>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <strong>تاريخ الخروج:</strong> {{ order.departure_date.strftime('%Y-%m-%d') if order.departure_date else '-' }}
+          </div>
+          <div class="col-md-6">
+            <strong>تاريخ العودة:</strong> {{ order.return_date.strftime('%Y-%m-%d') if order.return_date else '-' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- التكاليف -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-cash-stack"></i> التكاليف</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-light rounded">
+              <div class="text-muted mb-1">سعر الرحلة اليومي</div>
+              <div class="fs-5 fw-bold">{{ "{:,.2f}".format(order.trip_price) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-light rounded">
+              <div class="text-muted mb-1">المدة</div>
+              <div class="fs-5 fw-bold">{{ order.duration_days }} يوم</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-light rounded">
+              <div class="text-muted mb-1">قيمة ايجار الحافلة</div>
+              <div class="fs-5 fw-bold">{{ "{:,.0f}".format(order.bus_rental_value) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-light rounded">
+              <div class="text-muted mb-1">قيمة صيانة الحافلة</div>
+              <div class="fs-5 fw-bold">{{ "{:,.0f}".format(order.bus_maintenance_value) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-light rounded">
+              <div class="text-muted mb-1">نقل وإعاشة السائق</div>
+              <div class="fs-5 fw-bold">{{ "{:,.0f}".format(order.driver_transport_value) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center p-3 bg-info text-white rounded">
+              <div class="mb-1">التكلفة = {{ order.duration_days }} × {{ "{:,.2f}".format(order.trip_price) }}</div>
+              <div class="fs-5 fw-bold">{{ "{:,.2f}".format(order.duration_days * order.trip_price) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="text-center p-3 bg-primary text-white rounded">
+              <div class="mb-1">القيمة الاجمالية</div>
+              <div class="fs-4 fw-bold">{{ "{:,.0f}".format(order.total_value) }} د.ل</div>
+            </div>
+          </div>
+          {% if order.executive_discount_value and order.executive_discount_value > 0 %}
+          <div class="col-md-12">
+            <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:2px solid #f59e0b;border-radius:12px;padding:16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:#f59e0b;display:flex;align-items:center;justify-content:center;">
+                  <i class="bi bi-percent" style="color:#fff;font-size:14px;"></i>
+                </div>
+                <span style="font-size:14px;font-weight:700;color:#92400e;">التخفيضات المُطبّقة</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                <div style="text-align:center;background:#fff;border-radius:10px;padding:12px;border:1px solid #fde68a;">
+                  <div style="font-size:10px;color:#64748b;margin-bottom:4px;">نسبة التخفيض</div>
+                  <div style="font-size:22px;font-weight:900;color:#dc2626;">{% if order.total_value > 0 %}{{ "%.0f"|format((order.executive_discount_value / order.total_value) * 100) }}%{% else %}-{% endif %}</div>
+                </div>
+                <div style="text-align:center;background:#fff;border-radius:10px;padding:12px;border:1px solid #fde68a;">
+                  <div style="font-size:10px;color:#64748b;margin-bottom:4px;">قيمة التخفيض</div>
+                  <div style="font-size:22px;font-weight:900;color:#dc2626;">-{{ "{:,.0f}".format(order.executive_discount_value) }} د.ل</div>
+                </div>
+                <div style="text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;">
+                  <div style="font-size:10px;color:#64748b;margin-bottom:4px;">القيمة النهائية</div>
+                  <div style="font-size:24px;font-weight:900;color:#166534;">{{ "{:,.0f}".format(order.final_value or order.total_value) }} د.ل</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#64748b;">
+                <span><i class="bi bi-chat-left-text me-1" style="color:#f59e0b;"></i>{{ order.executive_discount_reason or '-' }}</span>
+                <span><i class="bi bi-person me-1"></i>{{ order.executive_discount_by or '' }} | {{ order.executive_discount_at.strftime('%Y-%m-%d %H:%M') if order.executive_discount_at else '' }}</span>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- الحافلات -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-bus-front"></i> الحافلات ({{ order.buses|length }})</h5>
+      </div>
+      <div class="card-body p-0">
+        {% if order.buses %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>رقم الحافلة</th>
+                <th>رقم اعمار</th>
+                <th>السائق</th>
+                <th>سعر الحافلة/يوم</th>
+                <th>نسبة السائق %</th>
+                <th>قيمة نسبة السائق</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bus in order.buses %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ bus.bus_number or '-' }}</td>
+                <td>{{ bus.vehicle.emaar_number if bus.vehicle and bus.vehicle.emaar_number else '-' }}</td>
+                <td>{{ bus.driver_name or '-' }}</td>
+                <td>{{ "{:,.2f}".format(bus.bus_price) if bus.bus_price else '-' }}</td>
+                <td>
+                  {% if order.trip_type == 'external' and bus.driver_share_pct %}
+                  <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-weight:600;font-size:11px">{{ bus.driver_share_pct }}%</span>
+                  {% else %}-{% endif %}
+                </td>
+                <td>
+                  {% if order.trip_type == 'external' and bus.driver_share_value %}
+                  <span style="color:#059669;font-weight:700">{{ "{:,.2f}".format(bus.driver_share_value) }}</span>
+                  {% else %}-{% endif %}
+                </td>
+                <td>{{ bus.notes or '-' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">لا توجد حافلات مسجلة</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- الاعمال والتوقيعات -->
+  <div class="col-md-4">
+    <!-- الحالة -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-flag"></i> الحالة</h5>
+      </div>
+      <div class="card-body text-center">
+        {% if order.executive_approved %}
+          <span class="badge bg-success fs-6 p-2">تم التنفيذ</span>
+        {% elif order.finance_approved %}
+          <span class="badge bg-primary fs-6 p-2">قيد التنفيذ - بانتظار المدير التنفيذي</span>
+        {% elif order.movement_approved %}
+          <span class="badge bg-primary fs-6 p-2">قيد التنفيذ - بانتظار المالي</span>
+        {% elif order.marketing_approved %}
+          <span class="badge bg-primary fs-6 p-2">قيد التنفيذ - بانتظار الحركة</span>
+        {% elif order.status == 'draft' %}
+          <span class="badge bg-warning fs-6 p-2">مسودة</span>
+        {% elif order.status == 'cancelled' %}
+          <span class="badge bg-secondary fs-6 p-2">ملغي</span>
+        {% else %}
+          <span class="badge bg-secondary fs-6 p-2">{{ order.status }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- الاعتمادات -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-check2-square"></i> الاعتمادات</h5>
+      </div>
+      <div class="card-body">
+
+        <!-- حساب التأخير -->
+        {% set now = now_datetime %}
+        {% set created = order.created_at %}
+        {% set days_diff = ((now - created).days if created else 0) %}
+
+        <!-- 1. التسويق -->
+        {% set mkt_done = order.marketing_approved %}
+        <div class="mb-3 p-3 rounded" style="border: 2px solid {% if mkt_done %}#198754{% else %}#dee2e6{% endif %}; background: {% if mkt_done %}#d1e7dd{% else %}#f8f9fa{% endif %};">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold"><i class="bi bi-1-circle-fill me-2" style="color:{% if mkt_done %}#198754{% else %}#6c757d{% endif %}"></i>قسم التسويق</span>
+            {% if mkt_done %}
+              <span class="badge bg-success" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-check-circle-fill me-1"></i>تم الاعتماد</span>
+            {% elif days_diff >= 7 %}
+              <span class="badge bg-danger" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-exclamation-triangle me-1"></i>متأخر {{ days_diff }} يوم</span>
+            {% elif days_diff >= 3 %}
+              <span class="badge bg-warning text-dark" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-hourglass-split me-1"></i>بانتظار {{ days_diff }} يوم</span>
+            {% else %}
+              <span class="badge bg-secondary" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-hourglass-split me-1"></i>بانتظار الاعتماد</span>
+            {% endif %}
+          </div>
+          {% if mkt_done %}
+          <div class="d-flex align-items-center gap-2" style="font-size:0.85em">
+            <span class="text-success"><i class="bi bi-person-check me-1"></i>{{ order.marketing_approved_by }}</span>
+            <span class="text-muted">|</span>
+            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ order.marketing_approved_at.strftime('%Y-%m-%d %H:%M') if order.marketing_approved_at else '-' }}</span>
+          </div>
+          {% elif not mkt_done %}
+          <form method="POST" action="{{ url_for('marketing.work_order_approve', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="department" value="marketing">
+            <button type="submit" class="btn btn-success w-100"><i class="bi bi-check2 me-1"></i>اعتماد التسويق</button>
+          </form>
+          {% endif %}
+        </div>
+
+        <!-- 2. الحركة -->
+        {% set mov_done = order.movement_approved %}
+        {% set mov_open = mkt_done and not mov_done %}
+        <div class="mb-3 p-3 rounded" style="border: 2px solid {% if mov_done %}#198754{% elif mov_open %}#0d6efd{% else %}#e9ecef{% endif %}; background: {% if mov_done %}#d1e7dd{% elif mov_open %}#cfe2ff{% else %}#f5f5f5{% endif %}; opacity: {% if mov_done %}1{% elif mov_open %}1{% else %}0.7{% endif %}">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold"><i class="bi bi-2-circle-fill me-2" style="color:{% if mov_done %}#198754{% elif mov_open %}#0d6efd{% else %}#adb5bd{% endif %}"></i>قسم الحركة</span>
+            {% if mov_done %}
+              <span class="badge bg-success" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-check-circle-fill me-1"></i>تم الاعتماد</span>
+            {% elif mov_open and days_diff >= 7 %}
+              <span class="badge bg-danger" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-exclamation-triangle me-1"></i>متأخر {{ days_diff }} يوم</span>
+            {% elif mov_open %}
+              <span class="badge bg-primary" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-hourglass-split me-1"></i>بانتظار الاعتماد</span>
+            {% else %}
+              <span class="badge bg-secondary" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-lock-fill me-1"></i>قفل</span>
+            {% endif %}
+          </div>
+          {% if mov_done %}
+          <div class="d-flex align-items-center gap-2" style="font-size:0.85em">
+            <span class="text-success"><i class="bi bi-person-check me-1"></i>{{ order.movement_approved_by }}</span>
+            <span class="text-muted">|</span>
+            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ order.movement_approved_at.strftime('%Y-%m-%d %H:%M') if order.movement_approved_at else '-' }}</span>
+          </div>
+          {% elif mov_open %}
+          <form method="POST" action="{{ url_for('marketing.work_order_approve', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="department" value="movement">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check2 me-1"></i>اعتماد الحركة</button>
+          </form>
+          {% else %}
+          <div class="text-muted" style="font-size:0.85em"><i class="bi bi-lock me-1"></i>يجب اعتماد قسم التسويق أولاً</div>
+          {% endif %}
+        </div>
+
+        <!-- 3. المالية -->
+        {% set fin_done = order.finance_approved %}
+        {% set fin_open = mkt_done and mov_done and not fin_done %}
+        <div class="mb-3 p-3 rounded" style="border: 2px solid {% if fin_done %}#198754{% elif fin_open %}#fd7e14{% else %}#e9ecef{% endif %}; background: {% if fin_done %}#d1e7dd{% elif fin_open %}#fff3cd{% else %}#f5f5f5{% endif %}; opacity: {% if fin_done %}1{% elif fin_open %}1{% else %}0.7{% endif %}">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold"><i class="bi bi-3-circle-fill me-2" style="color:{% if fin_done %}#198754{% elif fin_open %}#fd7e14{% else %}#adb5bd{% endif %}"></i>القسم المالي</span>
+            {% if fin_done %}
+              <span class="badge bg-success" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-check-circle-fill me-1"></i>تم الاعتماد</span>
+            {% elif fin_open and days_diff >= 7 %}
+              <span class="badge bg-danger" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-exclamation-triangle me-1"></i>متأخر {{ days_diff }} يوم</span>
+            {% elif fin_open %}
+              <span class="badge bg-warning text-dark" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-hourglass-split me-1"></i>بانتظار الاعتماد</span>
+            {% else %}
+              <span class="badge bg-secondary" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-lock-fill me-1"></i>قفل</span>
+            {% endif %}
+          </div>
+          {% if fin_done %}
+          <div class="d-flex align-items-center gap-2" style="font-size:0.85em">
+            <span class="text-success"><i class="bi bi-person-check me-1"></i>{{ order.finance_approved_by }}</span>
+            <span class="text-muted">|</span>
+            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ order.finance_approved_at.strftime('%Y-%m-%d %H:%M') if order.finance_approved_at else '-' }}</span>
+          </div>
+          {% elif fin_open %}
+          <form method="POST" action="{{ url_for('marketing.work_order_approve', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="department" value="finance">
+            <button type="submit" class="btn btn-warning w-100"><i class="bi bi-check2 me-1"></i>اعتماد المالي</button>
+          </form>
+          {% else %}
+          <div class="text-muted" style="font-size:0.85em"><i class="bi bi-lock me-1"></i>يجب اعتماد التسويق والحركة أولاً</div>
+          {% endif %}
+        </div>
+
+        <!-- 4. المدير التنفيذي -->
+        {% set exe_done = order.executive_approved %}
+        {% set exe_open = mkt_done and mov_done and fin_done and not exe_done %}
+        <div class="mb-3 p-3 rounded" style="border: 2px solid {% if exe_done %}#198754{% elif exe_open %}#6f42c1{% else %}#e9ecef{% endif %}; background: {% if exe_done %}#d1e7dd{% elif exe_open %}#e2d9f3{% else %}#f5f5f5{% endif %}; opacity: {% if exe_done %}1{% elif exe_open %}1{% else %}0.7{% endif %}">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold"><i class="bi bi-4-circle-fill me-2" style="color:{% if exe_done %}#198754{% elif exe_open %}#6f42c1{% else %}#adb5bd{% endif %}"></i>المدير التنفيذي</span>
+            {% if exe_done %}
+              <span class="badge bg-success" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-check-circle-fill me-1"></i>تم الاعتماد</span>
+            {% elif exe_open and days_diff >= 7 %}
+              <span class="badge bg-danger" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-exclamation-triangle me-1"></i>متأخر {{ days_diff }} يوم</span>
+            {% elif exe_open %}
+              <span class="badge" style="background:#6f42c1;font-size:0.85em;padding:6px 12px"><i class="bi bi-hourglass-split me-1"></i>بانتظار الاعتماد</span>
+            {% else %}
+              <span class="badge bg-secondary" style="font-size:0.85em;padding:6px 12px"><i class="bi bi-lock-fill me-1"></i>قفل</span>
+            {% endif %}
+          </div>
+          {% if exe_done %}
+          <div class="d-flex align-items-center gap-2" style="font-size:0.85em">
+            <span class="text-success"><i class="bi bi-person-check me-1"></i>{{ order.executive_approved_by }}</span>
+            <span class="text-muted">|</span>
+            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ order.executive_approved_at.strftime('%Y-%m-%d %H:%M') if order.executive_approved_at else '-' }}</span>
+          </div>
+          {% elif exe_open %}
+          <form method="POST" action="{{ url_for('marketing.work_order_approve', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="department" value="executive">
+            <button type="submit" class="btn btn-dark w-100"><i class="bi bi-check2 me-1"></i>اعتماد المدير التنفيذي</button>
+          </form>
+          {% else %}
+          <div class="text-muted" style="font-size:0.85em"><i class="bi bi-lock me-1"></i>يجب اعتماد جميع الأقسام أولاً</div>
+          {% endif %}
+        </div>
+
+        {% if mkt_done and mov_done and fin_done and exe_done %}
+        <div class="alert alert-success mb-0 text-center">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <strong>تم اعتماد أمر التشغيل بنجاح من جميع الأقسام</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- الملاحظات -->
+    {% if order.notes %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-text-left"></i> الملاحظات</h5>
+      </div>
+      <div class="card-body">
+        <p class="mb-0">{{ order.notes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- قسم التخفيضات -->
+    {% if order.status != 'cancelled' %}
+    <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #f59e0b;border-radius:16px;overflow:hidden;margin-bottom:24px;">
+      <div style="background:linear-gradient(135deg,#f59e0b,#f97316);padding:16px 20px;color:#fff;display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+          <i class="bi bi-percent" style="font-size:18px;"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">التخفيضات</div>
+          <div style="font-size:11px;opacity:0.85;">صلاحية المدير التنفيذي</div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        {% if order.executive_discount_value and order.executive_discount_value > 0 %}
+          <!-- عرض التخفيض المُطبّق -->
+          <div style="background:#fff;border:1px solid #bbf7d0;border-radius:12px;padding:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:14px;"></i>
+              </div>
+              <span style="font-size:14px;font-weight:700;color:#166534;">تم تطبيق التخفيض</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">القيمة الأصلية</div>
+                <div style="font-size:20px;font-weight:800;color:#1e40af;text-decoration:line-through;">{{ "{:,.0f}".format(order.total_value) }}</div>
+                <div style="font-size:10px;color:#94a3b8;">د.ل</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">نسبة التخفيض</div>
+                <div style="font-size:20px;font-weight:800;color:#dc2626;">
+                  {% if order.total_value > 0 %}{{ "%.0f"|format((order.executive_discount_value / order.total_value) * 100) }}%{% else %}-{% endif %}
+                </div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">قيمة التخفيض</div>
+                <div style="font-size:20px;font-weight:800;color:#dc2626;">-{{ "{:,.0f}".format(order.executive_discount_value) }}</div>
+                <div style="font-size:10px;color:#94a3b8;">د.ل</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">القيمة النهائية</div>
+                <div style="font-size:22px;font-weight:900;color:#166534;">{{ "{:,.0f}".format(order.final_value or order.total_value) }}</div>
+                <div style="font-size:10px;color:#94a3b8;">د.ل</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:12px;color:#374151;background:#f8fafc;padding:6px 12px;border-radius:8px;">
+                <i class="bi bi-chat-left-text me-1" style="color:#f59e0b;"></i>{{ order.executive_discount_reason or '-' }}
+              </div>
+              <div style="font-size:11px;color:#94a3b8;">
+                <i class="bi bi-person me-1"></i>{{ order.executive_discount_by or '-' }}
+                <span class="mx-1">|</span>
+                <i class="bi bi-clock me-1"></i>{{ order.executive_discount_at.strftime('%Y-%m-%d %H:%M') if order.executive_discount_at else '-' }}
+              </div>
+            </div>
+            {% if current_user.is_admin %}
+            <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f0;text-align:center;">
+              <form method="POST" action="{{ url_for('marketing.work_order_reverse_discount', order_id=order.id) }}" onsubmit="return confirm('هل أنت متأكد من التراجع عن التخفيض؟ سيتم استعادة القيمة الأصلية.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b;border:1px solid #fca5a5;border-radius:8px;font-weight:600;padding:6px 16px;">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>تراجع عن التخفيض
+                </button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+        {% else %}
+          {% if current_user.role_name == 'executive' or current_user.is_admin %}
+          <!-- نموذج التخفيض -->
+          <form method="POST" action="{{ url_for('marketing.work_order_apply_discount', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div style="background:#fff;border:1px solid #fde68a;border-radius:12px;padding:20px;">
+
+              <!-- القيمة الأصلية -->
+              <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:12px;color:#64748b;margin-bottom:4px;">القيمة الأصلية للرحلة</div>
+                <div style="font-size:32px;font-weight:900;color:#1e40af;">{{ "{:,.0f}".format(order.total_value) }} <span style="font-size:14px;font-weight:600;color:#94a3b8;">د.ل</span></div>
+              </div>
+
+              <!-- نوع التخفيض -->
+              <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <button type="button" id="btnValue" onclick="setDiscountType('value')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #f59e0b;background:#fffbeb;color:#92400e;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;">
+                  <i class="bi bi-cash me-1"></i>قيمة ثابتة
+                </button>
+                <button type="button" id="btnPercent" onclick="setDiscountType('percent')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #e2e8f0;background:#f8fafc;color:#64748b;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;">
+                  <i class="bi bi-percent me-1"></i>نسبة مئوية
+                </button>
+              </div>
+              <input type="hidden" name="discount_type" id="discountType" value="value">
+
+              <!-- حقل التخفيض -->
+              <div style="margin-bottom:16px;">
+                <div id="valueField">
+                  <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">قيمة التخفيض بالدينار <span class="text-danger">*</span></label>
+                  <div style="position:relative;">
+                    <input type="number" name="discount_value" id="discountInput" class="form-control" required min="0" max="{{ order.total_value }}" step="100" placeholder="0" oninput="calcFinal()" style="border-radius:10px;border:2px solid #fde68a;padding:12px 50px 12px 14px;font-size:18px;font-weight:700;text-align:left;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;color:#94a3b8;font-weight:600;">د.ل</span>
+                  </div>
+                </div>
+                <div id="percentField" style="display:none;">
+                  <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">نسبة التخفيض <span class="text-danger">*</span></label>
+                  <div style="position:relative;">
+                    <input type="number" name="discount_percent" id="percentInput" class="form-control" min="1" max="100" step="1" placeholder="0" oninput="calcFinalFromPercent()" style="border-radius:10px;border:2px solid #fde68a;padding:12px 50px 12px 14px;font-size:18px;font-weight:700;text-align:left;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;color:#94a3b8;font-weight:600;">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- القيمة النهائية -->
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;text-align:center;margin-bottom:16px;">
+                <div style="font-size:11px;color:#64748b;margin-bottom:4px;">القيمة النهائية بعد التخفيض</div>
+                <div id="finalValueDisplay" style="font-size:28px;font-weight:900;color:#166534;">{{ "{:,.0f}".format(order.total_value) }} <span style="font-size:13px;font-weight:600;color:#94a3b8;">د.ل</span></div>
+              </div>
+
+              <!-- سبب التخفيض -->
+              <div style="margin-bottom:16px;">
+                <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">سبب التخفيض <span class="text-danger">*</span></label>
+                <textarea name="discount_reason" class="form-control" rows="2" required placeholder="اذكر سبب التخفيض..." style="border-radius:10px;border:2px solid #fde68a;resize:none;"></textarea>
+              </div>
+            </div>
+
+            <button type="submit" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 15px rgba(245,158,11,0.3);margin-top:12px;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(245,158,11,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 15px rgba(245,158,11,0.3)'" onclick="return confirm('هل انت متاكد من تطبيق التخفيض؟')">
+              <i class="bi bi-percent me-1"></i>تطبيق التخفيض
+            </button>
+          </form>
+          {% else %}
+          <div style="text-align:center;padding:30px;background:#fff;border-radius:12px;border:1px dashed #e2e8f0;">
+            <div style="width:56px;height:56px;border-radius:14px;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+              <i class="bi bi-lock-fill" style="font-size:24px;color:#d97706;"></i>
+            </div>
+            <div style="font-size:14px;font-weight:600;color:#64748b;">قسم التخفيضات متاح للمدير التنفيذي فقط</div>
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const totalValue = {{ order.total_value or 0 }};
+const finalDisplay = document.getElementById('finalValueDisplay');
+const discountInput = document.getElementById('discountInput');
+const percentInput = document.getElementById('percentInput');
+
+function setDiscountType(type) {
+  document.getElementById('discountType').value = type;
+  const btnValue = document.getElementById('btnValue');
+  const btnPercent = document.getElementById('btnPercent');
+  const valueField = document.getElementById('valueField');
+  const percentField = document.getElementById('percentField');
+  if (type === 'value') {
+    btnValue.style.borderColor = '#f59e0b'; btnValue.style.background = '#fffbeb'; btnValue.style.color = '#92400e';
+    btnPercent.style.borderColor = '#e2e8f0'; btnPercent.style.background = '#f8fafc'; btnPercent.style.color = '#64748b';
+    valueField.style.display = ''; percentField.style.display = 'none';
+    discountInput.required = true; percentInput.required = false; discountInput.value = '';
+  } else {
+    btnPercent.style.borderColor = '#f59e0b'; btnPercent.style.background = '#fffbeb'; btnPercent.style.color = '#92400e';
+    btnValue.style.borderColor = '#e2e8f0'; btnValue.style.background = '#f8fafc'; btnValue.style.color = '#64748b';
+    percentField.style.display = ''; valueField.style.display = 'none';
+    percentInput.required = true; discountInput.required = false; percentInput.value = '';
+  }
+  updateFinal(totalValue);
+}
+
+function calcFinal() {
+  const val = parseFloat(discountInput.value) || 0;
+  updateFinal(Math.max(0, totalValue - val));
+}
+
+function calcFinalFromPercent() {
+  const pct = parseFloat(percentInput.value) || 0;
+  const discount = totalValue * (pct / 100);
+  document.getElementById('discountInput').value = discount.toFixed(0);
+  updateFinal(Math.max(0, totalValue - discount));
+}
+
+function updateFinal(val) {
+  if (!finalDisplay) return;
+  finalDisplay.innerHTML = val.toLocaleString('en') + ' <span style="font-size:13px;font-weight:600;color:#94a3b8;">د.ل</span>';
+  finalDisplay.style.color = val < totalValue ? '#166534' : '#dc2626';
+}
+</script>
+{% endblock %}

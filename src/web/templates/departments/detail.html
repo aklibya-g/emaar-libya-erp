@@ -1,0 +1,46 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ department.name_ar }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">بيانات القسم: {{ department.name_ar }}</h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('departments.departments_edit', id=department.id) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>تعديل</a>
+    <a href="{{ url_for('departments.departments_list') }}" class="btn btn-outline-secondary">العودة للقائمة</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">بيانات القسم</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6"><strong>الاسم بالعربي:</strong><p>{{ department.name_ar }}</p></div>
+          <div class="col-md-6"><strong>الاسم بالإنجليزي:</strong><p>{{ department.name_en or '-' }}</p></div>
+          <div class="col-md-6"><strong>الكود:</strong><p>{{ department.code or '-' }}</p></div>
+          <div class="col-md-6"><strong>الشركة:</strong><p>{{ department.company.name_ar if department.company else '-' }}</p></div>
+          <div class="col-md-6"><strong>القسم الأب:</strong><p>{{ department.parent.name_ar if department.parent else '-' }}</p></div>
+          <div class="col-md-6"><strong>المدير:</strong><p>{{ department.manager.full_name_ar if department.manager else '-' }}</p></div>
+          <div class="col-md-6"><strong>الموقع:</strong><p>{{ department.location or '-' }}</p></div>
+          <div class="col-md-6"><strong>الهاتف:</strong><p>{{ department.phone or '-' }}</p></div>
+          <div class="col-md-6"><strong>البريد الإلكتروني:</strong><p>{{ department.email or '-' }}</p></div>
+          <div class="col-md-12"><strong>الوصف:</strong><p>{{ department.description or '-' }}</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">الإجراءات</h6></div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('departments.departments_edit', id=department.id) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>تعديل البيانات</a>
+        <form method="POST" action="{{ url_for('departments.departments_delete', id=department.id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا القسم؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash me-1"></i>حذف القسم</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}المستخدمون | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block extra_css %}
+<style>
+  .user-card { background: var(--bg-card,#fff); border: 1px solid var(--border-color,#e2e8f0); border-radius: 16px; overflow: hidden; transition: all 0.2s; }
+  .user-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+  .user-card .uc-header { padding: 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border-color,#f1f5f9); }
+  .user-card .uc-avatar { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .user-card .uc-name { font-size: 15px; font-weight: 700; color: var(--text-primary,#1e293b); }
+  .user-card .uc-username { font-size: 12px; color: var(--text-secondary,#64748b); }
+  .user-card .uc-body { padding: 16px 20px; }
+  .user-card .uc-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary,#64748b); margin-bottom: 8px; }
+  .user-card .uc-info i { font-size: 14px; width: 16px; text-align: center; }
+  .user-card .uc-footer { padding: 12px 20px; background: var(--hover-bg,#f8fafc); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .user-card .uc-footer .btn, .user-card .uc-footer a, .user-card .uc-footer button {
+    border-radius: 8px; font-size: 12px; font-weight: 600; padding: 8px 0; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; transition: all 0.2s;
+  }
+  .search-box { background: var(--bg-card,#fff); border: 1px solid var(--border-color,#e2e8f0); border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .search-box input { border: none; background: none; outline: none; font-size: 13px; color: var(--text-primary,#1e293b); flex: 1; }
+  .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  @media (max-width: 768px) { .users-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item active">المستخدمون</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-person-gear me-2"></i>المستخدمون</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('users.users_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>اضافة مستخدم</a>
+    </div>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="search-box mb-4" style="max-width:400px;">
+  <i class="bi bi-search" style="color:var(--text-secondary,#94a3b8);"></i>
+  <input type="text" id="searchInput" placeholder="بحث بالاسم أو اسم المستخدم..." onkeyup="filterUsers()" style="color:var(--text-primary,#1e293b);">
+</div>
+
+<!-- Users Grid -->
+{% if users %}
+<div class="users-grid" id="usersGrid">
+  {% for user in users %}
+  {% set colors = ['#4f46e5','#7c3aed','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#8b5cf6'] %}
+  {% set color = colors[loop.index0 % 8] %}
+  <div class="user-card" data-search="{{ (user.username ~ ' ' ~ user.full_name_ar ~ ' ' ~ (user.role.name_ar if user.role else '') ~ ' ' ~ (user._dept.name_ar if user._dept else ''))|lower }}">
+    <div class="uc-header">
+      <div class="uc-avatar" style="background:linear-gradient(135deg,{{ color }},{{ color }}cc);">
+        {{ user.full_name_ar[0] if user.full_name_ar else user.username[0] }}
+      </div>
+      <div class="flex-grow-1">
+        <div class="uc-name">{{ user.full_name_ar }}</div>
+        <div class="uc-username">@{{ user.username }}</div>
+      </div>
+      {% if user.is_active %}
+      <span style="background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;">نشط</span>
+      {% else %}
+      <span style="background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;">غير نشط</span>
+      {% endif %}
+    </div>
+    <div class="uc-body">
+      <div class="uc-info">
+        <i class="bi bi-shield-lock" style="color:{{ color }};"></i>
+        <span>{{ user.role.name_ar if user.role else 'بدون دور' }}</span>
+      </div>
+      <div class="uc-info">
+        <i class="bi bi-building" style="color:#06b6d4;"></i>
+        <span>{{ user._dept.name_ar if user._dept else 'بدون قسم' }}</span>
+      </div>
+      <div class="uc-info">
+        <i class="bi bi-envelope" style="color:#f59e0b;"></i>
+        <span>{{ user.email or 'بدون بريد' }}</span>
+      </div>
+      <div class="uc-info">
+        <i class="bi bi-clock" style="color:#8b5cf6;"></i>
+        <span>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'لم يسجل دخول' }}</span>
+      </div>
+    </div>
+    <div class="uc-footer">
+      <a href="{{ url_for('users.users_edit', id=user.id) }}" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;">
+        <i class="bi bi-pencil"></i><span>تعديل</span>
+      </a>
+      <button style="background:#fef3c7;color:#92400e;" data-bs-toggle="modal" data-bs-target="#resetModal{{ user.id }}">
+        <i class="bi bi-key"></i><span>كلمة المرور</span>
+      </button>
+      <form method="POST" action="{{ url_for('users.users_delete', id=user.id) }}" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" style="background:#fee2e2;color:#991b1b;width:100%;">
+          <i class="bi bi-trash"></i><span>حذف</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div class="modal fade" id="resetModal{{ user.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <form method="POST" action="{{ url_for('users.users_reset_password', id=user.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div style="background:linear-gradient(135deg,#f59e0b,#f97316);padding:16px 20px;border-radius:14px 14px 0 0;color:#fff;">
+            <h6 class="modal-title fw-bold mb-0"><i class="bi bi-key me-1"></i>إعادة تعيين كلمة المرور</h6>
+          </div>
+          <div class="modal-body" style="padding:20px;">
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;">المستخدم: <strong>{{ user.username }}</strong></p>
+            <input type="password" name="new_password" class="form-control" required minlength="6" placeholder="كلمة المرور الجديدة" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+          </div>
+          <div class="modal-footer" style="border-top:1px solid #e2e8f0;padding:12px 20px;border-radius:0 0 14px 14px;">
+            <button type="button" class="btn btn-sm" data-bs-dismiss="modal" style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;">إلغاء</button>
+            <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;border-radius:8px;font-weight:600;">
+              <i class="bi bi-check-lg me-1"></i>حفظ
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5" style="background:var(--bg-card,#fff);border:1px solid var(--border-color,#e2e8f0);border-radius:16px;">
+  <i class="bi bi-people" style="font-size:3rem;color:#d1d5db;"></i>
+  <h6 class="mt-3" style="color:var(--text-secondary,#64748b);">لا يوجد مستخدمين</h6>
+  <a href="{{ url_for('users.users_add') }}" class="btn mt-2" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:10px;font-weight:600;font-size:13px;">
+    <i class="bi bi-plus-lg me-1"></i>إضافة أول مستخدم
+  </a>
+</div>
+{% endif %}
+
+<script>
+function filterUsers() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.user-card').forEach(card => {
+    const text = card.getAttribute('data-search') || '';
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

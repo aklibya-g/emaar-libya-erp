@@ -1,0 +1,185 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الموظفين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<style>
+  .emp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .emp-stat { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-card, #fff); display: flex; align-items: center; gap: 12px; }
+  .emp-stat .icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .emp-stat .info .num { font-size: 20px; font-weight: 700; line-height: 1.1; }
+  .emp-stat .info .lbl { font-size: 11px; color: var(--text-secondary, #64748b); }
+  .filter-card { border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; background: var(--bg-card, #fff); margin-bottom: 20px; }
+  .filter-card .card-body { padding: 14px 18px; }
+  .filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .filter-row .form-select, .filter-row .form-control { max-width: 200px; border-radius: 8px; font-size: 13px; }
+  .emp-table { border-collapse: separate; border-spacing: 0; }
+  .emp-table thead th { background: #1e40af; color: #fff; padding: 10px 12px; font-size: 11px; font-weight: 600; text-align: right; white-space: nowrap; }
+  .emp-table thead th:first-child { border-radius: 0 10px 0 0; }
+  .emp-table thead th:last-child { border-radius: 10px 0 0 0; text-align: center; }
+  .emp-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-color, #e2e8f0); vertical-align: middle; }
+  .emp-table tbody tr:hover { background: var(--hover-bg, #f1f5f9); }
+  .emp-table tbody tr:last-child td { border-bottom: none; }
+  .emp-name-cell { display: flex; align-items: center; gap: 10px; }
+  .emp-avatar { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .emp-name-text .ar { font-weight: 600; font-size: 13px; line-height: 1.2; }
+  .emp-name-text .en { font-size: 10px; color: var(--text-secondary, #94a3b8); }
+  .emp-dept { display: flex; flex-direction: column; }
+  .emp-dept .dept-name { font-weight: 500; font-size: 12px; }
+  .emp-dept .pos-name { font-size: 10px; color: var(--text-secondary, #94a3b8); }
+  .emp-phone { font-size: 11px; direction: ltr; text-align: right; }
+  .emp-date { font-size: 11px; color: var(--text-secondary, #64748b); }
+  .emp-num { font-weight: 600; font-size: 12px; color: #1e40af; }
+  .emp-actions { text-align: center; }
+  .emp-actions .btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 12px; }
+  .empty-state { text-align: center; padding: 50px 20px; }
+  .empty-state i { font-size: 48px; color: var(--text-secondary, #cbd5e1); margin-bottom: 12px; }
+  .empty-state p { color: var(--text-secondary, #64748b); font-size: 14px; }
+  .avatar-colors { --c1: #3b82f6; --c2: #10b981; --c3: #f59e0b; --c4: #ef4444; --c5: #8b5cf6; --c6: #06b6d4; --c7: #ec4899; --c8: #f97316; }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title">إدارة الموظفين</h4>
+    <p class="page-subtitle">قائمة شاملة بجميع موظفي الشركة</p>
+  </div>
+  <a href="{{ url_for('employees.employees_add') }}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i>إضافة موظف
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="emp-stats avatar-colors">
+  <div class="emp-stat">
+    <div class="icon" style="background:rgba(59,130,246,0.1);color:#3b82f6"><i class="bi bi-people-fill"></i></div>
+    <div class="info"><div class="num">{{ employees | length }}</div><div class="lbl">الموظفين المعروضين</div></div>
+  </div>
+  <div class="emp-stat">
+    <div class="icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="info"><div class="num">{{ employees | selectattr('status', 'equalto', 'active') | list | length }}</div><div class="lbl">نشط</div></div>
+  </div>
+  <div class="emp-stat">
+    <div class="icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-building"></i></div>
+    <div class="info"><div class="num">{{ departments | length }}</div><div class="lbl">الاقسام</div></div>
+  </div>
+  <div class="emp-stat">
+    <div class="icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="bi bi-person-badge"></i></div>
+    <div class="info"><div class="num">{{ employees | selectattr('status', 'equalto', 'on_leave') | list | length }}</div><div class="lbl">في إجازة</div></div>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-card">
+  <div class="card-body">
+    <form method="GET" class="filter-row">
+      <div class="position-relative flex-grow-1" style="max-width:300px">
+        <i class="bi bi-search position-absolute" style="right:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary,#94a3b8)"></i>
+        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم، الرقم، أو الهاتف..." value="{{ search }}" style="padding-right:36px;border-radius:8px">
+      </div>
+      <select name="department_id" class="form-select">
+        <option value="">جميع الأقسام</option>
+        {% for dept in departments %}
+        <option value="{{ dept.id }}" {% if department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+        {% endfor %}
+      </select>
+      <select name="status" class="form-select">
+        <option value="">جميع الحالات</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>غير نشط</option>
+        <option value="on_leave" {% if status == 'on_leave' %}selected{% endif %}>إجازة</option>
+      </select>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>تصفية</button>
+      {% if search or department_id or status %}
+      <a href="{{ url_for('employees.employees_list') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>مسح الفلتر</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table emp-table mb-0">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th>المعلومات</th>
+            <th>الرقم الوظيفي</th>
+            <th>القسم / الوظيفة</th>
+            <th>الهاتف</th>
+            <th>تاريخ التعيين</th>
+            <th>الحالة</th>
+            <th style="width:100px;text-align:center">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          {% set colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#f97316'] %}
+          {% set color_idx = loop.index0 % 8 %}
+          <tr>
+            <td style="color:var(--text-secondary,#94a3b8);font-size:11px">{{ loop.index }}</td>
+            <td>
+              <div class="emp-name-cell">
+                {% if emp.photo_path %}
+                <img src="{{ emp.photo_path }}" class="emp-avatar" style="object-fit:cover" alt="">
+                {% else %}
+                <div class="emp-avatar" style="background:{{ colors[color_idx] }}">
+                  {{ emp.full_name_ar[0] if emp.full_name_ar else '?' }}
+                </div>
+                {% endif %}
+                <div class="emp-name-text">
+                  <div class="ar">{{ emp.full_name_ar }}</div>
+                  {% if emp.full_name_en %}<div class="en">{{ emp.full_name_en }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td><span class="emp-num">{{ emp.employee_number }}</span></td>
+            <td>
+              <div class="emp-dept">
+                <span class="dept-name">{{ emp.department.name_ar if emp.department else '-' }}</span>
+                <span class="pos-name">{{ emp.position.name_ar if emp.position else '' }}</span>
+              </div>
+            </td>
+            <td><span class="emp-phone">{{ emp.phone or '-' }}</span></td>
+            <td><span class="emp-date">{{ emp.hire_date.strftime('%Y-%m-%d') if emp.hire_date else '-' }}</span></td>
+            <td>
+              {% if emp.status == 'active' %}
+              <span class="badge" style="background:#dcfce7;color:#16a34a;font-weight:500;padding:5px 10px;border-radius:6px">نشط</span>
+              {% elif emp.status == 'inactive' %}
+              <span class="badge" style="background:#f1f5f9;color:#475569;font-weight:500;padding:5px 10px;border-radius:6px">غير نشط</span>
+              {% elif emp.status == 'on_leave' %}
+              <span class="badge" style="background:#fef3c7;color:#d97706;font-weight:500;padding:5px 10px;border-radius:6px">إجازة</span>
+              {% else %}
+              <span class="badge" style="background:#f1f5f9;color:#475569;font-weight:500;padding:5px 10px;border-radius:6px">{{ emp.status }}</span>
+              {% endif %}
+            </td>
+            <td class="emp-actions">
+              <div class="d-flex gap-1 justify-content-center">
+                <a href="{{ url_for('employees.employees_detail', id=emp.id) }}" class="btn btn-outline-info" title="عرض"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('employees.employees_edit', id=emp.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('employees.employees_delete', id=emp.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا الموظف؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not employees %}
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="bi bi-people d-block"></i>
+                <p>لا يوجد موظفين مسجلين</p>
+                <a href="{{ url_for('employees.employees_add') }}" class="btn btn-primary btn-sm mt-2">
+                  <i class="bi bi-plus-lg me-1"></i>إضافة موظف
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

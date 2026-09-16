@@ -1,0 +1,317 @@
+{% extends "layouts/base.html" %}
+{% block title %}الإدارة المالية | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; letter-spacing: -0.5px; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 400; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item a:hover { color: #fff; text-decoration: underline; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .header-actions .btn { padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; transition: all 0.25s ease; }
+  .header-actions .btn-new { background: #fff; color: #1a365d; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .header-actions .btn-new:hover { background: #f0f9ff; transform: translateY(-2px); }
+
+  .stat-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 20px; text-align: center; transition: all 0.2s; }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .stat-card .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+  .stat-card .stat-number { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+
+  .summary-bar { display: flex; gap: 16px; margin-bottom: 24px; }
+  .summary-item { flex: 1; background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
+  .summary-item .s-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .summary-item .s-info .s-value { font-size: 22px; font-weight: 800; line-height: 1; }
+  .summary-item .s-info .s-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; margin-top: 2px; }
+
+  .chart-bar { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding: 20px 0; }
+  .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart-col .bars { display: flex; gap: 3px; align-items: flex-end; width: 100%; justify-content: center; }
+  .chart-col .bar { width: 14px; border-radius: 4px 4px 0 0; transition: height 0.3s; min-height: 2px; }
+  .chart-col .m-label { font-size: 10px; color: var(--text-secondary, #64748b); font-weight: 500; margin-top: 4px; }
+
+  .h-bar { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-color, #f1f5f9); }
+  .h-bar:last-child { border-bottom: none; }
+  .h-bar .h-name { font-size: 12px; color: var(--text-secondary, #64748b); width: 100px; flex-shrink: 0; text-align: left; }
+  .h-bar .h-track { flex: 1; height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; }
+  .h-bar .h-fill { height: 100%; border-radius: 5px; }
+  .h-bar .h-value { font-size: 12px; font-weight: 700; width: 60px; text-align: left; }
+
+  .finance-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .finance-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 12px; font-size: 11px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .finance-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .finance-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .finance-table tbody tr:last-child td { border-bottom: none; }
+
+  .badge-status { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">الإدارة المالية</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-wallet2 me-2"></i>الإدارة المالية</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <form method="POST" action="{{ url_for('finance.generate_claims') }}" class="d-inline" onsubmit="return confirm('هل تريد توليد المطالبات المالية للشهر الحالي؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-new">
+          <i class="bi bi-file-earmark-plus me-1"></i>توليد المطالبات
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <a href="{{ url_for('finance.claims_list') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-number" style="color:#f59e0b">{{ pending_claims|default(0) }}</div>
+        <div class="stat-label">مطالبات بانتظار التحصيل</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{{ url_for('finance.debts') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="bi bi-person-exclamation"></i></div>
+        <div class="stat-number" style="color:#ef4444">{{ total_remaining|default(0)|int }}</div>
+        <div class="stat-label">ديون الجيال</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{{ url_for('finance.payouts_list') }}" class="text-decoration-none d-block">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-cash-stack"></i></div>
+        <div class="stat-number" style="color:#8b5cf6">{{ pending_payouts|default(0) }}</div>
+        <div class="stat-label">مصروفات السائقين</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-number" style="color:#10b981">{{ "{:,.0f}".format(net_profit|default(0)) }}</div>
+      <div class="stat-label">صافي الربح <span style="font-size:10px">د.ل</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Financial Summary Bar -->
+<div class="summary-bar">
+  <div class="summary-item">
+    <div class="s-icon" style="background:rgba(59,130,246,0.1);color:#3b82f6"><i class="bi bi-arrow-down-left"></i></div>
+    <div class="s-info">
+      <div class="s-value" style="color:#3b82f6">{{ "{:,.0f}".format(total_revenue|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="s-label">اجمالي المدخلات</div>
+    </div>
+  </div>
+  <div class="summary-item">
+    <div class="s-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="bi bi-arrow-up-right"></i></div>
+    <div class="s-info">
+      <div class="s-value" style="color:#ef4444">{{ "{:,.0f}".format(total_payouts|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="s-label">اجمالي المصروفات</div>
+    </div>
+  </div>
+  <div class="summary-item">
+    <div class="s-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="bi bi-cash-coin"></i></div>
+    <div class="s-info">
+      <div class="s-value" style="color:#10b981">{{ "{:,.0f}".format(net_profit|default(0)) }} <span style="font-size:12px;font-weight:500;color:#94a3b8">د.ل</span></div>
+      <div class="s-label">صافي الربح</div>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly Chart + Debts -->
+<div class="row g-3 mb-4">
+  <!-- Monthly Revenue Chart -->
+  <div class="col-lg-8">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0" style="font-weight:700"><i class="bi bi-bar-chart-line me-2" style="color:#3b82f6"></i>المقارنة الشهرية (آخر 6 شهور)</h6>
+          <div class="d-flex gap-3" style="font-size:11px">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-left:4px"></span>الإيرادات</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#10b981;margin-left:4px"></span>المحصل</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-left:4px"></span>المصروفات</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if monthly_data %}
+        {% set max_val = [1] %}
+        {% for m in monthly_data %}
+          {% if m.revenue > max_val[0] %}{% set _ = max_val.__setitem__(0, m.revenue) %}{% endif %}
+          {% if m.received > max_val[0] %}{% set _ = max_val.__setitem__(0, m.received) %}{% endif %}
+          {% if m.payouts > max_val[0] %}{% set _ = max_val.__setitem__(0, m.payouts) %}{% endif %}
+        {% endfor %}
+        <div class="chart-bar">
+          {% for m in monthly_data %}
+          {% set max_v = max_val[0] if max_val[0] > 0 else 1 %}
+          <div class="chart-col">
+            <div class="bars">
+              <div class="bar" style="height:{{ (m.revenue / max_v * 100)|int }}%;background:#3b82f6" title="الإيرادات: {{ '{:,.0f}'.format(m.revenue) }}"></div>
+              <div class="bar" style="height:{{ (m.received / max_v * 100)|int }}%;background:#10b981" title="المحصل: {{ '{:,.0f}'.format(m.received) }}"></div>
+              <div class="bar" style="height:{{ (m.payouts / max_v * 100)|int }}%;background:#ef4444" title="المصروفات: {{ '{:,.0f}'.format(m.payouts) }}"></div>
+            </div>
+            <div class="m-label">{{ m.name }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5" style="color:var(--text-secondary,#94a3b8)">
+          <i class="bi bi-bar-chart fs-3 d-block mb-2"></i>
+          لا توجد بيانات شهرية بعد
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Debts by Client -->
+  <div class="col-lg-4">
+    <div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0" style="font-weight:700"><i class="bi bi-people me-2" style="color:#ef4444"></i>الديون حسب الجهة</h6>
+          <a href="{{ url_for('finance.debts') }}" style="font-size:11px;color:#3b82f6;text-decoration:none">عرض الكل</a>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if debts_by_client %}
+        {% set max_debt = debts_by_client[0].remaining if debts_by_client else 1 %}
+        {% for d in debts_by_client[:6] %}
+        {% set pct = (d.remaining / max_debt * 100) if max_debt > 0 else 0 %}
+        <div class="h-bar">
+          <span class="h-name" title="{{ d.client_name }}">{{ d.client_name[:12] }}</span>
+          <div class="h-track">
+            <div class="h-fill" style="width:{{ pct|int }}%;background:linear-gradient(90deg,#ef4444,#f97316)"></div>
+          </div>
+          <span class="h-value" style="color:#ef4444">{{ "{:,.0f}".format(d.remaining) }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-4" style="color:var(--text-secondary,#94a3b8)">
+          <i class="bi bi-check-circle fs-3 d-block mb-2" style="color:#10b981"></i>
+          لا توجد ديون حالياً
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Claims -->
+<div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0" style="font-weight:700"><i class="bi bi-file-earmark-text me-2" style="color:#f59e0b"></i>آخر المطالبات</h6>
+      <a href="{{ url_for('finance.claims_list') }}" style="font-size:11px;color:#3b82f6;text-decoration:none">عرض الكل</a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="finance-table mb-0">
+        <thead>
+          <tr>
+            <th>رقم المطالبة</th>
+            <th>رقم أمر التشغيل</th>
+            <th>الجهة</th>
+            <th>القيمة النهائية</th>
+            <th>المحصل</th>
+            <th>المتبقي</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_claims %}
+          {% for claim in recent_claims %}
+          <tr>
+            <td><a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}" style="font-weight:700;color:#1e40af;text-decoration:none;background:#eff6ff;padding:3px 8px;border-radius:6px;font-size:12px">{{ claim.claim_number }}</a></td>
+            <td>{{ claim.order_number or '-' }}</td>
+            <td style="font-weight:600;font-size:11px">{{ claim.client_name or '-' }}</td>
+            <td><span style="font-weight:700;color:#1e40af">{{ "{:,.0f}".format(claim.final_value) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+            <td><span style="font-weight:600;color:#10b981">{{ "{:,.0f}".format(claim.received_amount) }}</span></td>
+            <td><span style="font-weight:600;color:#ef4444">{{ "{:,.0f}".format(claim.remaining_amount) }}</span></td>
+            <td>
+              {% if claim.status == 'pending' %}
+                <span class="badge-status" style="background:#fef3c7;color:#92400e">بانتظار التحصيل</span>
+              {% elif claim.status == 'partially_paid' %}
+                <span class="badge-status" style="background:#dbeafe;color:#1e40af">مدفوع جزئياً</span>
+              {% elif claim.status == 'fully_paid' %}
+                <span class="badge-status" style="background:#d1fae5;color:#065f46">مدفوع بالكامل</span>
+              {% else %}
+                <span class="badge-status" style="background:#f3f4f6;color:#374151">{{ claim.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr><td colspan="7" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-inbox fs-3 d-block mb-2"></i>لا توجد مطالبات بعد</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+    <h6 class="mb-0" style="font-weight:700"><i class="bi bi-lightning-charge-fill me-2" style="color:#f59e0b"></i>إجراءات سريعة</h6>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <a href="{{ url_for('finance.claims_list') }}" class="btn btn-outline-primary w-100" style="border-radius:12px;padding:14px">
+          <i class="bi bi-list-ul me-1"></i>قائمة المطالبات
+        </a>
+      </div>
+      <div class="col-md-3">
+        <a href="{{ url_for('finance.receipts_list') }}" class="btn btn-outline-success w-100" style="border-radius:12px;padding:14px">
+          <i class="bi bi-receipt me-1"></i>الإيصالات
+        </a>
+      </div>
+      <div class="col-md-3">
+        <a href="{{ url_for('finance.payouts_list') }}" class="btn btn-outline-warning w-100" style="border-radius:12px;padding:14px">
+          <i class="bi bi-cash-stack me-1"></i>مصروفات السائقين
+        </a>
+      </div>
+      <div class="col-md-3">
+        <a href="{{ url_for('finance.reports') }}" class="btn btn-outline-info w-100" style="border-radius:12px;padding:14px">
+          <i class="bi bi-graph-up me-1"></i>التقارير المالية
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

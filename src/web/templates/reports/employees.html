@@ -1,0 +1,56 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}تقرير الموظفين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">تقرير الموظفين</h4>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-primary">{{ total }}</h3>
+        <small class="text-muted">إجمالي الموظفين النشطين</small>
+      </div>
+    </div>
+  </div>
+  {% for dept_name, count in dept_counts.items() %}
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <h3 class="text-info">{{ count }}</h3>
+        <small class="text-muted">{{ dept_name }}</small>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header"><h6 class="mb-0">قائمة الموظفين النشطين</h6></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr><th>رقم الموظف</th><th>الاسم</th><th>القسم</th><th>الهاتف</th><th>تاريخ التعيين</th><th>الحالة</th></tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td>{{ emp.employee_number }}</td>
+            <td>{{ emp.full_name_ar }}</td>
+            <td>{{ emp.department.name_ar if emp.department else '-' }}</td>
+            <td>{{ emp.phone or '-' }}</td>
+            <td>{{ emp.hire_date.strftime('%Y-%m-%d') if emp.hire_date else '-' }}</td>
+            <td>
+              {% if emp.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% else %}<span class="badge bg-secondary">{{ emp.status }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,529 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}تفاصيل السيارة {{ vehicle.plate_number }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <div>
+      <h4 class="page-title mb-0">{{ vehicle.plate_number }} - {{ vehicle.brand or '' }} {{ vehicle.model or '' }}</h4>
+      <p class="page-subtitle mb-0">{{ vehicle.vehicle_type.name_ar if vehicle.vehicle_type else '' }}</p>
+    </div>
+  </div>
+  <a href="{{ url_for('vehicles.vehicles_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة المركبات
+  </a>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'info' %}active{% endif %}" href="?tab=info">المعلومات</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'maintenance' %}active{% endif %}" href="?tab=maintenance">الصيانة</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'breakdowns' %}active{% endif %}" href="?tab=breakdowns">الأعطال</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'expenses' %}active{% endif %}" href="?tab=expenses">المصاريف</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'fuel' %}active{% endif %}" href="?tab=fuel">الوقود</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'parts' %}active{% endif %}" href="?tab=parts">قطع الغيار</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'documents' %}active{% endif %}" href="?tab=documents">المستندات</a></li>
+  <li class="nav-item"><a class="nav-link {% if active_tab == 'drivers' %}active{% endif %}" href="?tab=drivers">السائقون</a></li>
+</ul>
+
+{% if active_tab == 'info' %}
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">بيانات السيارة</h6></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table table-borderless mb-0">
+              <tr><td class="text-muted" style="width:45%">رقم اللوحة</td><td class="fw-bold">{{ vehicle.plate_number }}</td></tr>
+              <tr><td class="text-muted">رقم اعمار</td><td>{{ vehicle.emaar_number or '-' }}</td></tr>
+              <tr><td class="text-muted">النوع</td><td>{{ vehicle.vehicle_type.name_ar if vehicle.vehicle_type else '-' }}</td></tr>
+              <tr><td class="text-muted">الماركة</td><td>{{ vehicle.brand or '-' }}</td></tr>
+              <tr><td class="text-muted">الموديل</td><td>{{ vehicle.model or '-' }}</td></tr>
+              <tr><td class="text-muted">السنة</td><td>{{ vehicle.year or '-' }}</td></tr>
+              <tr><td class="text-muted">اللون</td><td>{{ vehicle.color or '-' }}</td></tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <table class="table table-borderless mb-0">
+              <tr><td class="text-muted" style="width:45%">رقم المحرّك</td><td>{{ vehicle.engine_number or '-' }}</td></tr>
+              <tr><td class="text-muted">رقم الشاصي</td><td>{{ vehicle.chassis_number or '-' }}</td></tr>
+              <tr><td class="text-muted">نوع الوقود</td><td>{{ vehicle.fuel_type or '-' }}</td></tr>
+              <tr><td class="text-muted">سعة الخزان</td><td>{{ vehicle.tank_capacity or '-' }} لتر</td></tr>
+              <tr><td class="text-muted">عدد المقاعد</td><td>{{ vehicle.seats_count or '-' }}</td></tr>
+              <tr><td class="text-muted">الكيلومتر</td><td>{{ vehicle.current_km or '0' }} كم</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">الحالة والتأمين</h6></div>
+      <div class="card-body">
+        <div class="mb-2">
+          <span class="text-muted">الحالة:</span>
+          {% if vehicle.status == 'active' %}<span class="badge bg-success">نشط</span>
+          {% elif vehicle.status == 'maintenance' %}<span class="badge bg-warning text-dark">صيانة</span>
+          {% else %}<span class="badge bg-secondary">متوقف</span>{% endif %}
+        </div>
+        <div class="mb-2"><span class="text-muted">انتهاء التأمين:</span> {{ vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle.insurance_expiry else '-' }}</div>
+        <div class="mb-2"><span class="text-muted">انتهاء التسجيل:</span> {{ vehicle.registration_expiry.strftime('%Y-%m-%d') if vehicle.registration_expiry else '-' }}</div>
+        <div><span class="text-muted">ملاحظات:</span> {{ vehicle.notes or '-' }}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">السائق المسؤول</h6></div>
+      <div class="card-body text-center">
+        {% if vehicle.driver %}
+          {% if driver_photo %}
+          <img src="{{ driver_photo }}" alt="صورة السائق" class="rounded-circle mb-2" style="width:80px;height:80px;object-fit:cover">
+          {% else %}
+          <div class="bg-secondary bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:80px;height:80px">
+            <i class="bi bi-person fs-1 text-muted"></i>
+          </div>
+          {% endif %}
+          <div class="fw-bold">{{ vehicle.driver.full_name_ar }}</div>
+          <small class="text-muted">{{ vehicle.driver.phone or '' }}</small>
+        {% else %}
+          <div class="text-muted py-3">لا يوجد سائق معيّن</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'maintenance' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>سجل الصيانة</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMaintenanceModal"><i class="bi bi-plus-lg me-1"></i>إضافة صيانة</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>التاريخ</th><th>النوع</th><th>الوصف</th><th>التكلفة</th><th>قام بالصيانة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for m in maintenance %}
+        <tr>
+          <td>{{ m.maintenance_date.strftime('%Y-%m-%d') if m.maintenance_date else '-' }}</td>
+          <td>{{ m.maintenance_type }}</td>
+          <td>{{ m.description[:50] }}</td>
+          <td>{{ '{:,.2f}'.format(m.cost) if m.cost else '-' }}</td>
+          <td>{{ m.performed_by or '-' }}</td>
+          <td>
+            <span class="badge {% if m.status == 'completed' %}bg-success{% elif m.status == 'pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {% if m.status == 'completed' %}مكتملة{% elif m.status == 'pending' %}قيد التنفيذ{% elif m.status == 'cancelled' %}ملغاة{% else %}{{ m.status }}{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if m.status != 'completed' and m.status != 'cancelled' %}
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">تحديث</button>
+              <ul class="dropdown-menu">
+                <li><form method="POST" action="{{ url_for('vehicles.maintenance_update_status', id=vehicle.id, mid=m.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="completed"><button class="dropdown-item text-success" type="submit">مكتملة</button></form></li>
+                <li><form method="POST" action="{{ url_for('vehicles.maintenance_update_status', id=vehicle.id, mid=m.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="cancelled"><button class="dropdown-item text-danger" type="submit">ملغاة</button></form></li>
+              </ul>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not maintenance %}<tr><td colspan="7" class="text-center text-muted py-4">لا توجد سجلات صيانة</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addMaintenanceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.maintenance_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة صيانة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">نوع الصيانة <span class="text-danger">*</span></label>
+            <select name="maintenance_type" class="form-select" required>
+              <option value="">اختر</option>
+              <option value="duster">داستر</option>
+              <option value="oil_change">تغيير زيت</option>
+              <option value="tires">إطارات</option>
+              <option value="brakes">فرامل</option>
+              <option value="battery">بطارية</option>
+              <option value="general">صيانة عامة</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">الوصف <span class="text-danger">*</span></label><textarea name="description" class="form-control" rows="2" required></textarea></div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="maintenance_date" class="form-control" value="{{ today }}"></div>
+            <div class="col-md-6"><label class="form-label">التكلفة</label><input type="number" name="cost" class="form-control" step="0.01"></div>
+            <div class="col-md-6"><label class="form-label">التاريخ القادم للصيانة</label><input type="date" name="next_maintenance_date" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">الكيلومتر القادم</label><input type="number" name="next_maintenance_km" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">قام بالصيانة</label><input type="text" name="performed_by" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">الحالة</label>
+              <select name="status" class="form-select">
+                <option value="pending">قيد التنفيذ</option>
+                <option value="completed">مكتملة</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'breakdowns' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>سجل الأعطال</h5>
+  <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addBreakdownModal"><i class="bi bi-plus-lg me-1"></i>تسجيل عطل</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>التاريخ</th><th>الوصف</th><th>الشدة</th><th>التكلفة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for b in breakdowns %}
+        <tr>
+          <td>{{ b.breakdown_date.strftime('%Y-%m-%d') if b.breakdown_date else '-' }}</td>
+          <td>{{ b.description[:50] }}</td>
+          <td><span class="badge {% if b.severity == 'major' %}bg-danger{% elif b.severity == 'moderate' %}bg-warning text-dark{% else %}bg-info{% endif %}">{{ b.severity }}</span></td>
+          <td>{{ '{:,.2f}'.format(b.cost) if b.cost else '-' }}</td>
+          <td><span class="badge {% if b.resolved %}bg-success{% else %}bg-danger{% endif %}">{{ 'تم الحل' if b.resolved else 'معلق' }}</span></td>
+          <td>
+            {% if not b.resolved %}
+            <form method="POST" action="{{ url_for('vehicles.breakdown_resolve', id=vehicle.id, bid=b.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-success btn-sm" title="تم الحل"><i class="bi bi-check-lg"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not breakdowns %}<tr><td colspan="6" class="text-center text-muted py-4">لا توجد أعطال</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addBreakdownModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.breakdown_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">تسجيل عطل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">الوصف <span class="text-danger">*</span></label><textarea name="description" class="form-control" rows="2" required></textarea></div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="breakdown_date" class="form-control" value="{{ today }}"></div>
+            <div class="col-md-6"><label class="form-label">الشدة</label>
+              <select name="severity" class="form-select">
+                <option value="minor">بسيط</option>
+                <option value="moderate">متوسط</option>
+                <option value="major">كبير</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">التكلفة</label><input type="number" name="cost" class="form-control" step="0.01"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'expenses' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>المصاريف - الإجمالي: {{ '{:,.2f}'.format(total_expenses) }} د.ل</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal"><i class="bi bi-plus-lg me-1"></i>إضافة مصروف</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الوصف</th><th>رقم الإيصال</th></tr></thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td>{{ e.expense_date.strftime('%Y-%m-%d') if e.expense_date else '-' }}</td>
+          <td>{{ e.expense_type }}</td>
+          <td class="fw-bold">{{ '{:,.2f}'.format(e.amount) }}</td>
+          <td>{{ e.description or '-' }}</td>
+          <td>{{ e.receipt_number or '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not expenses %}<tr><td colspan="5" class="text-center text-muted py-4">لا توجد مصاريف</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.expense_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة مصروف</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">النوع <span class="text-danger">*</span></label>
+            <select name="expense_type" class="form-select" required>
+              <option value="">اختر</option>
+              <option value="maintenance">صيانة</option>
+              <option value="insurance">تأمين</option>
+              <option value="registration">تسجيل</option>
+              <option value="fine">غرامة</option>
+              <option value="toll">رسوم مرور</option>
+              <option value="parking">موقف</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">المبلغ <span class="text-danger">*</span></label><input type="number" name="amount" class="form-control" step="0.01" required></div>
+            <div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="expense_date" class="form-control" value="{{ today }}"></div>
+            <div class="col-md-6"><label class="form-label">الوصف</label><input type="text" name="description" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">رقم الإيصال</label><input type="text" name="receipt_number" class="form-control"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'fuel' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>سجل الوقود - الإجمالي: {{ '{:,.2f}'.format(total_fuel) }} د.ل</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFuelModal"><i class="bi bi-plus-lg me-1"></i>إضافة تعبئة</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>التاريخ</th><th>اللترات</th><th>سعر اللتر</th><th>التكلفة</th><th>العداد</th><th>المحطة</th></tr></thead>
+      <tbody>
+        {% for f in fuel_records %}
+        <tr>
+          <td>{{ f.fuel_date.strftime('%Y-%m-%d') if f.fuel_date else '-' }}</td>
+          <td>{{ f.liters }}</td>
+          <td>{{ '{:,.2f}'.format(f.cost_per_liter) }}</td>
+          <td class="fw-bold">{{ '{:,.2f}'.format(f.total_cost) }}</td>
+          <td>{{ f.odometer_km or '-' }}</td>
+          <td>{{ f.fuel_station or '-' }}</td>
+        </tr>
+        {% endfor %}
+        {% if not fuel_records %}<tr><td colspan="6" class="text-center text-muted py-4">لا توجد سجلات وقود</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addFuelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.fuel_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة تعبئة وقود</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">التاريخ</label><input type="date" name="fuel_date" class="form-control" value="{{ today }}"></div>
+            <div class="col-md-6"><label class="form-label">اللترات <span class="text-danger">*</span></label><input type="number" name="liters" class="form-control" step="0.01" required></div>
+            <div class="col-md-6"><label class="form-label">سعر اللتر <span class="text-danger">*</span></label><input type="number" name="cost_per_liter" class="form-control" step="0.01" required></div>
+            <div class="col-md-6"><label class="form-label">العداد</label><input type="number" name="odometer_km" class="form-control" step="0.1"></div>
+            <div class="col-md-6"><label class="form-label">المحطة</label><input type="text" name="fuel_station" class="form-control"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'parts' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>قطع الغيار المستخدمة - الإجمالي: {{ '{:,.2f}'.format(total_parts) }} د.ل</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPartModal"><i class="bi bi-plus-lg me-1"></i>إضافة قطعة غيار</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>التاريخ</th><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+        {% for p in spare_parts %}
+        <tr>
+          <td>{{ p.usage_date.strftime('%Y-%m-%d') if p.usage_date else '-' }}</td>
+          <td>{{ p.item.name_ar if p.item else '-' }}</td>
+          <td>{{ p.quantity }}</td>
+          <td>{{ '{:,.2f}'.format(p.unit_price) }}</td>
+          <td class="fw-bold">{{ '{:,.2f}'.format(p.total_price) }}</td>
+        </tr>
+        {% endfor %}
+        {% if not spare_parts %}<tr><td colspan="5" class="text-center text-muted py-4">لا توجد قطع غيار مسجلة</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addPartModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.spare_part_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة قطعة غيار</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">الصنف من المخزن <span class="text-danger">*</span></label>
+            <select name="item_id" class="form-select" required>
+              <option value="">اختر الصنف</option>
+              {% for item in items %}
+              <option value="{{ item.id }}">{{ item.name_ar }} (متوفر: {{ item.current_quantity }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">الكمية <span class="text-danger">*</span></label><input type="number" name="quantity" class="form-control" step="0.1" required></div>
+            <div class="col-md-4"><label class="form-label">سعر الوحدة <span class="text-danger">*</span></label><input type="number" name="unit_price" class="form-control" step="0.01" required></div>
+            <div class="col-md-4"><label class="form-label">ملاحظات</label><input type="text" name="notes" class="form-control"></div>
+          </div>
+          <div class="alert alert-warning mt-3 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>سيتم خصم الكمية من المخزن تلقائياً</div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">صرف وحفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'documents' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>مستندات المركبة</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocumentModal"><i class="bi bi-plus-lg me-1"></i>إضافة مستند</button>
+</div>
+<div class="row g-3">
+  {% for doc in documents %}
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="badge bg-primary">{{ doc.doc_type }}</span>
+          <form method="POST" action="{{ url_for('vehicles.document_delete', id=vehicle.id, did=doc.id) }}" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+        <h6>{{ doc.title }}</h6>
+        {% if doc.issue_date %}<small class="text-muted d-block">تاريخ الإصدار: {{ doc.issue_date.strftime('%Y-%m-%d') }}</small>{% endif %}
+        {% if doc.expiry_date %}<small class="text-muted d-block">تاريخ الانتهاء: {{ doc.expiry_date.strftime('%Y-%m-%d') }}</small>{% endif %}
+        {% if doc.notes %}<small class="d-block mt-1">{{ doc.notes }}</small>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if not documents %}
+  <div class="col-12">
+    <div class="card"><div class="card-body text-center text-muted py-5">لا توجد مستندات مسجلة لهذه المركبة</div></div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal fade" id="addDocumentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.document_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة مستند</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">نوع المستند <span class="text-danger">*</span></label>
+              <select name="doc_type" class="form-select" required>
+                <option value="">اختر</option>
+                <option value="رخصة">رخصة</option>
+                <option value="تأمين">تأمين</option>
+                <option value="فاتورة">فاتورة</option>
+                <option value="عقد">عقد</option>
+                <option value="صورة">صورة</option>
+                <option value="أخرى">أخرى</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">العنوان <span class="text-danger">*</span></label><input type="text" name="title" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">تاريخ الإصدار</label><input type="date" name="issue_date" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">تاريخ الانتهاء</label><input type="date" name="expiry_date" class="form-control"></div>
+            <div class="col-12"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% elif active_tab == 'drivers' %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5>سجل السائقين على هذه المركبة</h5>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDriverLogModal"><i class="bi bi-plus-lg me-1"></i>إضافة سجل</button>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>السائق</th><th>من تاريخ</th><th>إلى تاريخ</th><th>المدة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for log in driver_logs %}
+        <tr>
+          <td class="fw-bold">{{ log.driver.full_name_ar if log.driver else '-' }}</td>
+          <td>{{ log.start_date.strftime('%Y-%m-%d') if log.start_date else '-' }}</td>
+          <td>{{ log.end_date.strftime('%Y-%m-%d') if log.end_date else 'حتى الآن' }}</td>
+          <td>
+            {% if log.end_date %}
+              {{ (log.end_date - log.start_date).days }} يوم
+            {% else %}
+              {% set diff = (today - log.start_date).days %}
+              {{ diff }} يوم
+            {% endif %}
+          </td>
+          <td>
+            {% if log.end_date %}
+              <span class="badge bg-secondary">منتهي</span>
+            {% else %}
+              <span class="badge bg-success">نشط</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not log.end_date %}
+            <form method="POST" action="{{ url_for('vehicles.driver_log_end', id=vehicle.id, lid=log.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-warning btn-sm" title="إنهاء الفترة" onclick="return confirm('هل تريد إنهاء فترة عمل هذا السائق؟')"><i class="bi bi-stop-circle"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not driver_logs %}<tr><td colspan="6" class="text-center text-muted py-4">لا توجد سجلات سائقين</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="addDriverLogModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('vehicles.driver_log_add', id=vehicle.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header"><h5 class="modal-title">إضافة سجل سائق</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">السائق <span class="text-danger">*</span></label>
+            <select name="driver_id" class="form-select" required>
+              <option value="">اختر السائق</option>
+              {% for drv in drivers %}
+              <option value="{{ drv.id }}">{{ drv.full_name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">تاريخ البدء <span class="text-danger">*</span></label><input type="date" name="start_date" class="form-control" value="{{ today }}" required></div>
+            <div class="col-md-6"><label class="form-label">تاريخ الانتهاء</label><input type="date" name="end_date" class="form-control"><small class="text-muted">اتركه فارغاً إذا كان السائق لا يزال يعمل</small></div>
+          </div>
+          <div class="mb-3"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>عقد العمل - {{ contract.contract_number }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Cairo', 'Tahoma', sans-serif; font-size: 13px; color: #1a202c; line-height: 1.8; background: #fff; }
+    .page { width: 210mm; height: 297mm; padding: 10mm 14mm; position: relative; overflow: hidden; }
+
+    /* Header */
+    .header { text-align: center; border-bottom: 2.5px solid #0d3b66; padding-bottom: 6px; margin-bottom: 4px; }
+    .company-name { font-size: 22px; font-weight: 800; color: #0d3b66; letter-spacing: 1px; }
+    .company-sub { font-size: 10px; color: #718096; margin-top: 1px; }
+
+    .bismillah { text-align: center; font-size: 14px; font-weight: 700; color: #0d3b66; padding: 4px 0; }
+
+    .title-bar { display: inline-block; background: #0d3b66; color: #fff; padding: 5px 35px; font-size: 15px; font-weight: 700; border-radius: 4px; letter-spacing: 2px; margin-bottom: 8px; }
+
+    /* Sections */
+    .section { margin-bottom: 6px; border: 1.5px solid #0d3b66; border-radius: 6px; overflow: hidden; }
+    .section-header { background: #0d3b66; color: #fff; padding: 3px 12px; font-size: 12px; font-weight: 700; }
+    .section-body { padding: 6px 12px; }
+
+    /* Data */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 15px; }
+    .data-row { display: flex; padding: 3px 0; border-bottom: 1px dotted #cbd5e0; align-items: baseline; }
+    .data-row:last-child { border-bottom: none; }
+    .data-label { font-weight: 700; min-width: 100px; color: #2d3748; font-size: 12px; }
+    .data-value { flex: 1; color: #1a202c; font-size: 13px; }
+
+    /* Financial */
+    .fin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .fin-card { text-align: center; padding: 6px; border: 1.5px solid #0d3b66; border-radius: 6px; }
+    .fin-card.total { background: #0d3b66; color: #fff; }
+    .fin-label { font-size: 10px; color: #4a5568; }
+    .fin-card.total .fin-label { color: #bee3f8; }
+    .fin-value { font-size: 16px; font-weight: 800; color: #0d3b66; }
+    .fin-card.total .fin-value { color: #fff; }
+    .fin-unit { font-size: 9px; color: #718096; }
+    .fin-card.total .fin-unit { color: #bee3f8; }
+
+    /* Articles */
+    .article { padding: 3px 0; border-bottom: 1px dotted #cbd5e0; }
+    .article:last-child { border-bottom: none; }
+    .article-num { display: inline-block; background: #edf2f7; color: #0d3b66; padding: 0 7px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-left: 4px; }
+    .article-title { font-weight: 700; color: #0d3b66; font-size: 12px; }
+    .article-text { display: inline; font-size: 12px; color: #2d3748; }
+
+    /* Signatures */
+    .sig-section { margin-top: 10px; page-break-inside: avoid; }
+    .sig-label { text-align: center; font-size: 12px; font-weight: 700; color: #0d3b66; margin-bottom: 8px; }
+    .sig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .sig-box { text-align: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f7fafc; }
+    .sig-stamp { width: 55px; height: 55px; border: 2px dashed #cbd5e0; border-radius: 50%; margin: 4px auto 6px; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-size: 9px; background: #fff; }
+    .sig-line { width: 80%; margin: 0 auto 4px; border-top: 1.5px solid #2d3748; }
+    .sig-title { font-weight: 700; font-size: 12px; color: #0d3b66; }
+    .sig-name { font-size: 10px; color: #718096; margin-top: 2px; }
+
+    /* Footer */
+    .footer { margin-top: 8px; padding-top: 5px; border-top: 2px solid #0d3b66; text-align: center; }
+    .footer-line { display: flex; justify-content: space-between; font-size: 10px; color: #718096; }
+
+    @media print {
+      body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="text-align:center;margin-bottom:10px">
+    <button onclick="window.print()" style="padding:8px 30px;background:#0d3b66;color:#fff;border:none;border-radius:5px;font-size:14px;cursor:pointer;font-family:'Cairo';font-weight:600">🖨️ طباعة العقد</button>
+  </div>
+
+  <div class="page">
+    <div class="header">
+      <div class="company-name">شركة اعمار ليبيا لنقل الركاب</div>
+      <div class="company-sub">subsidiary: شركة اعمار ليبيا القابضة</div>
+    </div>
+
+    <div style="text-align:center"><div class="title-bar">عقد عمل</div></div>
+
+    <!-- الطرف الاول -->
+    <div class="section">
+      <div class="section-header">الطرف الاول (صاحب العمل)</div>
+      <div class="section-body">
+        <div class="data-row"><span class="data-label">الاسم:</span><span class="data-value">شركة اعمار ليبيا لنقل الركاب</span></div>
+        <div class="data-row"><span class="data-label">المقر:</span><span class="data-value">طرابلس - ليبيا</span></div>
+      </div>
+    </div>
+
+    <!-- الطرف الثاني -->
+    <div class="section">
+      <div class="section-header">الطرف الثاني (الموظف)</div>
+      <div class="section-body">
+        <div class="two-col">
+          <div>
+            <div class="data-row"><span class="data-label">الاسم:</span><span class="data-value">{{ employee.full_name_ar if employee else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">الرقم الوظيفي:</span><span class="data-value">{{ employee.employee_number if employee else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">الرقم الوطني:</span><span class="data-value">{{ employee.national_id if employee else '-' }}</span></div>
+          </div>
+          <div>
+            <div class="data-row"><span class="data-label">الهاتف:</span><span class="data-value">{{ employee.phone if employee else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">القسم:</span><span class="data-value">{{ employee.department.name if employee and employee.department else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">المنصب:</span><span class="data-value">{{ employee.position.title if employee and employee.position else '-' }}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- تفاصيل العقد -->
+    <div class="section">
+      <div class="section-header">تفاصيل العقد</div>
+      <div class="section-body">
+        <div class="two-col">
+          <div>
+            <div class="data-row"><span class="data-label">رقم العقد:</span><span class="data-value">{{ contract.contract_number }}</span></div>
+            <div class="data-row"><span class="data-label">نوع العقد:</span><span class="data-value">{% if contract.contract_type == 'permanent' %}دائم{% elif contract.contract_type == 'temporary' %}مؤقت{% elif contract.contract_type == 'probation' %}اخباري{% else %}{{ contract.contract_type or '-' }}{% endif %}</span></div>
+            <div class="data-row"><span class="data-label">فترة الاختبار:</span><span class="data-value">{{ contract.probation_period_months or '-' }} شهر</span></div>
+          </div>
+          <div>
+            <div class="data-row"><span class="data-label">تاريخ البدء:</span><span class="data-value">{{ contract.start_date.strftime('%d/%m/%Y') if contract.start_date else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">تاريخ الانتهاء:</span><span class="data-value">{{ contract.end_date.strftime('%d/%m/%Y') if contract.end_date else '-' }}</span></div>
+            <div class="data-row"><span class="data-label">الحالة:</span><span class="data-value">{% if contract.status == 'active' %}نشط{% elif contract.status == 'expired' %}منتهي{% elif contract.status == 'terminated' %}ملغي{% else %}{{ contract.status or '-' }}{% endif %}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بنود العقد -->
+    <div class="section">
+      <div class="section-header">بنود العقد</div>
+      <div class="section-body">
+        <div class="article"><span class="article-num">1</span><span class="article-title">مدة العقد:</span> <span class="article-text">يستمر هذا العقد لمدة {{ contract.probation_period_months or '...' }} شهر تبدأ من {{ contract.start_date.strftime('%d/%m/%Y') if contract.start_date else '...' }} ولغاية {{ contract.end_date.strftime('%d/%m/%Y') if contract.end_date else '...' }}</span></div>
+        <div class="article"><span class="article-num">2</span><span class="article-title">الراتب:</span> <span class="article-text">يكون الراتب الشهري {{ '{:,.0f}'.format(contract.salary) if contract.salary else '...' }} د.ل {{ '+ ' ~ '{:,.0f}'.format(contract.allowances) if contract.allowances else '' }}{{ ' د.ل بدلات' if contract.allowances else '' }}</span></div>
+        <div class="article"><span class="article-num">3</span><span class="article-title">اوقات العمل:</span> <span class="article-text">يكون العمل وفقاً للوائح والأنظمة المعمول بها في الشركة</span></div>
+        <div class="article"><span class="article-num">4</span><span class="article-title">الاجازات:</span> <span class="article-text">يستحق الموظف الاجازات وفقاً للوائح والأنظمة المعمول بها</span></div>
+      </div>
+    </div>
+
+    <!-- الرواتب -->
+    <div class="section">
+      <div class="section-header">الرواتب والمميزات</div>
+      <div class="section-body">
+        <div class="fin-grid">
+          <div class="fin-card"><div class="fin-label">الراتب الاساسي</div><div class="fin-value">{{ '{:,.0f}'.format(contract.salary) if contract.salary else '-' }}</div><div class="fin-unit">د.ل / شهرياً</div></div>
+          <div class="fin-card"><div class="fin-label">البدلات</div><div class="fin-value">{{ '{:,.0f}'.format(contract.allowances) if contract.allowances else '-' }}</div><div class="fin-unit">د.ل / شهرياً</div></div>
+          <div class="fin-card total"><div class="fin-label">المجموع الكلي</div><div class="fin-value">{{ '{:,.0f}'.format((contract.salary or 0) + (contract.allowances or 0)) }}</div><div class="fin-unit">د.ل / شهرياً</div></div>
+        </div>
+        {% if contract.benefits %}<div style="margin-top:5px;padding:5px 10px;background:#f0fff4;border:1px solid #c6f6d5;border-radius:4px;color:#276749;font-size:11px">⭐ <b>المميزات:</b> {{ contract.benefits }}</div>{% endif %}
+      </div>
+    </div>
+
+    {% if contract.notes %}<div class="section"><div class="section-header">ملاحظات</div><div class="section-body"><div style="white-space:pre-wrap;padding:4px;border:1px solid #e2e8f0;border-radius:4px;background:#f7fafc;font-size:11px">{{ contract.notes }}</div></div></div>{% endif %}
+
+    {% if contract.terms_and_conditions %}<div class="section"><div class="section-header">الشروط والأحكام</div><div class="section-body"><div style="white-space:pre-wrap;padding:4px;border:1px solid #e2e8f0;border-radius:4px;background:#f7fafc;font-size:11px">{{ contract.terms_and_conditions }}</div></div></div>{% endif %}
+
+    <!-- التوقيعات -->
+    <div class="sig-section">
+      <div class="sig-label">توقيعات الاطراف المعنية</div>
+      <div class="sig-row">
+        <div class="sig-box"><div class="sig-stamp">الختم</div><div class="sig-line"></div><div class="sig-title">مدير الشؤون الادارية</div><div class="sig-name">الاسم: ..........................</div></div>
+        <div class="sig-box"><div class="sig-stamp">الختم</div><div class="sig-line"></div><div class="sig-title">المدير التنفيذي</div><div class="sig-name">الاسم: ..........................</div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-line"><span>عقد عمل رقم: {{ contract.contract_number }}</span><span>تاريخ الطباعة: {{ now_date }}</span></div>
+    </div>
+  </div>
+</body>
+</html>

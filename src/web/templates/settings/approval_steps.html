@@ -1,0 +1,251 @@
+{% extends "layouts/base.html" %}
+{% block title %}إدارة خطوات الاعتماد | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">
+    <i class="bi bi-clipboard-check me-2"></i>إدارة خطوات الاعتماد
+  </h4>
+  <p class="text-muted mb-0">تحديد ترتيب وشروط اعتماد اوامر التشغيل</p>
+</div>
+
+<div class="row g-4">
+  <!-- قائمة الخطوات -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-secondary);border-radius:14px;">
+      <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background:transparent;">
+        <h6 class="mb-0" style="color:var(--text-primary);">
+          <i class="bi bi-list-ol me-1" style="color:#667eea;"></i>خطوات الاعتماد ({{ steps|length }})
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        {% if steps %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr style="background:var(--bg-primary);">
+                <th style="padding:12px 14px;font-size:12px;width:60px;">الترتيب</th>
+                <th style="padding:12px 14px;font-size:12px;">اسم الخطوة</th>
+                <th style="padding:12px 14px;font-size:12px;">القسم</th>
+                <th style="padding:12px 14px;font-size:12px;">المعتمد</th>
+                <th style="padding:12px 14px;font-size:12px;">الحالة</th>
+                <th style="padding:12px 14px;font-size:12px;width:200px;">العمليات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for step in steps %}
+              <tr style="border-bottom:1px solid var(--border-color);">
+                <td>
+                  <div style="width:32px;height:32px;border-radius:8px;background:{{ step.color }};color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">
+                    {{ step.step_order }}
+                  </div>
+                </td>
+                <td>
+                  <div style="color:var(--text-primary);font-weight:500;">{{ step.name }}</div>
+                  {% if step.description %}
+                  <small class="text-muted" style="font-size:11px;">{{ step.description }}</small>
+                  {% endif %}
+                </td>
+                <td style="color:var(--text-secondary);font-size:13px;">{{ step.department or '-' }}</td>
+                <td style="font-size:13px;">
+                  {% if step.required_approver %}
+                  <span style="color:var(--text-primary);">{{ step.required_approver.full_name_ar }}</span>
+                  {% else %}
+                  <span class="text-muted">اي شخص</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if step.is_active %}
+                  <span class="badge" style="background:#d1fae5;color:#065f46;font-size:11px;">نشط</span>
+                  {% else %}
+                  <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:11px;">معطّل</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    {% if not loop.first %}
+                    <form method="POST" action="{{ url_for('settings.approval_steps_move', step_id=step.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="direction" value="up">
+                      <button type="submit" class="btn btn-sm" style="background:#e5e7eb;color:#374151;border-radius:6px;" title="تحريك الى الاعلى">
+                        <i class="bi bi-arrow-up"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                    {% if not loop.last %}
+                    <form method="POST" action="{{ url_for('settings.approval_steps_move', step_id=step.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="direction" value="down">
+                      <button type="submit" class="btn btn-sm" style="background:#e5e7eb;color:#374151;border-radius:6px;" title="تحريك الى الاسفل">
+                        <i class="bi bi-arrow-down"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                    <button type="button" class="btn btn-sm" style="background:#dbeafe;color:#1e40af;border-radius:6px;" 
+                            onclick="editStep('{{ step.id }}', '{{ step.name }}', '{{ step.department or '' }}', '{{ step.required_approver_id or '' }}', '{{ step.color }}', '{{ step.description or '' }}', {{ 'true' if step.is_active else 'false' }})" title="تعديل">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="POST" action="{{ url_for('settings.approval_steps_toggle', step_id=step.id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm" style="background:{% if step.is_active %}#fef3c7;color:#92400e{% else %}#d1fae5;color:#065f46{% endif %};border-radius:6px;" title="{% if step.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                        <i class="bi bi-{% if step.is_active %}pause{% else %}play{% endif %}"></i>
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('settings.approval_steps_delete', step_id=step.id) }}" 
+                          onsubmit="return confirm('هل انت متأكد من حذف خطوة {{ step.name }}؟');" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#dc3545;border-radius:6px;" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-clipboard-x" style="font-size:3rem;color:#9ca3af;"></i>
+          <p class="text-muted mt-2 mb-0">لا توجد خطوات اعتماد مسجلة</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- اضافة خطوة جديدة -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-secondary);border-radius:14px;">
+      <div class="card-header border-0" style="background:transparent;">
+        <h6 class="mb-0" style="color:var(--text-primary);">
+          <i class="bi bi-plus-circle me-1" style="color:#10b981;"></i>اضافة خطوة جديدة
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('settings.approval_steps_add') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">ترتيب الخطوة *</label>
+            <select name="step_order" class="form-select" style="border-radius:8px;">
+              {% for i in range(1, steps|length + 2) %}
+              <option value="{{ i }}" {% if i == steps|length + 1 %}selected{% endif %}>{{ i }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">اسم الخطوة *</label>
+            <input type="text" name="name" class="form-control" style="border-radius:8px;" placeholder="مثال: الحركة" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">القسم</label>
+            <input type="text" name="department" class="form-control" style="border-radius:8px;" placeholder="مثال: ادارة الحركة">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">المعتمد المطلوب</label>
+            <select name="required_approver_id" class="form-select" style="border-radius:8px;">
+              <option value="">اي شخص</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">{{ user.full_name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">اللون</label>
+            <input type="color" name="color" class="form-control form-control-color" value="#667eea">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">الوصف</label>
+            <textarea name="description" class="form-control" rows="2" style="border-radius:8px;" placeholder="وصف مختصر للخطوة"></textarea>
+          </div>
+          <button type="submit" class="btn w-100" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:8px;">
+            <i class="bi bi-plus-lg me-1"></i>اضافة الخطوة
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- معلومات -->
+    <div class="card border-0 shadow-sm mt-3" style="background:var(--bg-secondary);border-radius:14px;">
+      <div class="card-body">
+        <h6 style="color:var(--text-primary);font-size:13px;font-weight:600;">
+          <i class="bi bi-info-circle me-1" style="color:#667eea;"></i>كيف يعمل النظام؟
+        </h6>
+        <ul style="font-size:12px;color:var(--text-secondary);padding-right:16px;">
+          <li class="mb-1">يتم اعتماد اوامر التشغيل حسب الترتيب</li>
+          <li class="mb-1">لا يمكن تخطي خطوة الا بعد اكمال الخطوة السابقة</li>
+          <li class="mb-1">يمكن تفعيل/تعطيل اي خطوة</li>
+          <li class="mb-1">يمكن تحديد معتمد محدد لكل خطوة</li>
+          <li>يمكن تغيير الترتيب بازرار الاسهم</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal التعديل -->
+<div class="modal fade" id="editStepModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:14px;">
+      <form method="POST" id="editStepForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header" style="border-bottom:1px solid var(--border-color);">
+          <h6 class="modal-title" style="color:var(--text-primary);">تعديل خطوة الاعتماد</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">اسم الخطوة *</label>
+            <input type="text" name="name" id="edit_name" class="form-control" style="border-radius:8px;" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">القسم</label>
+            <input type="text" name="department" id="edit_department" class="form-control" style="border-radius:8px;">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">المعتمد المطلوب</label>
+            <select name="required_approver_id" id="edit_approver" class="form-select" style="border-radius:8px;">
+              <option value="">اي شخص</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">{{ user.full_name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">اللون</label>
+            <input type="color" name="color" id="edit_color" class="form-control form-control-color" value="#667eea">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">الوصف</label>
+            <textarea name="description" id="edit_description" class="form-control" rows="2" style="border-radius:8px;"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:13px;">الحالة</label>
+            <select name="is_active" id="edit_is_active" class="form-select" style="border-radius:8px;">
+              <option value="1">نشط</option>
+              <option value="0">معطّل</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--border-color);">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:8px;">الغاء</button>
+          <button type="submit" class="btn btn-primary" style="border-radius:8px;">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editStep(id, name, department, approver, color, description, isActive) {
+  document.getElementById('editStepForm').action = '/settings/approval-steps/' + id + '/edit';
+  document.getElementById('edit_name').value = name;
+  document.getElementById('edit_department').value = department;
+  document.getElementById('edit_approver').value = approver;
+  document.getElementById('edit_color').value = color;
+  document.getElementById('edit_description').value = description;
+  document.getElementById('edit_is_active').value = isActive ? '1' : '0';
+  new bootstrap.Modal(document.getElementById('editStepModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>طباعة العقد رقم {{ contract.contract_number }}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Arial', sans-serif; font-size: 11pt; color: #333; line-height: 1.6; }
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 15mm; }
+
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1a5276; padding-bottom: 15px; margin-bottom: 20px; }
+    .company-name { font-size: 18pt; font-weight: bold; color: #1a5276; }
+    .company-sub { font-size: 10pt; color: #666; }
+    .contract-num-box { background: #1a5276; color: white; padding: 10px 20px; border-radius: 8px; text-align: center; }
+    .contract-num-box .num { font-size: 16pt; font-weight: bold; }
+    .contract-num-box .label { font-size: 9pt; }
+
+    .section { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .section-title { background: #1a5276; color: white; padding: 6px 12px; font-size: 11pt; font-weight: bold; }
+    .section-body { padding: 10px 12px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .info-item { display: flex; gap: 8px; }
+    .info-label { font-weight: bold; min-width: 120px; color: #555; }
+    .info-value { flex: 1; }
+
+    .cost-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .cost-box { padding: 8px; border-radius: 6px; background: #f8f9fa; }
+    .cost-box .label { font-size: 9pt; color: #666; }
+    .cost-box .value { font-size: 13pt; font-weight: bold; color: #1a5276; }
+    .cost-box.total { background: #1a5276; color: white; }
+    .cost-box.total .label { color: #ddd; }
+    .cost-box.total .value { color: white; }
+
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 10pt; font-weight: bold; }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-renewed { background: #d1ecf1; color: #0c5460; }
+    .status-completed { background: #e2e3e5; color: #383d41; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .amendment-section { border: 2px dashed #ffc107; background: #fffde7; border-radius: 6px; padding: 12px; margin-top: 10px; }
+    .amendment-title { color: #e65100; font-weight: bold; margin-bottom: 8px; }
+
+    .description-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-top: 8px; white-space: pre-wrap; }
+
+    .footer { margin-top: 20px; padding-top: 10px; border-top: 2px solid #1a5276; display: flex; justify-content: space-between; font-size: 9pt; color: #666; }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="company-name">شركة اعمار ليبيا لنقل الركاب</div>
+        <div class="company-sub">subsidiary: شركة اعمار ليبيا القابضة</div>
+      </div>
+      <div class="contract-num-box">
+        <div class="label">رقم العقد</div>
+        <div class="num">{{ contract.contract_number }}</div>
+      </div>
+    </div>
+
+    <!-- البيانات الأساسية -->
+    <div class="section">
+      <div class="section-title">البيانات الأساسية</div>
+      <div class="section-body">
+        <div class="info-grid">
+          <div class="info-item"><span class="info-label">نوع العقد:</span><span class="info-value">{{ contract.title }}</span></div>
+          <div class="info-item"><span class="info-label">الجهة:</span><span class="info-value">{{ contract.client.name_ar if contract.client else '-' }}</span></div>
+          <div class="info-item"><span class="info-label">رقم هاتف الجهة:</span><span class="info-value">{{ contract.client.phone if contract.client else '-' }}</span></div>
+          <div class="info-item"><span class="info-label">المسؤول:</span><span class="info-value">{{ contract.responsible_name if contract.responsible_name else '-' }}</span></div>
+          <div class="info-item">
+            <span class="info-label">الحالة:</span>
+            <span class="info-value">
+              {% if contract.status == 'active' %}
+                <span class="status-badge status-active">نشط</span>
+              {% elif contract.status == 'renewed' %}
+                <span class="status-badge status-renewed">مجدد</span>
+              {% elif contract.status == 'completed' %}
+                <span class="status-badge status-completed">منتهي</span>
+              {% elif contract.status == 'cancelled' %}
+                <span class="status-badge status-cancelled">ملغي</span>
+              {% else %}
+                {{ contract.status }}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- تواريخ العقد -->
+    <div class="section">
+      <div class="section-title">التواريخ والمدة</div>
+      <div class="section-body">
+        <div class="cost-grid">
+          <div class="cost-box">
+            <div class="label">تاريخ البدء</div>
+            <div class="value">{{ contract.start_date.strftime('%Y-%m-%d') }}</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">تاريخ الانتهاء</div>
+            <div class="value">{{ contract.end_date.strftime('%Y-%m-%d') }}</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">المدة (ايام)</div>
+            <div class="value">{{ ((contract.end_date - contract.start_date).days + 1) if contract.end_date and contract.start_date else '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- البيانات المالية -->
+    <div class="section">
+      <div class="section-title">البيانات المالية</div>
+      <div class="section-body">
+        <div class="cost-grid">
+          <div class="cost-box">
+            <div class="label">قيمة العقد</div>
+            <div class="value">{{ "{:,.0f}".format(contract.total_value) }} د.ل</div>
+          </div>
+          <div class="cost-box">
+            <div class="label">عدد الحافلات</div>
+            <div class="value">{{ contract.bus_count if contract.bus_count else '-' }}</div>
+          </div>
+          <div class="cost-box total">
+            <div class="label">القيمة الاجمالية</div>
+            <div class="value">{{ "{:,.0f}".format(contract.total_value) }} د.ل</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ملحق التعديل -->
+    {% if contract.amendment_bus_count or contract.amendment_value or contract.amendment_description %}
+    <div class="amendment-section">
+      <div class="amendment-title"><i class="bi bi-file-earmark-plus"></i> ملحق تعديل</div>
+      <div class="info-grid">
+        {% if contract.amendment_bus_count %}
+        <div class="info-item"><span class="info-label">عدد الحافلات المعدلة:</span><span class="info-value">{{ contract.amendment_bus_count }}</span></div>
+        {% endif %}
+        {% if contract.amendment_value %}
+        <div class="info-item"><span class="info-label">القيمة المعدلة:</span><span class="info-value">{{ "{:,.0f}".format(contract.amendment_value) }} د.ل</span></div>
+        {% endif %}
+        {% if contract.amendment_description %}
+        <div class="info-item" style="grid-column: 1/-1;"><span class="info-label">وصف الملحق:</span><span class="info-value">{{ contract.amendment_description }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- الوصف والملاحظات -->
+    {% if contract.description or contract.notes %}
+    <div class="section">
+      <div class="section-title">الوصف والملاحظات</div>
+      <div class="section-body">
+        {% if contract.description %}
+        <div>
+          <strong>الوصف:</strong>
+          <div class="description-box">{{ contract.description }}</div>
+        </div>
+        {% endif %}
+        {% if contract.notes %}
+        <div style="margin-top: 8px;">
+          <strong>ملاحظات:</strong>
+          <div class="description-box">{{ contract.notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- التوقيعات -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 25px;">
+      <div style="text-align: center;">
+        <div style="margin-bottom: 30px;"></div>
+        <div style="border-top: 1px solid #333; width: 80%; margin: 0 auto; padding-top: 5px;">
+          <strong>جهة العقد</strong>
+        </div>
+      </div>
+      <div style="text-align: center;">
+        <div style="margin-bottom: 30px;"></div>
+        <div style="border-top: 1px solid #333; width: 80%; margin: 0 auto; padding-top: 5px;">
+          <strong>الادارة التسويقية</strong>
+        </div>
+      </div>
+      <div style="text-align: center;">
+        <div style="margin-bottom: 30px;"></div>
+        <div style="border-top: 1px solid #333; width: 80%; margin: 0 auto; padding-top: 5px;">
+          <strong>المدير العام</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>تاريخ الطباعة: {{ today }}</span>
+      {% if current_user.is_authenticated %}
+      <span>محرر المستند: {{ current_user.full_name_ar }} ({{ current_user.username }})</span>
+      {% endif %}
+      <span>شركة اعمار ليبيا لنقل الركاب</span>
+    </div>
+  </div>
+
+  <div class="no-print" style="text-align:center; padding:20px;">
+    <button onclick="window.print()" style="padding:10px 30px; font-size:14pt; background:#1a5276; color:white; border:none; border-radius:8px; cursor:pointer;">
+      <i class="bi bi-printer"></i> طباعة
+    </button>
+    <button onclick="window.close()" style="padding:10px 30px; font-size:14pt; background:#666; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">
+      اغلاق
+    </button>
+  </div>
+</body>
+</html>

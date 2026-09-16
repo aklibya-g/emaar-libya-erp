@@ -1,0 +1,85 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}الأصناف | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">الأصناف</h4>
+  <a href="{{ url_for('warehouses.warehouses_item_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة صنف</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_list') }}">المخازن</a></li>
+  <li class="nav-item"><a class="nav-link active" href="{{ url_for('warehouses.warehouses_items') }}">الأصناف</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_transactions') }}">المعاملات</a></li>
+</ul>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-5">
+        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم أو الكود..." value="{{ search }}">
+      </div>
+      <div class="col-md-4">
+        <select name="warehouse_id" class="form-select">
+          <option value="">جميع المخازن</option>
+          {% for wh in warehouses %}
+          <option value="{{ wh.id }}" {% if warehouse_id == wh.id %}selected{% endif %}>{{ wh.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الاسم بالعربي</th>
+            <th>المخزن</th>
+            <th>الكمية الحالية</th>
+            <th>الحد الأدنى</th>
+            <th>السعر</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.code }}</td>
+            <td>{{ item.name_ar }}</td>
+            <td>{{ item.warehouse.name_ar if item.warehouse else '-' }}</td>
+            <td>
+              {% if item.min_quantity > 0 and item.current_quantity <= item.min_quantity %}
+              <span class="text-danger fw-bold">{{ item.current_quantity }}</span>
+              {% else %}
+              {{ item.current_quantity }}
+              {% endif %}
+            </td>
+            <td>{{ item.min_quantity }}</td>
+            <td>{{ '{:,.2f}'.format(item.unit_price) if item.unit_price else '-' }} د.ل</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('warehouses.warehouses_item_edit', id=item.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('warehouses.warehouses_item_delete', id=item.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not items %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا توجد أصناف</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

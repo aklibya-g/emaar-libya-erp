@@ -1,0 +1,364 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ correspondence.reference_number }} | المراسلات{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1">
+      <i class="bi bi-envelope-open me-2"></i>تفاصيل المراسلة
+    </h4>
+    <small class="text-muted">{{ correspondence.reference_number }}</small>
+  </div>
+  <a href="{{ url_for('correspondence.correspondence_list') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-right me-1"></i>العودة للقائمة
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column -->
+  <div class="col-lg-8">
+
+    <!-- Main Info Card -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 class="mb-1">{{ correspondence.subject }}</h5>
+            <span class="text-muted" style="font-size:0.85em">
+              <i class="bi bi-hash me-1"></i>{{ correspondence.reference_number }}
+            </span>
+          </div>
+          <div class="d-flex gap-2">
+            {% set sc = workflow.get_status_color(correspondence.status.code) if correspondence.status else '#6b7280' %}
+            <span class="badge" style="background:{{ sc }};font-size:0.8em;padding:6px 12px">
+              {{ correspondence.status.name_ar if correspondence.status else 'غير محدد' }}
+            </span>
+            {% if correspondence.importance == 'critical' %}
+            <span class="badge bg-danger" style="font-size:0.8em;padding:6px 12px">عاجل</span>
+            {% elif correspondence.importance == 'high' %}
+            <span class="badge bg-warning text-dark" style="font-size:0.8em;padding:6px 12px">مهم</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <small class="text-muted d-block">التاريخ</small>
+            <span>{{ correspondence.date.strftime('%Y-%m-%d') if correspondence.date else '-' }}</span>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted d-block">النوع</small>
+            <span>{{ correspondence.cor_type.name_ar if correspondence.cor_type else '-' }}</span>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted d-block">القسم المرسل</small>
+            <span>{{ correspondence.sender_department.name_ar if correspondence.sender_department else '-' }}</span>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted d-block">القسم المستلم</small>
+            <span>{{ correspondence.receiver_department.name_ar if correspondence.receiver_department else '-' }}</span>
+          </div>
+        </div>
+
+        {% if correspondence.body %}
+        <hr>
+        <div class="correspondence-body" style="white-space:pre-wrap;line-height:1.8;color:var(--text-color)">{{ correspondence.body }}</div>
+        {% endif %}
+
+        {% if correspondence.is_confidential %}
+        <div class="mt-3">
+          <span class="badge bg-danger"><i class="bi bi-lock me-1"></i>سري</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Replies Section -->
+    {% if replies %}
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-chat-dots me-2"></i>الردود ({{ replies|length }})
+      </div>
+      <div class="card-body p-0">
+        {% for reply in replies %}
+        <div class="border-bottom p-3 {% if loop.last %}border-bottom-0{% endif %}">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">
+                {{ reply.employee[0] if reply.employee != 'غير معروف' else '?' }}
+              </div>
+              <div>
+                <strong style="font-size:0.9em">{{ reply.employee }}</strong>
+                <br><small class="text-muted">{{ reply.department }}</small>
+              </div>
+            </div>
+            <div class="text-end">
+              <small class="text-muted d-block">{{ reply.action_date.strftime('%Y-%m-%d') }}</small>
+              <small class="text-muted">{{ reply.action_date.strftime('%H:%M') }}</small>
+            </div>
+          </div>
+          <div class="mt-2" style="background:var(--bg-secondary);padding:10px 14px;border-radius:8px;white-space:pre-wrap">{{ reply.notes }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Reply Form -->
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-reply me-2"></i>إضافة رد
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_reply', id=correspondence.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="notes" class="form-control" rows="3" placeholder="اكتب ردك هنا..." required></textarea>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i>سيتم تسجيل تاريخ ووقت الرد تلقائياً
+            </small>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-send me-1"></i>إرسال الرد
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Workflow History -->
+    {% if history %}
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-clock-history me-2"></i>سجل الإجراءات
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>الإجراء</th>
+                <th>التاريخ</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in history %}
+              <tr>
+                <td><span class="badge bg-light text-dark">{{ h.action_type }}</span></td>
+                <td><small>{{ h.action_date.strftime('%Y-%m-%d %H:%M') }}</small></td>
+                <td><small>{{ h.notes or '-' }}</small></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Attachments -->
+    {% if attachments %}
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-paperclip me-2"></i>المرفقات ({{ attachments|length }})
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-3">
+          {% for att in attachments %}
+          {% set ext = att.filename.rsplit('.', 1)[-1].lower() if '.' in att.filename else '' %}
+          {% set raw_url = url_for('correspondence.correspondence_serve_file', att_id=att.id) %}
+          {% set view_url = url_for('correspondence.correspondence_view_file', att_id=att.id) %}
+          <div style="width:140px;">
+            <a href="{{ view_url }}" target="_blank" class="text-decoration-none">
+              {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'] %}
+              <div style="width:140px;height:110px;border-radius:10px;overflow:hidden;border:2px solid var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <img src="{{ raw_url }}" style="width:100%;height:100%;object-fit:cover;" alt="{{ att.filename }}">
+              </div>
+              {% elif ext in ['pdf'] %}
+              <div style="width:140px;height:110px;border-radius:10px;border:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;background:rgba(220,53,69,0.08);" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <i class="bi bi-file-earmark-pdf" style="font-size:2.2rem;color:#dc3545;"></i>
+                <span style="font-size:9px;color:#dc3545;font-weight:600;">PDF</span>
+              </div>
+              {% elif ext in ['doc', 'docx'] %}
+              <div style="width:140px;height:110px;border-radius:10px;border:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;background:rgba(13,110,253,0.08);" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <i class="bi bi-file-earmark-word" style="font-size:2.2rem;color:#0d6efd;"></i>
+                <span style="font-size:9px;color:#0d6efd;font-weight:600;">{{ ext|upper }}</span>
+              </div>
+              {% elif ext in ['xls', 'xlsx'] %}
+              <div style="width:140px;height:110px;border-radius:10px;border:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;background:rgba(25,135,84,0.08);" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <i class="bi bi-file-earmark-excel" style="font-size:2.2rem;color:#198754;"></i>
+                <span style="font-size:9px;color:#198754;font-weight:600;">{{ ext|upper }}</span>
+              </div>
+              {% else %}
+              <div style="width:140px;height:110px;border-radius:10px;border:2px solid var(--border-color);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;background:var(--bg-secondary);" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <i class="bi bi-file-earmark" style="font-size:2.2rem;color:var(--text-secondary);"></i>
+                <span style="font-size:9px;color:var(--text-secondary);font-weight:600;">{{ ext|upper if ext else 'FILE' }}</span>
+              </div>
+              {% endif %}
+            </a>
+            <div class="text-center mt-1" style="font-size:10px;color:var(--text-secondary);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ att.filename }}">{{ att.filename }}</div>
+            {% if att.notes %}
+            <div class="text-center" style="font-size:9px;color:var(--accent,#667eea);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ att.notes }}">
+              <i class="bi bi-info-circle me-1"></i>{{ att.notes }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Column - Actions -->
+  <div class="col-lg-4">
+
+    <!-- Workflow Actions -->
+    {% if available_transitions %}
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-lightning me-2"></i>الإجراءات
+      </div>
+      <div class="card-body">
+        {% for t in available_transitions %}
+        <form method="POST" action="{{ url_for('correspondence.correspondence_transition', id=correspondence.id, target=t.to_state) }}" class="mb-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="text" name="notes" class="form-control form-control-sm mb-1" placeholder="ملاحظات (اختياري)">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-arrow-left me-1"></i>{{ t.action_name }}
+          </button>
+        </form>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Forward -->
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-share me-2"></i>إحالة
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_forward', id=correspondence.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2">
+            <label class="form-label" style="font-size:0.85em">القسم المستلم</label>
+            <select name="to_department_id" class="form-select form-select-sm" id="fwdDept">
+              <option value="">اختر القسم</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label" style="font-size:0.85em">الموظف المستلم</label>
+            <select name="to_employee_id" class="form-select form-select-sm" id="fwdEmployee" required disabled>
+              <option value="">اختر القسم أولاً</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label" style="font-size:0.85em">الإجراء المطلوب</label>
+            <input type="text" name="required_action" class="form-control form-control-sm" placeholder="مثال: مراجعة واعتماد">
+          </div>
+          <div class="mb-2">
+            <label class="form-label" style="font-size:0.85em">تاريخ الاستحقاق</label>
+            <input type="date" name="due_date" class="form-control form-control-sm">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:0.85em">ملاحظات</label>
+            <input type="text" name="notes" class="form-control form-control-sm" placeholder="ملاحظات">
+          </div>
+          <button type="submit" class="btn btn-warning btn-sm w-100">
+            <i class="bi bi-share me-1"></i>إحالة
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Link -->
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-link-45deg me-2"></i>ربط بمراسلة أخرى
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_link', id=correspondence.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-group input-group-sm">
+            <input type="text" name="reference_number" class="form-control" placeholder="رقم المراسلة">
+            <button type="submit" class="btn btn-outline-primary">ربط</button>
+          </div>
+        </form>
+        {% if linked %}
+        <div class="mt-2">
+          <a href="{{ url_for('correspondence.correspondence_detail', id=linked.id) }}" class="text-primary" style="font-size:0.85em">
+            <i class="bi bi-link me-1"></i>{{ linked.reference_number }} - {{ linked.subject }}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Attach -->
+    <div class="card mb-4">
+      <div class="card-header bg-transparent">
+        <i class="bi bi-paperclip me-2"></i>إرفاق ملف
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_attach', id=correspondence.id) }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="file" name="file" class="form-control form-control-sm mb-2" required>
+          <input type="text" name="notes" class="form-control form-control-sm mb-2" placeholder="ملاحظات">
+          <button type="submit" class="btn btn-outline-primary btn-sm w-100">إرفاق</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete -->
+    {% if correspondence.status and correspondence.status.code == 'DRAFT' %}
+    <div class="card mb-4 border-danger">
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_delete', id=correspondence.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('هل أنت متأكد من الحذف؟')">
+            <i class="bi bi-trash me-1"></i>حذف المراسلة
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var fwdDept = document.getElementById('fwdDept');
+  var fwdEmployee = document.getElementById('fwdEmployee');
+  if (fwdDept) {
+    fwdDept.addEventListener('change', function() {
+      var deptId = this.value;
+      if (!deptId) {
+        fwdEmployee.innerHTML = '<option value="">اختر القسم أولاً</option>';
+        fwdEmployee.disabled = true;
+        return;
+      }
+      fwdEmployee.disabled = true;
+      fwdEmployee.innerHTML = '<option value="">جاري التحميل...</option>';
+      fetch('/correspondence/api/employees-by-department/' + deptId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var html = '<option value="">اختر الموظف</option>';
+          data.forEach(function(emp) {
+            html += '<option value="' + emp.id + '">' + emp.name + '</option>';
+          });
+          fwdEmployee.innerHTML = html;
+          fwdEmployee.disabled = false;
+        })
+        .catch(function() {
+          fwdEmployee.innerHTML = '<option value="">خطأ في التحميل</option>';
+          fwdEmployee.disabled = false;
+        });
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,376 @@
+{% extends "layouts/base.html" %}
+{% block title %}تفاصيل المطالبة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .header-actions .btn { padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; transition: all 0.25s ease; }
+  .header-actions .btn-new { background: #fff; color: #1a365d; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+
+  .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color, #f1f5f9); }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .info-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+  .info-row .info-value { font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b); }
+
+  .finance-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .finance-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .finance-table tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .finance-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .finance-table tbody tr:last-child td { border-bottom: none; }
+
+  .badge-status { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .action-btn { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 12px; transition: all 0.15s; }
+
+  .progress-custom { height: 12px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('finance.claims_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        المطالبات
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">المالية</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.claims_list') }}">المطالبات</a></li>
+            <li class="breadcrumb-item active">{{ claim.claim_number }}</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-file-earmark-text me-2"></i>المطالبة {{ claim.claim_number }}</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('finance.claim_print', claim_id=claim.id) }}" target="_blank" class="btn btn-new" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3)">
+        <i class="bi bi-printer me-1"></i>طباعة
+      </a>
+      <a href="{{ url_for('finance.add_receipt', claim_id=claim.id) }}" class="btn btn-new">
+        <i class="bi bi-plus-circle me-1"></i>إضافة ايصال
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Left Column: Work Order Info -->
+  <div class="col-lg-8">
+    <!-- Work Order Info -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-clipboard-data me-2" style="color:#3b82f6"></i>بيانات أمر التشغيل</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">رقم أمر التشغيل</span>
+              <span class="info-value">{{ claim.order_number or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">الجهة</span>
+              <span class="info-value">{{ claim.client_name or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">رقم الهاتف</span>
+              <span class="info-value">{{ claim.contact_phone or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">نوع الرحلة</span>
+              <span class="info-value">{% if claim.trip_type == 'external' %}خارج المدينة{% else %}داخل المدينة{% endif %}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">المسار</span>
+              <span class="info-value">{{ claim.route or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">رحلة من</span>
+              <span class="info-value">{{ claim.trip_from or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">رحلة الى</span>
+              <span class="info-value">{{ claim.trip_to or '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">المدة (أيام)</span>
+              <span class="info-value">{{ claim.duration_days }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">تاريخ الخروج</span>
+              <span class="info-value">{{ claim.departure_date.strftime('%Y-%m-%d') if claim.departure_date else '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">تاريخ العودة</span>
+              <span class="info-value">{{ claim.return_date.strftime('%Y-%m-%d') if claim.return_date else '-' }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">عدد الحافلات</span>
+              <span class="info-value">{{ claim.bus_count|default(0) }}</span>
+            </div>
+          </div>
+          {% if claim.estimated_distance %}
+          <div class="col-md-6">
+            <div class="info-row">
+              <span class="info-label">المسافة التقديرية</span>
+              <span class="info-value">{{ claim.estimated_distance }} كم</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Breakdown -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-cash-stack me-2" style="color:#10b981"></i>البيانات المالية</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <div style="text-align:center;padding:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px">
+              <div style="font-size:11px;color:#64748b;margin-bottom:4px">القيمة الإجمالية</div>
+              <div style="font-size:22px;font-weight:800;color:#1e40af">{{ "{:,.0f}".format(claim.total_value|default(0)) }} <span style="font-size:11px;font-weight:500;color:#94a3b8">د.ل</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="text-align:center;padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px">
+              <div style="font-size:11px;color:#64748b;margin-bottom:4px">التخفيض</div>
+              <div style="font-size:22px;font-weight:800;color:#ea580c">-{{ "{:,.0f}".format(claim.discount_value|default(0)) }} <span style="font-size:11px;font-weight:500;color:#94a3b8">د.ل</span></div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="text-align:center;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px">
+              <div style="font-size:11px;color:#64748b;margin-bottom:4px">القيمة النهائية</div>
+              <div style="font-size:24px;font-weight:900;color:#166534">{{ "{:,.0f}".format(claim.final_value) }} <span style="font-size:11px;font-weight:500;color:#94a3b8">د.ل</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <div style="padding:10px;background:var(--hover-bg,#f8fafc);border-radius:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary,#64748b)">إيجار الحافلة</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary,#1e293b)">{{ "{:,.0f}".format(claim.bus_rental_value|default(0)) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="padding:10px;background:var(--hover-bg,#f8fafc);border-radius:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary,#64748b)">الصيانة</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary,#1e293b)">{{ "{:,.0f}".format(claim.bus_maintenance_value|default(0)) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="padding:10px;background:var(--hover-bg,#f8fafc);border-radius:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary,#64748b)">نقل السائق</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary,#1e293b)">{{ "{:,.0f}".format(claim.driver_transport_value|default(0)) }} د.ل</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div style="padding:10px;background:var(--hover-bg,#f8fafc);border-radius:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text-secondary,#64748b)">سعر الرحلة</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary,#1e293b)">{{ "{:,.0f}".format(claim.trip_price|default(0)) }} د.ل</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receipts Table -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0" style="font-weight:700"><i class="bi bi-receipt me-2" style="color:#8b5cf6"></i>الإيصالات ({{ receipts|length if receipts else 0 }})</h6>
+          <a href="{{ url_for('finance.add_receipt', claim_id=claim.id) }}" class="btn btn-sm" style="background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff;border-radius:8px;font-size:11px">
+            <i class="bi bi-plus-circle me-1"></i>إضافة ايصال
+          </a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="finance-table mb-0">
+            <thead>
+              <tr>
+                <th>رقم الإيصال</th>
+                <th>المبلغ</th>
+                <th>طريقة الدفع</th>
+                <th>التاريخ</th>
+                <th>الحالة</th>
+                <th>العمليات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if receipts %}
+              {% for receipt in receipts %}
+              <tr>
+                <td><span style="font-weight:700;color:#1e40af;font-size:12px;background:#eff6ff;padding:3px 8px;border-radius:6px">{{ receipt.receipt_number }}</span></td>
+                <td><span style="font-weight:700;color:#10b981">{{ "{:,.0f}".format(receipt.amount) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+                <td>
+                  {% if receipt.payment_method == 'cash' %}
+                    <span style="font-size:11px;color:#10b981;font-weight:600"><i class="bi bi-cash me-1"></i>نقدي</span>
+                  {% elif receipt.payment_method == 'transfer' %}
+                    <span style="font-size:11px;color:#3b82f6;font-weight:600"><i class="bi bi-bank me-1"></i>تحويل بنكي</span>
+                  {% elif receipt.payment_method == 'check' %}
+                    <span style="font-size:11px;color:#8b5cf6;font-weight:600"><i class="bi bi-file-earmark-check me-1"></i>شيك</span>
+                  {% else %}
+                    <span style="font-size:11px;color:#64748b">{{ receipt.payment_method }}</span>
+                  {% endif %}
+                </td>
+                <td><span style="font-size:11px;color:var(--text-secondary,#64748b)">{{ receipt.created_at.strftime('%Y-%m-%d') if receipt.created_at else '-' }}</span></td>
+                <td>
+                  {% if receipt.status == 'draft' %}
+                    <span class="badge-status" style="background:#fef3c7;color:#92400e">مسودة</span>
+                  {% elif receipt.status == 'confirmed' %}
+                    <span class="badge-status" style="background:#d1fae5;color:#065f46">مؤكد</span>
+                  {% else %}
+                    <span class="badge-status" style="background:#f3f4f6;color:#374151">{{ receipt.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="d-flex gap-1 justify-content-center">
+                    {% if receipt.status == 'draft' %}
+                    <form method="POST" action="{{ url_for('finance.confirm_receipt', receipt_id=receipt.id) }}" class="d-inline" onsubmit="return confirm('هل تريد تأكيد هذا الإيصال؟')">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn action-btn btn-outline-success" title="تأكيد">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-receipt fs-3 d-block mb-2"></i>لا توجد إيصالات بعد</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Financial Summary -->
+  <div class="col-lg-4">
+    <!-- Status Card -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-flag me-2" style="color:#f59e0b"></i>حالة المطالبة</h6>
+      </div>
+      <div class="card-body text-center">
+        {% if claim.status == 'pending' %}
+          <span class="badge" style="background:#dcfce7;color:#166534;font-size:14px;padding:10px 20px;border-radius:10px">قيد التحصيل</span>
+        {% elif claim.status == 'collecting' %}
+          <span class="badge" style="background:#dcfce7;color:#166534;font-size:14px;padding:10px 20px;border-radius:10px">قيد التحصيل</span>
+        {% elif claim.status == 'partially_paid' %}
+          <span class="badge" style="background:#fef9c3;color:#854d0e;font-size:14px;padding:10px 20px;border-radius:10px">تحصيل جزئي</span>
+        {% elif claim.status == 'collected' or claim.status == 'fully_paid' %}
+          <span class="badge" style="background:#bbf7d0;color:#166534;font-size:14px;padding:10px 20px;border-radius:10px">تم التحصيل</span>
+        {% else %}
+          <span class="badge" style="background:#f3f4f6;color:#374151;font-size:14px;padding:10px 20px;border-radius:10px">{{ claim.status }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-wallet2 me-2" style="color:#10b981"></i>الملخص المالي</h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:12px;color:var(--text-secondary,#64748b)">القيمة النهائية</span>
+            <span style="font-size:13px;font-weight:700;color:#1e40af">{{ "{:,.0f}".format(claim.final_value) }} د.ل</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:12px;color:var(--text-secondary,#64748b)">المبلغ المحصل</span>
+            <span style="font-size:13px;font-weight:700;color:#10b981">{{ "{:,.0f}".format(claim.received_amount|default(0)) }} د.ل</span>
+          </div>
+          <div class="progress-custom">
+            {% set progress_pct = (claim.received_amount / claim.final_value * 100) if claim.final_value > 0 else 0 %}
+            <div class="progress-fill" style="width:{{ progress_pct|int }}%;background:linear-gradient(90deg,#10b981,#34d399)"></div>
+          </div>
+          <div class="text-center mt-1" style="font-size:11px;color:var(--text-secondary,#64748b)">{{ "%.0f"|format(progress_pct) }}%</div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:12px;color:var(--text-secondary,#64748b)">المبلغ المتبقي</span>
+            <span style="font-size:13px;font-weight:700;color:#ef4444">{{ "{:,.0f}".format(claim.remaining_amount|default(claim.final_value)) }} د.ل</span>
+          </div>
+        </div>
+        <hr style="border-color:var(--border-color,#e2e8f0)">
+        <div class="d-flex justify-content-between">
+          <span style="font-size:13px;font-weight:700">نسبة التحصيل</span>
+          <span style="font-size:14px;font-weight:800;color:{% if progress_pct >= 100 %}#10b981{% elif progress_pct >= 50 %}#f59e0b{% else %}#ef4444{% endif %}">{{ "%.0f"|format(progress_pct) }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color,#e2e8f0);border-radius:14px 14px 0 0;padding:14px 18px">
+        <h6 class="mb-0" style="font-weight:700"><i class="bi bi-gear me-2" style="color:#64748b"></i>العمليات</h6>
+      </div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('finance.add_receipt', claim_id=claim.id) }}" class="btn btn-success" style="border-radius:10px;font-weight:600">
+          <i class="bi bi-plus-circle me-1"></i>إضافة ايصال
+        </a>
+        {% if not claim.finance_approved %}
+        <form method="POST" action="{{ url_for('finance.approve_claim', claim_id=claim.id) }}" onsubmit="return confirm('هل تريد اعتماد هذه المطالبة مالياً؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary w-100" style="border-radius:10px;font-weight:600">
+            <i class="bi bi-check2-circle me-1"></i>اعتماد مالي
+          </button>
+        </form>
+        {% else %}
+        <div class="text-center p-3" style="background:#d1fae5;border-radius:10px">
+          <i class="bi bi-check-circle-fill me-1" style="color:#065f46"></i>
+          <span style="color:#065f46;font-weight:600;font-size:13px">تم الاعتماد المالي</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

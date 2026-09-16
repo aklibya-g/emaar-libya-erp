@@ -1,0 +1,131 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}مستندات الموظفين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">مستندات الموظفين</h4>
+  <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-4">
+        <input type="text" name="search" class="form-control" placeholder="بحث في اسم المستند أو الموظف..." value="{{ search | default('') }}">
+      </div>
+      <div class="col-md-3">
+        <select name="category" class="form-select">
+          <option value="">جميع الفئات</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% for cat in categories %}
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-folder2-open me-2 text-warning"></i>{{ cat.name_ar }}</h6>
+        <span class="badge bg-secondary">{{ cat.documents | length }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr><th>المستند</th><th>الموظف</th><th>تاريخ الرفع</th><th>الانتهاء</th><th>الحالة</th></tr>
+            </thead>
+            <tbody>
+              {% for doc in cat.documents %}
+              <tr>
+                <td><a href="{{ url_for('hr.document_download', id=doc.id) }}"><i class="bi bi-file-earmark me-1"></i>{{ doc.name }}</a></td>
+                <td>{{ doc.employee.full_name_ar | default('-') }}</td>
+                <td>{{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else '-' }}</td>
+                <td>{{ doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else '-' }}</td>
+                <td>
+                  {% if doc.status == 'valid' %}<span class="badge bg-success">صالح</span>
+                  {% elif doc.status == 'expired' %}<span class="badge bg-danger">منتهي</span>
+                  {% else %}<span class="badge bg-warning text-dark">{{ doc.status }}</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not cat.documents %}
+              <tr><td colspan="5" class="text-center text-muted py-3">لا توجد مستندات في هذه الفئة</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if not categories %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-folder fs-1 d-block mb-2"></i>
+        <p>لا توجد فئات مستندات</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('hr.employee_documents_add', id=employee.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title">رفع مستند جديد</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">الموظف</label>
+            <select name="employee_id" class="form-select" required>
+              <option value="">اختر الموظف</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.full_name_ar }} - {{ emp.employee_number }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">فئة المستند</label>
+            <select name="category_id" class="form-select" required>
+              <option value="">اختر الفئة</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">اسم المستند</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الملف</label>
+            <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">تاريخ الانتهاء (اختياري)</label>
+            <input type="date" name="expiry_date" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">رفع المستند</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

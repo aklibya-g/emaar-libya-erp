@@ -1,0 +1,125 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+    border-radius: 25px; text-decoration: none; font-weight: 500;
+  }
+  .back-btn:hover { transform: translateY(-2px); color: #fff; }
+  .deleted-item {
+    border: 1px solid #e9ecef; border-radius: 10px; padding: 15px;
+    margin-bottom: 10px; transition: all 0.3s; background: var(--bs-body-bg);
+  }
+  .deleted-item:hover { border-color: #dc3545; box-shadow: 0 2px 10px rgba(220,53,69,0.1); }
+  .item-type-badge { font-size: 0.75rem; padding: 3px 10px; border-radius: 15px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i> لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-trash3"></i> {{ page_title }}</h1>
+  </div>
+  <div class="d-flex gap-2">
+    {% if items %}
+    <form method="POST" action="{{ url_for('recycle.clear_all') }}" onsubmit="return confirm('هل انت متاكد من حذف جميع العناصر نهائياً؟ لا يمكن التراجع عن هذا الإجراء')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash me-1"></i>حذف الكل نهائياً
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if not items %}
+<div class="card">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-trash3" style="font-size:4rem; color:#ccc;"></i>
+    <h4 class="mt-3 text-muted">سلة المحذوفات فارغة</h4>
+    <p class="text-muted">لا توجد عناصر محذوفة حالياً</p>
+  </div>
+</div>
+{% else %}
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-danger">{{ items|length }}</div>
+        <div class="text-muted">اجمالي العناصر</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-primary">{{ items|selectattr('item_type', 'equalto', 'work_order')|list|length }}</div>
+        <div class="text-muted">اوامر تشغيل</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-warning">{{ items|selectattr('item_type', 'equalto', 'contract')|list|length }}</div>
+        <div class="text-muted">عقود</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% for item in items %}
+    <div class="deleted-item mx-3 mt-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            {% if item.item_type == 'work_order' %}
+              <span class="item-type-badge bg-primary text-white">امر تشغيل</span>
+            {% elif item.item_type == 'contract' %}
+              <span class="item-type-badge bg-warning text-dark">عقد</span>
+            {% elif item.item_type == 'client' %}
+              <span class="item-type-badge bg-info text-white">جهة</span>
+            {% else %}
+              <span class="item-type-badge bg-secondary text-white">{{ item.item_type }}</span>
+            {% endif %}
+            <strong>{{ item.item_number or '-' }}</strong>
+          </div>
+          {% if item.item_title %}
+          <div class="text-muted mb-1">{{ item.item_title }}</div>
+          {% endif %}
+          <div class="text-muted" style="font-size:0.8rem;">
+            <i class="bi bi-person me-1"></i>حذف بواسطة: {{ item.deleted_by or 'غير معروف' }}
+            <span class="mx-2">|</span>
+            <i class="bi bi-clock me-1"></i>{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}
+          </div>
+        </div>
+        <div class="d-flex gap-1">
+          <form method="POST" action="{{ url_for('recycle.restore_item', item_id=item.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-success" title="استعادة">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('recycle.permanent_delete', item_id=item.id) }}" class="d-inline" onsubmit="return confirm('هل انت متاكد من الحذف النهائي؟ لا يمكن التراجع')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف نهائي">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

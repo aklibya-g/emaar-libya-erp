@@ -1,0 +1,50 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}رحلات السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">رحلات السائقين</h4>
+  <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>السائق</th>
+            <th>التاريخ</th>
+            <th>المسار</th>
+            <th>المركبة</th>
+            <th>الركاب</th>
+            <th>من</th>
+            <th>إلى</th>
+            <th>المسافة</th>
+            <th>تكلفة الوقود</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trip in trips %}
+          <tr>
+            <td>{{ trip.driver.full_name_ar if trip.driver else '-' }}</td>
+            <td>{{ trip.trip_date.strftime('%Y-%m-%d') if trip.trip_date else '-' }}</td>
+            <td>{{ trip.route or '-' }}</td>
+            <td>{{ trip.vehicle_id or '-' }}</td>
+            <td>{{ trip.passengers_count or '-' }}</td>
+            <td>{{ trip.start_time.strftime('%H:%M') if trip.start_time else '-' }}</td>
+            <td>{{ trip.end_time.strftime('%H:%M') if trip.end_time else '-' }}</td>
+            <td>{{ trip.distance_km or '-' }} كم</td>
+            <td>{{ '{:,.2f}'.format(trip.fuel_cost) if trip.fuel_cost else '-' }}</td>
+          </tr>
+          {% endfor %}
+          {% if not trips %}
+          <tr><td colspan="9" class="text-center text-muted py-4">لا توجد رحلات مسجلة</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

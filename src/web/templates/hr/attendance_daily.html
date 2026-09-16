@@ -1,0 +1,119 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}سجل الحضور اليومي | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('hr.hr_dashboard') }}">شؤون الموظفين</a></li>
+            <li class="breadcrumb-item active">سجل الحضور اليومي</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-calendar-day me-2"></i>سجل الحضور اليومي</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('hr.attendance_monthly') }}" class="btn btn-outline-secondary"><i class="bi bi-calendar-month me-1"></i>العرض الشهري</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">التاريخ</label>
+        <input type="date" name="date" class="form-control" value="{{ selected_date | default(today) }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">القسم</label>
+        <select name="department_id" class="form-select">
+          <option value="">جميع الأقسام</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if selected_department == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>عرض</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('hr.attendance_save') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="date" value="{{ selected_date | default(today) }}">
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="form-check-input" id="selectAll"></th>
+              <th>الموظف</th>
+              <th>التاريخ</th>
+              <th>اليوم</th>
+              <th>دخول</th>
+              <th>خروج</th>
+              <th>الحالة</th>
+              <th>تأخير (دقيقة)</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec in attendance_records %}
+            <tr>
+              <td><input type="checkbox" class="form-check-input attendance-check" name="ids" value="{{ rec.employee_id }}"></td>
+              <td>
+                <input type="hidden" name="employee_id_{{ rec.employee_id }}" value="{{ rec.employee_id }}">
+                {{ rec.employee.full_name_ar | default('') }}
+                <small class="text-muted d-block">{{ rec.employee.employee_number | default('') }}</small>
+              </td>
+              <td><input type="date" name="date_{{ rec.employee_id }}" class="form-control form-control-sm" value="{{ selected_date | default(today) }}"></td>
+              <td>{{ rec.day_name or '-' }}</td>
+              <td><input type="time" name="check_in_{{ rec.employee_id }}" class="form-control form-control-sm" value="{{ rec.check_in.strftime('%H:%M') if rec.check_in else '' }}"></td>
+              <td><input type="time" name="check_out_{{ rec.employee_id }}" class="form-control form-control-sm" value="{{ rec.check_out.strftime('%H:%M') if rec.check_out else '' }}"></td>
+              <td>
+                <select name="status_{{ rec.employee_id }}" class="form-select form-select-sm">
+                  <option value="present" {% if rec.status == 'present' %}selected{% endif %}>حاضر</option>
+                  <option value="absent" {% if rec.status == 'absent' %}selected{% endif %}>غائب</option>
+                  <option value="late" {% if rec.status == 'late' %}selected{% endif %}>متأخر</option>
+                  <option value="leave" {% if rec.status == 'leave' %}selected{% endif %}>إجازة</option>
+                  <option value="holiday" {% if rec.status == 'holiday' %}selected{% endif %}>عطلة رسمية</option>
+                </select>
+              </td>
+              <td><input type="number" name="late_{{ rec.employee_id }}" class="form-control form-control-sm" value="{{ rec.late_minutes | default(0) }}" min="0"></td>
+              <td><input type="text" name="notes_{{ rec.employee_id }}" class="form-control form-control-sm" value="{{ rec.notes | default('') }}"></td>
+            </tr>
+            {% endfor %}
+            {% if not attendance_records %}
+            <tr><td colspan="9" class="text-center text-muted py-4">لا توجد سجلات حضور لهذا التاريخ</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if attendance_records %}
+    <div class="card-footer d-flex justify-content-end gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>حفظ التعديلات</button>
+    </div>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('selectAll')?.addEventListener('change', function() {
+  document.querySelectorAll('.attendance-check').forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "layouts/base.html" %}
+{% block title %}المطالبات المالية | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); }
+  .back-btn-header i { font-size: 14px; transition: transform 0.25s ease; }
+  .back-btn-header:hover i { transform: translateX(-3px); }
+
+  .header-actions .btn { padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; transition: all 0.25s ease; }
+  .header-actions .btn-new { background: #fff; color: #1a365d; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .header-actions .btn-new:hover { background: #f0f9ff; transform: translateY(-2px); }
+
+  .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-tab { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-decoration: none; color: var(--text-secondary, #64748b); background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); transition: all 0.2s; }
+  .filter-tab:hover { background: #f1f5f9; color: var(--text-primary, #1e293b); }
+  .filter-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-color: transparent; }
+
+  .finance-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .finance-table thead th { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); color: var(--text-secondary, #475569); padding: 10px 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid var(--border-color, #e2e8f0); white-space: nowrap; letter-spacing: 0.3px; }
+  .finance-table tbody td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 12px; vertical-align: middle; text-align: center; }
+  .finance-table tbody tr:hover { background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 50%, #f0f9ff 100%); }
+  .finance-table tbody tr:last-child td { border-bottom: none; }
+
+  .badge-status { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .action-btn { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 12px; transition: all 0.15s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('finance.finance_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة المالية
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('finance.finance_dashboard') }}">المالية</a></li>
+            <li class="breadcrumb-item active">المطالبات المالية</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-file-earmark-text me-2"></i>المطالبات المالية</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <form method="POST" action="{{ url_for('finance.generate_claims') }}" class="d-inline" onsubmit="return confirm('هل تريد توليد المطالبات المالية للشهر الحالي؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-new">
+          <i class="bi bi-file-earmark-plus me-1"></i>توليد المطالبات
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body" style="padding:14px 18px">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label" style="font-size:11px;font-weight:600">الحالة</label>
+        <select name="status" class="form-select form-select-sm" style="border-radius:8px">
+          <option value="">الكل</option>
+          <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>قيد التحصيل</option>
+          <option value="collecting" {% if request.args.get('status') == 'collecting' %}selected{% endif %}>قيد التحصيل</option>
+          <option value="partially_paid" {% if request.args.get('status') == 'partially_paid' %}selected{% endif %}>تحصيل جزئي</option>
+          <option value="collected" {% if request.args.get('status') == 'collected' %}selected{% endif %}>تم التحصيل</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" style="font-size:11px;font-weight:600">الجهة</label>
+        <select name="client_id" class="form-select form-select-sm" style="border-radius:8px">
+          <option value="">الكل</option>
+          {% for client in clients|default([]) %}
+          <option value="{{ client.id }}" {% if request.args.get('client_id')|int == client.id %}selected{% endif %}>{{ client.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" style="font-size:11px;font-weight:600">الشهر</label>
+        <select name="month" class="form-select form-select-sm" style="border-radius:8px">
+          <option value="">الكل</option>
+          {% for i in range(1, 13) %}
+          <option value="{{ i }}" {% if request.args.get('month')|int == i %}selected{% endif %}>
+            {% set months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'] %}
+            {{ months[i-1] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" style="font-size:11px;font-weight:600">السنة</label>
+        <select name="year" class="form-select form-select-sm" style="border-radius:8px">
+          <option value="">الكل</option>
+          {% for y in range(2024, 2028) %}
+          <option value="{{ y }}" {% if request.args.get('year')|int == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary btn-sm w-100" style="border-radius:8px"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+      <div class="col-md-1">
+        <a href="{{ url_for('finance.claims_list') }}" class="btn btn-outline-secondary btn-sm w-100" style="border-radius:8px"><i class="bi bi-arrow-counterclockwise"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Claims Table -->
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="finance-table mb-0">
+        <thead>
+          <tr>
+            <th>رقم المطالبة</th>
+            <th>رقم أمر التشغيل</th>
+            <th>الجهة</th>
+            <th>المسار</th>
+            <th>القيمة النهائية</th>
+            <th>المحصل</th>
+            <th>المتبقي</th>
+            <th>الحالة</th>
+            <th>العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if claims %}
+          {% for claim in claims %}
+          <tr>
+            <td><a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}" style="font-weight:700;color:#1e40af;text-decoration:none;background:#eff6ff;padding:3px 8px;border-radius:6px;font-size:12px">{{ claim.claim_number }}</a></td>
+            <td><span style="font-weight:600;font-size:12px">{{ claim.order_number or '-' }}</span></td>
+            <td><span style="font-weight:600;font-size:11px">{{ claim.client_name or '-' }}</span></td>
+            <td><span style="font-size:11px;color:var(--text-secondary,#64748b)">{{ claim.route or '-' }}</span></td>
+            <td><span style="font-weight:700;color:#1e40af">{{ "{:,.0f}".format(claim.final_value) }} <span style="font-size:9px;color:#94a3b8">د.ل</span></span></td>
+            <td><span style="font-weight:600;color:#10b981">{{ "{:,.0f}".format(claim.received_amount) }}</span></td>
+            <td><span style="font-weight:600;color:#ef4444">{{ "{:,.0f}".format(claim.remaining_amount) }}</span></td>
+            <td>
+              {% if claim.status == 'pending' %}
+                <span class="badge-status" style="background:#dcfce7;color:#166534">قيد التحصيل</span>
+              {% elif claim.status == 'collecting' %}
+                <span class="badge-status" style="background:#dcfce7;color:#166534">قيد التحصيل</span>
+              {% elif claim.status == 'partially_paid' %}
+                <span class="badge-status" style="background:#fef9c3;color:#854d0e">تحصيل جزئي</span>
+              {% elif claim.status == 'collected' or claim.status == 'fully_paid' %}
+                <span class="badge-status" style="background:#bbf7d0;color:#166534">تم التحصيل</span>
+              {% else %}
+                <span class="badge-status" style="background:#f3f4f6;color:#374151">{{ claim.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 justify-content-center">
+                <a href="{{ url_for('finance.claim_detail', claim_id=claim.id) }}" class="btn action-btn btn-outline-primary" title="عرض">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('finance.claim_print', claim_id=claim.id) }}" target="_blank" class="btn action-btn btn-outline-secondary" title="طباعة">
+                  <i class="bi bi-printer"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr><td colspan="9" class="text-center py-4" style="color:var(--text-secondary,#94a3b8)"><i class="bi bi-inbox fs-3 d-block mb-2"></i>لا توجد مطالبات مالية</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

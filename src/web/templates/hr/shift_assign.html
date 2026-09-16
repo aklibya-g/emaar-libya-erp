@@ -1,0 +1,91 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}تعيين وردية | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">تعيين وردية لموظف</h4>
+  <a href="{{ url_for('hr.shifts_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> الورديات
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">بيانات التعيين</h6></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('hr.shifts_assign') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الموظف <span class="text-danger">*</span></label>
+              <select name="employee_id" class="form-select" required>
+                <option value="">اختر الموظف</option>
+                {% for emp in employees %}
+                <option value="{{ emp.id }}">{{ emp.full_name_ar }} - {{ emp.employee_number }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">الوردية <span class="text-danger">*</span></label>
+              <select name="shift_id" class="form-select" required>
+                <option value="">اختر الوردية</option>
+                {% for shift in shifts %}
+                <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time.strftime('%H:%M') if shift.start_time else '' }} - {{ shift.end_time.strftime('%H:%M') if shift.end_time else '' }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">تاريخ البدء <span class="text-danger">*</span></label>
+              <input type="date" name="effective_from" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">تاريخ الانتهاء</label>
+              <input type="date" name="effective_to" class="form-control">
+              <small class="text-muted">اتركه فارغاً للتعيين الدائم</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">يوم الأسبوع</label>
+              <select name="day_of_week" class="form-select">
+                <option value="">كل الأيام</option>
+                <option value="Sunday">الأحد</option>
+                <option value="Monday">الإثنين</option>
+                <option value="Tuesday">الثلاثاء</option>
+                <option value="Wednesday">الأربعاء</option>
+                <option value="Thursday">الخميس</option>
+                <option value="Friday">الجمعة</option>
+                <option value="Saturday">السبت</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>حفظ التعيين</button>
+            <a href="{{ url_for('hr.shifts_list') }}" class="btn btn-secondary">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">الورديات المتاحة</h6></div>
+      <div class="card-body">
+        {% for shift in shifts %}
+        <div class="mb-3 pb-3 border-bottom">
+          <strong>{{ shift.name }}</strong>
+          <small class="text-muted d-block">{{ shift.start_time.strftime('%H:%M') if shift.start_time else '' }} - {{ shift.end_time.strftime('%H:%M') if shift.end_time else '' }}</small>
+          {% if shift.notes %}
+          <small class="text-muted d-block mt-1">{{ shift.notes }}</small>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% if not shifts %}
+        <div class="text-center py-3 text-muted">
+          <p class="mb-0 small">لا توجد ورديات بعد</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

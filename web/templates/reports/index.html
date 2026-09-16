@@ -1,0 +1,46 @@
+{% extends "layouts/base.html" %}
+{% block title %}التقارير | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">التقارير</h4>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <a href="{{ url_for('reports.reports_correspondence') }}" class="card text-decoration-none h-100">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-envelope-paper-fill text-primary" style="font-size:48px"></i>
+        <h5 class="card-title mt-3">تقرير المراسلات</h5>
+        <p class="text-muted">ملخص المراسلات حسب النوع والاتجاه والحالة</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('reports.reports_employees') }}" class="card text-decoration-none h-100">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-people-fill text-success" style="font-size:48px"></i>
+        <h5 class="card-title mt-3">تقرير الموظفين</h5>
+        <p class="text-muted">إحصائيات الموظفين حسب الأقسام</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('reports.reports_drivers') }}" class="card text-decoration-none h-100">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-truck text-warning" style="font-size:48px"></i>
+        <h5 class="card-title mt-3">تقرير السائقين</h5>
+        <p class="text-muted">إحصائيات السائقين وحالاتهم</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{{ url_for('reports.reports_warehouses') }}" class="card text-decoration-none h-100">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-box-seam-fill text-info" style="font-size:48px"></i>
+        <h5 class="card-title mt-3">تقرير المخازن</h5>
+        <p class="text-muted">ملخص المخازن والأصناف والمخزون</p>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

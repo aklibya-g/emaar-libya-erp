@@ -1,0 +1,223 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}طلبات الإجازة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<style>
+  .leave-stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+  .leave-stat { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; padding: 18px 16px; text-decoration: none; color: inherit; transition: all 0.2s; position: relative; overflow: hidden; text-align: center; }
+  .leave-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-color: transparent; }
+  .leave-stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 14px 14px 0 0; }
+  .leave-stat.s-total::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+  .leave-stat.s-pending::before { background: linear-gradient(90deg, #f59e0b, #f97316); }
+  .leave-stat.s-exec::before { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
+  .leave-stat.s-approved::before { background: linear-gradient(90deg, #10b981, #059669); }
+  .leave-stat.s-rejected::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+  .leave-stat .ls-num { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .leave-stat.s-total .ls-num { color: #3b82f6; }
+  .leave-stat.s-pending .ls-num { color: #f59e0b; }
+  .leave-stat.s-exec .ls-num { color: #8b5cf6; }
+  .leave-stat.s-approved .ls-num { color: #10b981; }
+  .leave-stat.s-rejected .ls-num { color: #ef4444; }
+  .leave-stat .ls-label { font-size: 12px; color: var(--text-secondary, #64748b); font-weight: 500; }
+  .leave-stat .ls-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 18px; }
+  .leave-stat.s-total .ls-icon { background: rgba(59,130,246,0.1); color: #3b82f6; }
+  .leave-stat.s-pending .ls-icon { background: rgba(245,158,11,0.1); color: #f59e0b; }
+  .leave-stat.s-exec .ls-icon { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+  .leave-stat.s-approved .ls-icon { background: rgba(16,185,129,0.1); color: #10b981; }
+  .leave-stat.s-rejected .ls-icon { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+  .leave-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .leave-tab { padding: 8px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; text-decoration: none; color: var(--text-secondary, #64748b); background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); transition: all 0.2s; }
+  .leave-tab:hover { border-color: #3b82f6; color: #3b82f6; }
+  .leave-tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .leave-tab .tab-badge { background: rgba(255,255,255,0.25); padding: 1px 7px; border-radius: 6px; font-size: 11px; margin-right: 5px; }
+  .leave-tab:not(.active) .tab-badge { background: var(--hover-bg, #f1f5f9); }
+
+  .leave-card { background: var(--bg-card, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; overflow: hidden; }
+  .leave-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  .leave-table thead th { background: #f8fafc; color: var(--text-secondary, #64748b); padding: 12px 16px; font-size: 11px; font-weight: 600; text-align: right; border-bottom: 1px solid var(--border-color, #e2e8f0); white-space: nowrap; }
+  .leave-table tbody td { padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f1f5f9); font-size: 13px; vertical-align: middle; }
+  .leave-table tbody tr { transition: background 0.15s; }
+  .leave-table tbody tr:hover { background: var(--hover-bg, #f8fafc); }
+  .leave-table tbody tr:last-child td { border-bottom: none; }
+
+  .emp-cell { display: flex; align-items: center; gap: 10px; }
+  .emp-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .emp-name { font-weight: 600; font-size: 13px; color: var(--text-primary, #1e293b); }
+  .emp-num { font-size: 11px; color: var(--text-secondary, #94a3b8); }
+
+  .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .status-pill.sp-pending { background: rgba(245,158,11,0.1); color: #d97706; }
+  .status-pill.sp-exec { background: rgba(139,92,246,0.1); color: #7c3aed; }
+  .status-pill.sp-approved { background: rgba(16,185,129,0.1); color: #059669; }
+  .status-pill.sp-rejected { background: rgba(239,68,68,0.1); color: #dc2626; }
+  .rejection-reason { font-size: 11px; color: #dc2626; margin-top: 4px; line-height: 1.5; max-width: 200px; }
+
+  .action-btn { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; border: none; cursor: pointer; }
+  .action-btn.btn-view { background: rgba(59,130,246,0.1); color: #3b82f6; }
+  .action-btn.btn-view:hover { background: #3b82f6; color: #fff; }
+  .action-btn.btn-approve { background: rgba(16,185,129,0.1); color: #10b981; }
+  .action-btn.btn-approve:hover { background: #10b981; color: #fff; }
+  .action-btn.btn-final { background: #10b981; color: #fff; }
+  .action-btn.btn-final:hover { background: #059669; }
+  .action-btn.btn-reject { background: rgba(239,68,68,0.1); color: #ef4444; }
+  .action-btn.btn-reject:hover { background: #ef4444; color: #fff; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state i { font-size: 48px; color: #d1d5db; }
+  .empty-state p { font-size: 14px; color: var(--text-secondary, #94a3b8); margin-top: 12px; }
+
+  @media (max-width: 1200px) { .leave-stat-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 768px) { .leave-stat-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<!-- Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('hr.hr_dashboard') }}">شؤون الموظفين</a></li>
+            <li class="breadcrumb-item active">طلبات الإجازة</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-calendar2-check me-2"></i>طلبات الإجازة</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('hr.leave_balances') }}" class="btn btn-outline-light"><i class="bi bi-wallet2 me-1"></i>الأرصدة</a>
+      <a href="{{ url_for('hr.leave_request_form') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>طلب جديد</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="leave-stat-row">
+  {% set counts = {} %}
+  {% for l in leaves %}
+    {% if l.status not in counts %}{% set _ = counts.update({l.status: 0}) %}{% endif %}
+    {% set _ = counts.update({l.status: counts[l.status] + 1}) %}
+  {% endfor %}
+  <a href="{{ url_for('hr.leave_list', tab='all') }}" class="leave-stat s-total">
+    <div class="ls-icon"><i class="bi bi-files"></i></div>
+    <div class="ls-num">{{ leaves|length }}</div>
+    <div class="ls-label">إجمالي الطلبات</div>
+  </a>
+  <a href="{{ url_for('hr.leave_list', tab='pending') }}" class="leave-stat s-pending">
+    <div class="ls-icon"><i class="bi bi-hourglass-split"></i></div>
+    <div class="ls-num">{{ counts.get('pending', 0) }}</div>
+    <div class="ls-label">معلقة</div>
+  </a>
+  <a href="{{ url_for('hr.leave_list', tab='pending_executive') }}" class="leave-stat s-exec">
+    <div class="ls-icon"><i class="bi bi-person-check"></i></div>
+    <div class="ls-num">{{ counts.get('pending_executive', 0) }}</div>
+    <div class="ls-label">بانتظار الاعتماد</div>
+  </a>
+  <a href="{{ url_for('hr.leave_list', tab='approved') }}" class="leave-stat s-approved">
+    <div class="ls-icon"><i class="bi bi-check-circle"></i></div>
+    <div class="ls-num">{{ counts.get('approved', 0) }}</div>
+    <div class="ls-label">مؤكدة</div>
+  </a>
+  <a href="{{ url_for('hr.leave_list', tab='rejected') }}" class="leave-stat s-rejected">
+    <div class="ls-icon"><i class="bi bi-x-circle"></i></div>
+    <div class="ls-num">{{ counts.get('rejected', 0) }}</div>
+    <div class="ls-label">مرفوضة</div>
+  </a>
+</div>
+
+<!-- Tabs -->
+<div class="leave-tabs">
+  <a href="{{ url_for('hr.leave_list', tab='all') }}" class="leave-tab {% if tab == 'all' %}active{% endif %}">الكل</a>
+  <a href="{{ url_for('hr.leave_list', tab='pending') }}" class="leave-tab {% if tab == 'pending' %}active{% endif %}">المعلقة <span class="tab-badge">{{ counts.get('pending', 0) }}</span></a>
+  <a href="{{ url_for('hr.leave_list', tab='pending_executive') }}" class="leave-tab {% if tab == 'pending_executive' %}active{% endif %}">بانتظار المدير التنفيذي <span class="tab-badge">{{ counts.get('pending_executive', 0) }}</span></a>
+  <a href="{{ url_for('hr.leave_list', tab='approved') }}" class="leave-tab {% if tab == 'approved' %}active{% endif %}">المؤكدة <span class="tab-badge">{{ counts.get('approved', 0) }}</span></a>
+  <a href="{{ url_for('hr.leave_list', tab='rejected') }}" class="leave-tab {% if tab == 'rejected' %}active{% endif %}">المرفوضة <span class="tab-badge">{{ counts.get('rejected', 0) }}</span></a>
+</div>
+
+<!-- Table -->
+<div class="leave-card">
+  {% if leaves %}
+  <div class="table-responsive">
+    <table class="leave-table">
+      <thead>
+        <tr>
+          <th style="width:22%">الموظف</th>
+          <th>النوع</th>
+          <th>من</th>
+          <th>إلى</th>
+          <th>الأيام</th>
+          <th>السبب</th>
+          <th>الحالة</th>
+          <th style="width:18%">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set avatar_colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#14b8a6'] %}
+        {% for leave in leaves %}
+        <tr>
+          <td>
+            <div class="emp-cell">
+              <div class="emp-avatar" style="background:{{ avatar_colors[loop.index0 % 8] }}">{{ (leave.employee.full_name_ar | default('؟'))[0] }}</div>
+              <div>
+                <div class="emp-name">{{ leave.employee.full_name_ar | default('-') }}</div>
+                <div class="emp-num">{{ leave.employee.employee_number | default('') }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span style="font-weight:500">{{ leave.leave_type.name_ar | default('-') }}</span></td>
+          <td style="white-space:nowrap">{{ leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '-' }}</td>
+          <td style="white-space:nowrap">{{ leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '-' }}</td>
+          <td><span style="font-weight:700;font-size:15px">{{ leave.total_days }}</span></td>
+          <td style="max-width:160px;color:var(--text-secondary,#64748b)">{{ (leave.reason[:35] if leave.reason else '-') }}{% if leave.reason and leave.reason|length > 35 %}...{% endif %}</td>
+          <td>
+            {% if leave.status == 'pending' %}
+              <span class="status-pill sp-pending"><i class="bi bi-hourglass-split"></i>معلق</span>
+            {% elif leave.status == 'pending_executive' %}
+              <span class="status-pill sp-exec"><i class="bi bi-person-check"></i>بانتظار الاعتماد</span>
+            {% elif leave.status == 'approved' %}
+              <span class="status-pill sp-approved"><i class="bi bi-check-circle-fill"></i>مؤكد</span>
+            {% elif leave.status == 'rejected' %}
+              <span class="status-pill sp-rejected"><i class="bi bi-x-circle-fill"></i>مرفوض</span>
+              {% if leave.rejection_reason %}
+              <div class="rejection-reason" title="{{ leave.rejection_reason }}"><i class="bi bi-info-circle me-1"></i>{{ leave.rejection_reason[:45] }}{% if leave.rejection_reason|length > 45 %}...{% endif %}</div>
+              {% endif %}
+            {% else %}
+              <span class="status-pill" style="background:#f1f5f9;color:#64748b">{{ leave.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-2" style="flex-wrap:nowrap">
+              <a href="{{ url_for('hr.leave_detail', id=leave.id) }}" class="action-btn btn-view" title="عرض الطلب"><i class="bi bi-eye"></i>عرض</a>
+              {% if leave.status == 'pending' %}
+              <form method="POST" action="{{ url_for('hr.leave_approve', id=leave.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn btn-approve" title="موافقة الموارد البشرية"><i class="bi bi-check-lg"></i>موافقة</button>
+              </form>
+              <a href="{{ url_for('hr.leave_detail', id=leave.id) }}#reject" class="action-btn btn-reject" title="رفض"><i class="bi bi-x-lg"></i></a>
+              {% elif leave.status == 'pending_executive' %}
+              <form method="POST" action="{{ url_for('hr.leave_approve', id=leave.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn btn-final" title="اعتماد المدير التنفيذي"><i class="bi bi-check2-all"></i>اعتماد</button>
+              </form>
+              <a href="{{ url_for('hr.leave_detail', id=leave.id) }}#reject" class="action-btn btn-reject" title="رفض"><i class="bi bi-x-lg"></i></a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-calendar2-check"></i>
+    <p>لا توجد طلبات إجازة {% if tab != 'all' %}في هذا التبويب{% endif %}</p>
+    <a href="{{ url_for('hr.leave_request_form') }}" class="btn btn-primary btn-sm mt-2" style="border-radius:8px"><i class="bi bi-plus-lg me-1"></i>طلب إجازة جديد</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>كشف الحضور - {{ month_name }} {{ year }} | شركة اعمار ليبيا لنقل الركاب</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, 'IBM Plex Sans Arabic', sans-serif; font-size: 9px; color: #1e293b; background: #fff; }
+    .report { padding: 8mm; }
+    .header { text-align: center; border-bottom: 3px solid #1e40af; padding-bottom: 8px; margin-bottom: 10px; }
+    .company { font-size: 16px; font-weight: 700; color: #1e40af; letter-spacing: 0.5px; }
+    .sub-company { font-size: 10px; color: #64748b; margin-top: 2px; }
+    .title { font-size: 13px; font-weight: 700; color: #374151; margin-top: 6px; }
+    .period { font-size: 11px; color: #6b7280; }
+    .meta { display: flex; justify-content: space-between; font-size: 8px; color: #6b7280; margin: 6px 0; padding: 4px 8px; background: #f8fafc; border-radius: 4px; }
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 7px; margin-bottom: 6px; padding: 3px 6px; background: #f1f5f9; border-radius: 4px; }
+    .legend span { display: inline-flex; align-items: center; gap: 2px; }
+    .legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+    table { width: 100%; border-collapse: collapse; font-size: 7px; }
+    th { background: #1e40af; color: #fff; padding: 3px 2px; text-align: center; font-size: 6.5px; font-weight: 600; }
+    th.name { text-align: right; padding-right: 4px; }
+    td { padding: 2px 1px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+    td.name { text-align: right; padding-right: 4px; font-weight: 600; font-size: 7px; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .st { display: inline-block; width: 12px; height: 12px; line-height: 12px; border-radius: 2px; font-size: 6px; font-weight: 700; color: #fff; text-align: center; }
+    .st-h { background: #22c55e; } .st-g { background: #ef4444; } .st-m { background: #f59e0b; }
+    .st-i { background: #3b82f6; } .st-r { background: #6b7280; } .st-ma { background: #8b5cf6; }
+    .st-t { background: #06b6d4; } .st-id { background: #10b981; } .st-n { background: #f97316; }
+    .st-k { background: #f59e0b; }
+    .sum { font-weight: 700; font-size: 7px; }
+    .sum-ok { background: #dcfce7; color: #16a34a; }
+    .sum-no { background: #fee2e2; color: #dc2626; }
+    .sum-late { background: #fef3c7; color: #d97706; }
+    .sum-leave { background: #dbeafe; color: #2563eb; }
+    .sum-hrs { background: #f1f5f9; color: #475569; }
+    .footer { margin-top: 12px; border-top: 2px solid #e2e8f0; padding-top: 8px; }
+    .notes { border: 1px dashed #cbd5e1; border-radius: 4px; padding: 6px; min-height: 25px; margin-bottom: 10px; font-size: 8px; color: #94a3b8; }
+    .sigs { display: flex; justify-content: space-between; margin-top: 15px; }
+    .sig { text-align: center; width: 28%; }
+    .sig-line { border-top: 1px solid #374151; margin-top: 40px; padding-top: 4px; font-size: 8px; font-weight: 600; }
+    .controls { position: fixed; top: 8px; left: 8px; z-index: 999; display: flex; gap: 5px; }
+    .controls button, .controls a { padding: 6px 14px; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; text-decoration: none; }
+    .b-print { background: #1e40af; color: #fff; }
+    .b-pdf { background: #059669; color: #fff; }
+    .b-close { background: #ef4444; color: #fff; }
+    @media print { .controls { display: none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  <div class="controls no-print">
+    <button class="b-print" onclick="window.print()">طباعة</button>
+    <a href="{{ url_for('hr.attendance_report_pdf', year=year, month=month, department_id=department_id) }}" class="b-pdf">تنزيل PDF</a>
+    <button class="b-close" onclick="window.close()">إغلاق</button>
+  </div>
+
+  <div class="report">
+    <div class="header">
+      <div class="company">شركة اعمار ليبيا لنقل الركاب</div>
+      <div class="sub-company">شركة اعمار ليبيا القابضة</div>
+      <div class="title">كشف الحضور والغياب الشهري</div>
+      <div class="period">{{ month_name }} {{ year }} (من يوم {{ start_day }} الي {{ end_day }})</div>
+    </div>
+
+    <div class="meta">
+      <span>عدد أيام الشهر: {{ days_in_month }}</span>
+      <span>عدد الموظفين: {{ report_data | length }}</span>
+      <span>تاريخ الطباعة: {{ today.strftime('%Y-%m-%d') }}</span>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#22c55e"></i> حاضر</span>
+      <span><i style="background:#ef4444"></i> غائب</span>
+      <span><i style="background:#f59e0b"></i> متأخر</span>
+      <span><i style="background:#3b82f6"></i> إجازة</span>
+      <span><i style="background:#6b7280"></i> راحة</span>
+      <span><i style="background:#8b5cf6"></i> مأمورية</span>
+      <span><i style="background:#06b6d4"></i> تدريب</span>
+      <span><i style="background:#10b981"></i> عمل إضافي</span>
+      <span><i style="background:#f97316"></i> نصف يوم</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="name" style="width:30px">#</th>
+          <th class="name" style="width:110px">اسم الموظف</th>
+          <th style="width:45px">الرقم</th>
+          {% for day in range(start_day, end_day + 1) %}
+          <th style="width:auto">{{ day }}</th>
+          {% endfor %}
+          <th style="width:22px;background:#16a34a">ح</th>
+          <th style="width:22px;background:#dc2626">غ</th>
+          <th style="width:22px;background:#d97706">م</th>
+          <th style="width:22px;background:#2563eb">إ</th>
+          <th style="width:30px;background:#475569">ساعات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_data %}
+        <tr>
+          <td class="name" style="color:#94a3b8">{{ loop.index }}</td>
+          <td class="name">{{ row.employee.full_name_ar }}</td>
+          <td style="font-size:6.5px;color:#94a3b8">{{ row.employee.employee_number or '-' }}</td>
+          {% for d in row.daily %}
+          <td>
+            {% if d.status_short == 'ح' %}<span class="st st-h">ح</span>
+            {% elif d.status_short == 'غ' %}<span class="st st-g">غ</span>
+            {% elif d.status_short == 'م' %}<span class="st st-m">م</span>
+            {% elif d.status_short == 'إ' %}<span class="st st-i">إ</span>
+            {% elif d.status_short == 'ر' %}<span class="st st-r">ر</span>
+            {% elif d.status_short == 'مأ' %}<span class="st st-ma">مأ</span>
+            {% elif d.status_short == 'ت' %}<span class="st st-t">ت</span>
+            {% elif d.status_short == 'إض' %}<span class="st st-id">إض</span>
+            {% elif d.status_short == 'ن' %}<span class="st st-n">ن</span>
+            {% elif d.status_short == 'خ' %}<span class="st st-k">خ</span>
+            {% else %}-{% endif %}
+          </td>
+          {% endfor %}
+          <td class="sum sum-ok">{{ row.stats.present }}</td>
+          <td class="sum sum-no">{{ row.stats.absent }}</td>
+          <td class="sum sum-late">{{ row.stats.late }}</td>
+          <td class="sum sum-leave">{{ row.stats.leave }}</td>
+          <td class="sum sum-hrs">{{ '{:.1f}'.format(row.stats.total_hours) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <div class="notes">ملاحظات: _____________________________________________________________________________</div>
+      <div class="sigs">
+        <div class="sig"><div class="sig-line">المدير المباشر</div></div>
+        <div class="sig"><div class="sig-line">مدير الموارد البشرية</div></div>
+        <div class="sig"><div class="sig-line">المدير العام</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

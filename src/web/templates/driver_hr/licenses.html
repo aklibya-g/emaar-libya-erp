@@ -1,0 +1,58 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}رخص السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">رخص السائقين</h4>
+  <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>السائق</th>
+            <th>رقم الرخصة</th>
+            <th>النوع</th>
+            <th>تاريخ الإصدار</th>
+            <th>تاريخ الانتهاء</th>
+            <th>جهة الإصدار</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in drivers %}
+          <tr>
+            <td><a href="{{ url_for('driver_hr.driver_file', id=d.id) }}">{{ d.full_name_ar }}</a></td>
+            <td>{{ d.license_number or '-' }}</td>
+            <td>{{ d.license_type or '-' }}</td>
+            <td>{{ d.license_issue_date.strftime('%Y-%m-%d') if d.license_issue_date else '-' }}</td>
+            <td>{{ d.license_expiry_date.strftime('%Y-%m-%d') if d.license_expiry_date else '-' }}</td>
+            <td>{{ d.license_issuing_authority or '-' }}</td>
+            <td>
+              {% if d.license_expiry_date %}
+                {% if d.license_expiry_date < today %}
+                  <span class="badge bg-danger">منتهية</span>
+                {% elif d.license_expiry_date <= today + delta30 %}
+                  <span class="badge bg-warning text-dark">تنتهي قريباً</span>
+                {% else %}
+                  <span class="badge bg-success">سارية</span>
+                {% endif %}
+              {% else %}
+                <span class="badge bg-secondary">غير مسجلة</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not drivers %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا توجد رخص مسجلة</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

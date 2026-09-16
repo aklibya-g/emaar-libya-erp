@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('marketing.dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketing.dashboard') }}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">{{ page_title }}</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-people me-2"></i>{{ page_title }}</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('marketing.client_add') }}" class="btn btn-new">
+        <i class="bi bi-plus-circle me-1"></i>اضافة عميل
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم العميل</th>
+            <th>اسم الجهة</th>
+            <th>التليفون</th>
+            <th>العنوان</th>
+            <th>التصنيف</th>
+            <th>جهة الاتصال</th>
+            <th>الحالة</th>
+            <th>الاعمال</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+          <tr>
+            <td>{{ client.client_number }}</td>
+            <td>{{ client.name_ar }}</td>
+            <td>{{ client.phone or '-' }}</td>
+            <td>{{ client.address or '-' }}</td>
+            <td>{{ client.scope or '-' }}</td>
+            <td>{{ client.contact_person or '-' }}</td>
+            <td>
+              {% if client.is_active %}
+                <span class="badge bg-success">نشط</span>
+              {% else %}
+                <span class="badge bg-secondary">غير نشط</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('marketing.client_edit', client_id=client.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not clients %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">لا يوجد عملاء</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

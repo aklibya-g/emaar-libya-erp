@@ -1,0 +1,189 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ correspondence.reference_number }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">مراسلة: {{ correspondence.reference_number }}</h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('correspondence.correspondence_pdf', id=correspondence.id) }}" class="btn btn-outline-danger"><i class="bi bi-file-pdf me-1"></i>تحميل PDF</a>
+    <a href="{{ url_for('correspondence.correspondence_list') }}" class="btn btn-outline-secondary">العودة للقائمة</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">بيانات المراسلة</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong>الرقم الإشاري:</strong><p>{{ correspondence.reference_number }}</p></div>
+          <div class="col-md-4"><strong>التاريخ:</strong><p>{{ correspondence.date.strftime('%Y-%m-%d') if correspondence.date else '-' }}</p></div>
+          <div class="col-md-4"><strong>النوع:</strong><p>{{ correspondence.cor_type.name_ar if correspondence.cor_type else '-' }}</p></div>
+          <div class="col-md-4">
+            <strong>الاتجاه:</strong>
+            <p>
+              {% if correspondence.direction == 'IN' %}<span class="badge bg-primary">وارد</span>
+              {% elif correspondence.direction == 'OUT' %}<span class="badge bg-success">صادار</span>
+              {% elif correspondence.direction == 'INT' %}<span class="badge bg-info">داخلي</span>
+              {% else %}{{ correspondence.direction }}{% endif %}
+            </p>
+          </div>
+          <div class="col-md-4">
+            <strong>الحالة:</strong>
+            <p><span class="badge" style="background:{{ workflow.get_status_color(correspondence.status.code) if correspondence.status else '#6b7280' }}">{{ correspondence.status.name_ar if correspondence.status else '-' }}</span></p>
+          </div>
+          <div class="col-md-4"><strong>الأهمية:</strong><p>{{ 'عاجل' if correspondence.importance == 'high' else ('مهم' if correspondence.importance == 'critical' else 'عادي') }}</p></div>
+          <div class="col-md-12"><strong>الموضوع:</strong><p class="fw-bold">{{ correspondence.subject }}</p></div>
+          {% if correspondence.body %}
+          <div class="col-md-12"><strong>المحتوى:</strong><p style="white-space:pre-wrap">{{ correspondence.body }}</p></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">الأطراف</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6"><strong>القسم المرسل:</strong><p>{{ correspondence.sender_department.name_ar if correspondence.sender_department else '-' }}</p></div>
+          <div class="col-md-6"><strong>القسم المستلم:</strong><p>{{ correspondence.receiver_department.name_ar if correspondence.receiver_department else '-' }}</p></div>
+          <div class="col-md-6"><strong>الجهة المرسلة:</strong><p>{{ correspondence.sender_entity or '-' }}</p></div>
+          <div class="col-md-6"><strong>الجهة المستلمة:</strong><p>{{ correspondence.receiver_entity or '-' }}</p></div>
+          <div class="col-md-6"><strong>الموظف المسؤول:</strong><p>{{ correspondence.responsible_employee.full_name_ar if correspondence.responsible_employee else '-' }}</p></div>
+          <div class="col-md-6"><strong>تاريخ الاستحقاق:</strong><p>{{ correspondence.due_date.strftime('%Y-%m-%d') if correspondence.due_date else '-' }}</p></div>
+        </div>
+      </div>
+    </div>
+
+    {% if history %}
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">سجل العمل</h6></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>الإجراء</th><th>التاريخ</th><th>ملاحظات</th></tr></thead>
+            <tbody>
+              {% for action in history %}
+              <tr>
+                <td>{{ action.action_type }}</td>
+                <td>{{ action.action_date.strftime('%Y-%m-%d %H:%M') if action.action_date else '-' }}</td>
+                <td>{{ action.notes or '-' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if attachments %}
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">المرفقات</h6></div>
+      <div class="card-body">
+        {% for att in attachments %}
+        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+          <span><i class="bi bi-paperclip me-1"></i>{{ att.filename }}</span>
+          <a href="{{ url_for('static', filename=att.file_path) }}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="bi bi-download"></i></a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if linked %}
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">المراسلة المرتبطة</h6></div>
+      <div class="card-body">
+        <a href="{{ url_for('correspondence.correspondence_detail', id=linked.id) }}">{{ linked.reference_number }} - {{ linked.subject }}</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">الإجراءات</h6></div>
+      <div class="card-body d-grid gap-2">
+        {% for transition in available_transitions %}
+        <form method="POST" action="{{ url_for('correspondence.correspondence_transition', id=correspondence.id, target=transition.to_state) }}">
+          <div class="input-group mb-1">
+            <input type="text" name="notes" class="form-control form-control-sm" placeholder="ملاحظات (اختياري)">
+            <button type="submit" class="btn btn-sm btn-primary">{{ transition.action_name }}</button>
+          </div>
+        </form>
+        {% endfor %}
+        {% if not available_transitions %}
+        <p class="text-muted text-center mb-0">لا توجد إجراءات متاحة</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">إحالة</h6></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_forward', id=correspondence.id) }}">
+          <div class="mb-2">
+            <select name="to_employee_id" class="form-select form-select-sm" required>
+              <option value="">اختر الموظف</option>
+              {% for emp in [] %}{% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <select name="to_department_id" class="form-select form-select-sm">
+              <option value="">اختر القسم</option>
+              {% for dept in [] %}{% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="required_action" class="form-control form-control-sm" placeholder="الإجراء المطلوب">
+          </div>
+          <div class="mb-2">
+            <input type="date" name="due_date" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <input type="text" name="notes" class="form-control form-control-sm" placeholder="ملاحظات">
+          </div>
+          <button type="submit" class="btn btn-sm btn-warning w-100">إحالة</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">ربط بمراسلة أخرى</h6></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_link', id=correspondence.id) }}">
+          <div class="input-group">
+            <input type="text" name="target_reference" class="form-control form-control-sm" placeholder="الرقم الإشاري">
+            <button type="submit" class="btn btn-sm btn-outline-primary">ربط</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">إرفاق ملف</h6></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_attach', id=correspondence.id) }}" enctype="multipart/form-data">
+          <div class="mb-2">
+            <input type="file" name="attachment" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="notes" class="form-control form-control-sm" placeholder="ملاحظات">
+          </div>
+          <button type="submit" class="btn btn-sm btn-outline-success w-100">إرفاق</button>
+        </form>
+      </div>
+    </div>
+
+    {% if correspondence.status and correspondence.status.code == 'DRAFT' %}
+    <div class="card">
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('correspondence.correspondence_delete', id=correspondence.id) }}" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+          <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash me-1"></i>حذف المراسلة</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

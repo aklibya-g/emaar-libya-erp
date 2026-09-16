@@ -1,0 +1,89 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل سائق' if driver else 'إضافة سائق' }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">{{ 'تعديل بيانات السائق' if driver else 'إضافة سائق جديد' }}</h4>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">رقم السائق <span class="text-danger">*</span></label>
+          <input type="text" name="driver_number" class="form-control" value="{{ driver.driver_number if driver else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="full_name_ar" class="form-control" value="{{ driver.full_name_ar if driver else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="full_name_en" class="form-control" value="{{ driver.full_name_en if driver and driver.full_name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الهوية</label>
+          <input type="text" name="national_id" class="form-control" value="{{ driver.national_id if driver and driver.national_id else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" name="phone" class="form-control" value="{{ driver.phone if driver and driver.phone else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ الالتحاق</label>
+          <input type="date" name="join_date" class="form-control" value="{{ driver.join_date.strftime('%Y-%m-%d') if driver and driver.join_date else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">العنوان</label>
+          <textarea name="address" class="form-control" rows="2">{{ driver.address if driver and driver.address else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الرخصة</label>
+          <input type="text" name="license_number" class="form-control" value="{{ driver.license_number if driver and driver.license_number else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع الرخصة</label>
+          <select name="license_type" class="form-select">
+            <option value="">اختر</option>
+            <option value="A" {% if driver and driver.license_type == 'A' %}selected{% endif %}>A</option>
+            <option value="B" {% if driver and driver.license_type == 'B' %}selected{% endif %}>B</option>
+            <option value="C" {% if driver and driver.license_type == 'C' %}selected{% endif %}>C</option>
+            <option value="D" {% if driver and driver.license_type == 'D' %}selected{% endif %}>D</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">جهة إصدار الرخصة</label>
+          <input type="text" name="license_issuing_authority" class="form-control" value="{{ driver.license_issuing_authority if driver and driver.license_issuing_authority else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ إصدار الرخصة</label>
+          <input type="date" name="license_issue_date" class="form-control" value="{{ driver.license_issue_date.strftime('%Y-%m-%d') if driver and driver.license_issue_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ انتهاء الرخصة</label>
+          <input type="date" name="license_expiry_date" class="form-control" value="{{ driver.license_expiry_date.strftime('%Y-%m-%d') if driver and driver.license_expiry_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if driver and driver.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="inactive" {% if driver and driver.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الموظف المرتبط</label>
+          <input type="text" name="employee_id" class="form-control" value="{{ driver.employee_id if driver and driver.employee_id else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ driver.notes if driver and driver.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if driver else 'إضافة السائق' }}</button>
+        <a href="{{ url_for('drivers.drivers_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

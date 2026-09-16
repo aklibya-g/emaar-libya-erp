@@ -1,0 +1,95 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+    border-radius: 25px; text-decoration: none; font-weight: 500;
+  }
+  .back-btn:hover { transform: translateY(-2px); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('hr.loans_list') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i> العودة
+    </a>
+    <h1 class="mb-0"><i class="bi bi-wallet2"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">الموظف <span class="text-danger">*</span></label>
+          <select class="form-select" name="employee_id" required>
+            <option value="">اختر الموظف</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}" {{ 'selected' if loan and loan.employee_id == emp.id }}>
+              {{ emp.full_name_ar }} ({{ emp.employee_number }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">نوع السلفة <span class="text-danger">*</span></label>
+          <select class="form-select" name="loan_type" required>
+            <option value="advance" {{ 'selected' if loan and loan.loan_type == 'advance' }}>سلفة مقدمة</option>
+            <option value="personal" {{ 'selected' if loan and loan.loan_type == 'personal' }}>شخصية</option>
+            <option value="emergency" {{ 'selected' if loan and loan.loan_type == 'emergency' }}>طوارئ</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المبلغ (د.ل) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" name="amount" value="{{ loan.amount if loan else '' }}" step="0.01" required min="1">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاقساط الشهرية (د.ل)</label>
+          <input type="number" class="form-control" name="monthly_deduction" value="{{ loan.monthly_deduction if loan else '' }}" step="0.01" min="0">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ السلفة <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="loan_date" value="{{ loan.loan_date.strftime('%Y-%m-%d') if loan else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ الاستحقاق</label>
+          <input type="date" class="form-control" name="due_date" value="{{ loan.due_date.strftime('%Y-%m-%d') if loan and loan.due_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select class="form-select" name="status">
+            <option value="active" {{ 'selected' if loan and loan.status == 'active' }}>نشطة</option>
+            <option value="completed" {{ 'selected' if loan and loan.status == 'completed' }}>مكتملة</option>
+            <option value="cancelled" {{ 'selected' if loan and loan.status == 'cancelled' }}>ملغاة</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">اعتمد بواسطة</label>
+          <input type="text" class="form-control" name="approved_by" value="{{ loan.approved_by if loan and loan.approved_by else '' }}" placeholder="اسم المعتمد">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">السبب</label>
+          <textarea class="form-control" name="reason" rows="2">{{ loan.reason if loan and loan.reason else '' }}</textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">ملاحظات</label>
+          <textarea class="form-control" name="notes" rows="2">{{ loan.notes if loan and loan.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('hr.loans_list') }}" class="btn btn-outline-secondary">الغاء</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

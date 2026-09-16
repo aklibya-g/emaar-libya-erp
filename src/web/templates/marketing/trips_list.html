@@ -1,0 +1,272 @@
+{% extends "layouts/base.html" %}
+{% block title %}كشف الرحلات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px; padding: 20px 28px; color: white; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .report-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
+  .report-header p { margin: 3px 0 0; font-size: 12px; opacity: 0.7; }
+  .filter-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+  }
+  .filter-card label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .filter-card .form-select, .filter-card .form-control {
+    border-radius: 8px; border: 1px solid var(--border-color);
+    font-size: 13px; padding: 6px 12px; background: var(--bg-secondary);
+  }
+  .stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .stat-box {
+    flex: 1; background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+  }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .stat-box .num { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .stat-box .lbl { font-size: 12px; color: var(--text-secondary); }
+  .table-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 14px; overflow: hidden;
+  }
+  .table-card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .table-card-header h5 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .table-card table { margin: 0; }
+  .table-card thead th {
+    background: #f8fafc; color: #475569; font-size: 12px; font-weight: 600;
+    padding: 10px 16px; border-bottom: 2px solid var(--border-color);
+  }
+  .table-card tbody td {
+    padding: 10px 16px; font-size: 13px; color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color); vertical-align: middle;
+  }
+  .table-card tbody tr:hover { background: var(--bg-secondary); }
+  .table-card tfoot td {
+    padding: 12px 16px; font-weight: 700; font-size: 13px;
+    background: #f8fafc; border-top: 2px solid var(--border-color);
+  }
+  .status-badge {
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    display: inline-block;
+  }
+  .btn-approve {
+    padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    border: 2px solid; transition: all 0.2s;
+  }
+  .btn-approve:hover { transform: translateY(-1px); }
+  .print-approvals { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .print-approval-box {
+    text-align: center; padding: 14px; border: 2px solid #e2e8f0; border-radius: 8px;
+    background: white;
+  }
+  .print-approval-box .dept { font-weight: 700; font-size: 11pt; margin-bottom: 30px; color: #1e293b; }
+  .print-approval-box .line { border-top: 1.5px solid #334155; width: 80%; margin: 0 auto; }
+  .print-approval-box .check { margin-top: 8px; font-size: 10pt; color: #64748b; }
+  .print-approved { background: #f0fdf4 !important; border-color: #16a34a !important; }
+  .print-approved .check { color: #16a34a; font-weight: 700; }
+  @media print {
+    body { background: white !important; }
+    .no-print { display: none !important; }
+    .print-section { display: block !important; }
+    .table-card { border: 1px solid #e2e8f0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="report-header no-print">
+  <div>
+    <h2><i class="bi bi-geo-alt me-2"></i>كشف الرحلات</h2>
+    <p>شركة اعمار ليبيا لنقل الركاب — تتبع وتحليل الرحلات الشهرية</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button onclick="toggleApproval('marketing')" id="btnMarketingApprove" class="btn-approve" style="background:white;color:#d97706;border-color:#fbbf24;">
+      <i class="bi bi-check-circle me-1"></i><span id="lblMarketing">اعتماد التسويق</span>
+    </button>
+    <button onclick="toggleApproval('executive')" id="btnExecutiveApprove" class="btn-approve" style="background:white;color:#7c3aed;border-color:#a78bfa;">
+      <i class="bi bi-check-circle me-1"></i><span id="lblExecutive">اعتماد المدير التنفيذي</span>
+    </button>
+    <button onclick="window.print()" class="btn-approve" style="background:white;color:#2563eb;border-color:#93c5fd;">
+      <i class="bi bi-printer me-1"></i>طباعة
+    </button>
+  </div>
+</div>
+
+<!-- فلتر -->
+<div class="filter-card no-print">
+  <form method="GET" class="row g-3 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label">الشهر</label>
+      <select class="form-select" name="month">
+        {% for m in range(1, 13) %}
+        <option value="{{ m }}" {{ 'selected' if m == current_month }}>
+          {% if m == 1 %}يناير{% elif m == 2 %}فبراير{% elif m == 3 %}مارس{% elif m == 4 %}ابريل{% elif m == 5 %}مايو{% elif m == 6 %}يونيو{% elif m == 7 %}يوليو{% elif m == 8 %}اغسطس{% elif m == 9 %}سبتمبر{% elif m == 10 %}اكتوبر{% elif m == 11 %}نوفمبر{% elif m == 12 %}ديسمبر{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">السنة</label>
+      <input type="number" class="form-control" name="year" value="{{ current_year }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">الجهة</label>
+      <select class="form-select" name="client_id">
+        <option value="">جميع الجهات</option>
+        {% for c in clients %}
+        <option value="{{ c.id }}" {{ 'selected' if c.id == selected_client }}>{{ c.name_ar }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn w-100" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;border-radius:8px;padding:8px;">
+        <i class="bi bi-funnel me-1"></i> تصفية
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- احصائيات -->
+<div class="stat-row no-print">
+  <div class="stat-box">
+    <div class="stat-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-geo-alt-fill"></i></div>
+    <div>
+      <div class="num">{{ trips|length }}</div>
+      <div class="lbl">اجمالي الرحلات</div>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-cash-stack"></i></div>
+    <div>
+      <div class="num">{{ "{:,.0f}".format(total_value) }} <span style="font-size:13px;font-weight:400;">د.ل</span></div>
+      <div class="lbl">اجمالي القيمة</div>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-calendar-event"></i></div>
+    <div>
+      <div class="num">{{ current_year }}/{{ "{:02d}".format(current_month) }}</div>
+      <div class="lbl">الفترة الحالية</div>
+    </div>
+  </div>
+</div>
+
+<!-- جدول الرحلات -->
+<div class="table-card">
+  <div class="table-card-header">
+    <h5><i class="bi bi-list-ul me-2" style="color:#2563eb;"></i>تفاصيل الرحلات</h5>
+    <span style="font-size:12px;color:var(--text-secondary);">{{ trips|length }} رحلة</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th style="width:50px;">#</th>
+          <th>رقم الرحلة</th>
+          <th>اسم الجهة</th>
+          <th>التاريخ</th>
+          <th style="text-align:left;">القيمة (د.ل)</th>
+          <th style="text-align:center;">الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in trips %}
+        <tr>
+          <td style="color:var(--text-secondary);font-size:12px;">{{ loop.index }}</td>
+          <td><span style="font-weight:600;color:#2563eb;">{{ item.trip.trip_number }}</span></td>
+          <td style="font-weight:500;">{{ item.trip.entity_name }}</td>
+          <td style="color:var(--text-secondary);">{{ item.trip.trip_date.strftime('%d / %m / %Y') }}</td>
+          <td style="text-align:left;font-weight:600;color:#16a34a;">{{ "{:,.0f}".format(item.trip.value) }}</td>
+          <td style="text-align:center;">
+            {% if item.trip.status == 'active' %}
+              <span class="status-badge" style="background:#dcfce7;color:#16a34a;">جارية</span>
+            {% elif item.trip.status == 'completed' %}
+              <span class="status-badge" style="background:#dbeafe;color:#2563eb;">مكتملة</span>
+            {% elif item.trip.status == 'cancelled' %}
+              <span class="status-badge" style="background:#fee2e2;color:#dc2626;">ملغاة</span>
+            {% else %}
+              <span class="status-badge" style="background:#f1f5f9;color:#64748b;">{{ item.trip.status }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not trips %}
+        <tr>
+          <td colspan="6" class="text-center" style="padding:40px;color:var(--text-secondary);">
+            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+            لا توجد رحلات في الفترة المحددة
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+      {% if trips %}
+      <tfoot>
+        <tr>
+          <td colspan="4" style="text-align:left;font-weight:700;color:var(--text-primary);">الاجمالي</td>
+          <td style="text-align:left;font-weight:700;color:#16a34a;font-size:14px;">{{ "{:,.0f}".format(total_value) }} د.ل</td>
+          <td></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- قسم الاعتماد للطباعة -->
+<div class="print-section" style="display:none;margin-top:20px;">
+  <div style="text-align:center;margin-bottom:14px;">
+    <div style="font-size:16pt;font-weight:700;color:#0f172a;">كشف الرحلات</div>
+    <div style="font-size:11pt;color:#64748b;">{{ current_year }}/{{ "{:02d}".format(current_month) }} — شركة اعمار ليبيا لنقل الركاب</div>
+  </div>
+  <div class="print-approvals">
+    <div class="print-approval-box" id="printMarketingBox">
+      <div class="dept">قسم التسويق التجاري</div>
+      <div class="line"></div>
+      <div class="check" id="printMarketingCheck">بانتظار الاعتماد</div>
+    </div>
+    <div class="print-approval-box" id="printExecutiveBox">
+      <div class="dept">المدير التنفيذي</div>
+      <div class="line"></div>
+      <div class="check" id="printExecutiveCheck">بانتظار الاعتماد</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleApproval(role) {
+  fetch('/marketing/trips/approve', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({year: {{ current_year }}, month: {{ current_month }}, role: role})
+  })
+  .then(r => r.json())
+  .then(data => { if (data.success) location.reload(); });
+}
+
+fetch('/marketing/trips/approval-status?year={{ current_year }}&month={{ current_month }}')
+  .then(r => r.json())
+  .then(data => {
+    if (data.marketing) {
+      document.getElementById('btnMarketingApprove').style.cssText = 'background:#16a34a;color:white;border-color:#16a34a;';
+      document.getElementById('lblMarketing').textContent = 'معتمد - التسويق';
+      document.getElementById('printMarketingBox').className = 'print-approval-box print-approved';
+      document.getElementById('printMarketingCheck').textContent = '✓ معتمد';
+    }
+    if (data.executive) {
+      document.getElementById('btnExecutiveApprove').style.cssText = 'background:#16a34a;color:white;border-color:#16a34a;';
+      document.getElementById('lblExecutive').textContent = 'معتمد - المدير التنفيذي';
+      document.getElementById('printExecutiveBox').className = 'print-approval-box print-approved';
+      document.getElementById('printExecutiveCheck').textContent = '✓ معتمد';
+    }
+  });
+</script>
+{% endblock %}

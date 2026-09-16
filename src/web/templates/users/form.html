@@ -1,0 +1,258 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل مستخدم' if user else 'إضافة مستخدم' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title"><i class="bi bi-person-{{ 'gear' if user else 'plus' }} me-2"></i>{{ 'تعديل بيانات المستخدم' if user else 'إضافة مستخدم جديد' }}</h4>
+</div>
+
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <!-- Basic Info -->
+  <div class="card mb-4">
+    <div class="card-header"><i class="bi bi-person me-2"></i>البيانات الأساسية</div>
+    <div class="card-body">
+      <div class="row g-3">
+        {% if not user %}
+        <div class="col-md-4">
+          <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+          <input type="text" name="username" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">كلمة المرور <span class="text-danger">*</span></label>
+          <input type="password" name="password" class="form-control" required minlength="6">
+        </div>
+        {% endif %}
+        <div class="col-md-4">
+          <label class="form-label">الاسم الكامل بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="full_name_ar" class="form-control" value="{{ user.full_name_ar if user else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="full_name_en" class="form-control" value="{{ user.full_name_en if user and user.full_name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input type="email" name="email" class="form-control" value="{{ user.email if user and user.email else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" name="phone" class="form-control" value="{{ user.phone if user and user.phone else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الدور</label>
+          <div class="input-group">
+            <select name="role_id" class="form-select">
+              <option value="">اختر الدور</option>
+              {% for role in roles %}
+              <option value="{{ role.id }}" {% if user and user.role_id == role.id %}selected{% endif %}>{{ role.name_ar }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addRoleModal" title="إضافة دور جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">القسم</label>
+          <select name="department_id" class="form-select">
+            <option value="">اختر القسم</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if user and user.department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if user %}
+        <div class="col-md-4">
+          <label class="form-label">كلمة المرور الجديدة (اتركها فارغة لعدم التغيير)</label>
+          <input type="password" name="new_password" class="form-control" minlength="6">
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Permissions -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-layout-sidebar me-2"></i>صلاحيات القائمة الجانبية</span>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAllSidebar(true)">تحديد الكل</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th style="width:30%">القسم</th>
+              <th class="text-center" style="width:17%">عرض</th>
+              <th class="text-center" style="width:17%">إضافة</th>
+              <th class="text-center" style="width:17%">تعديل</th>
+              <th class="text-center" style="width:17%">حذف</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mod in sidebar_modules %}
+            {% set sp = sidebar_perms.get(mod.key) if sidebar_perms else None %}
+            <tr>
+              <td>
+                <i class="{{ mod.icon }} me-2 text-primary"></i>
+                <strong>{{ mod.name }}</strong>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="sidebar_{{ mod.key }}_view" class="form-check-input"
+                  {% if not user or (sp and sp.can_view) %}checked{% endif %}
+                  onchange="toggleRow(this, '{{ mod.key }}')">
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="sidebar_{{ mod.key }}_add" class="form-check-input sidebar_{{ mod.key }}"
+                  {% if not user or (sp and sp.can_add) %}checked{% endif %}>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="sidebar_{{ mod.key }}_edit" class="form-check-input sidebar_{{ mod.key }}"
+                  {% if not user or (sp and sp.can_edit) %}checked{% endif %}>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="sidebar_{{ mod.key }}_delete" class="form-check-input sidebar_{{ mod.key }}"
+                  {% if not user or (sp and sp.can_delete) %}checked{% endif %}>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correspondence Permissions -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-envelope me-2"></i>صلاحيات المراسلات</span>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAllCorr(true)">تحديد الكل</button>
+    </div>
+    <div class="card-body">
+      <p class="text-muted mb-3">حدد الأقسام التي يمكن للمستخدم مراسلتها (إرسال واستقبال)</p>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th style="width:40%">القسم</th>
+              <th class="text-center" style="width:30%">إرسال</th>
+              <th class="text-center" style="width:30%">استقبال</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dept in departments %}
+            {% set cp = corr_perms.get(dept.id) if corr_perms else None %}
+            <tr>
+              <td>
+                <i class="bi bi-building me-2 text-info"></i>
+                {{ dept.name_ar }}
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="corr_{{ dept.id }}_send" class="form-check-input"
+                  {% if not user or (cp and cp.can_send) %}checked{% endif %}>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" name="corr_{{ dept.id }}_receive" class="form-check-input"
+                  {% if not user or (cp and cp.can_receive) %}checked{% endif %}>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if user else 'إضافة المستخدم' }}</button>
+    <a href="{{ url_for('users.users_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+  </div>
+</form>
+
+<!-- مودال إضافة دور جديد -->
+<div class="modal fade" id="addRoleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-1"></i>إضافة دور جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم الدور بالعربي <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newRoleName" placeholder="مثال: مدير التسويق">
+        </div>
+        <div id="roleAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary" id="saveRoleBtn" onclick="saveNewRole()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleRow(cb, key) {
+  document.querySelectorAll('.sidebar_' + key).forEach(el => el.checked = cb.checked);
+}
+function toggleAllSidebar(val) {
+  document.querySelectorAll('input[type=checkbox][name^=sidebar_]').forEach(el => el.checked = val);
+}
+function toggleAllCorr(val) {
+  document.querySelectorAll('input[type=checkbox][name^=corr_]').forEach(el => el.checked = val);
+}
+function saveNewRole() {
+  const name = document.getElementById('newRoleName').value.trim();
+  const alertEl = document.getElementById('roleAlert');
+  const btn = document.getElementById('saveRoleBtn');
+
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم الدور';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري الحفظ...';
+
+  fetch('{{ url_for("users.roles_quick_add") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({ name_ar: name })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const select = document.querySelector('[name="role_id"]');
+      const opt = new Option(data.name_ar, data.id, true, true);
+      select.appendChild(opt);
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addRoleModal'));
+      modal.hide();
+      document.getElementById('newRoleName').value = '';
+      alertEl.className = 'alert d-none';
+    } else {
+      alertEl.className = 'alert alert-danger';
+      alertEl.textContent = data.message || 'حدث خطأ';
+      alertEl.classList.remove('d-none');
+    }
+  })
+  .catch(() => {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'حدث خطأ في الاتصال';
+    alertEl.classList.remove('d-none');
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>حفظ';
+  });
+}
+</script>
+{% endblock %}

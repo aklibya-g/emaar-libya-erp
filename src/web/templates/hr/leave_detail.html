@@ -1,0 +1,169 @@
+{% extends "layouts/base.html" %}
+{% block title %}تفاصيل طلب الإجازة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title"><i class="bi bi-clipboard-check me-2"></i>تفاصيل طلب الإجازة</h4>
+  <a href="{{ url_for('hr.leave_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> طلبات الإجازة
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>بيانات الطلب</h6>
+        {% if leave.status == 'pending' %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>معلق</span>
+        {% elif leave.status == 'pending_executive' %}
+          <span class="badge bg-info"><i class="bi bi-person-check me-1"></i>بانتظار المدير التنفيذي</span>
+        {% elif leave.status == 'approved' %}
+          <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>مؤكد</span>
+        {% elif leave.status == 'rejected' %}
+          <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>مرفوض</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="text-muted small">الموظف</label>
+            <div class="fw-bold fs-6">{{ leave.employee.full_name_ar | default('-') }}</div>
+            <small class="text-muted">{{ leave.employee.employee_number | default('') }}</small>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">نوع الإجازة</label>
+            <div class="fw-bold fs-6">{{ leave.leave_type.name_ar | default('-') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">من تاريخ</label>
+            <div class="fw-bold">{{ leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '-' }}</div>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">إلى تاريخ</label>
+            <div class="fw-bold">{{ leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '-' }}</div>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">عدد الأيام</label>
+            <div class="fw-bold text-primary fs-5">{{ leave.total_days }} يوم</div>
+          </div>
+          {% if leave.reason %}
+          <div class="col-12">
+            <label class="text-muted small">السبب</label>
+            <div class="bg-light p-3 rounded">{{ leave.reason }}</div>
+          </div>
+          {% endif %}
+          {% if leave.notes %}
+          <div class="col-12">
+            <label class="text-muted small">ملاحظات</label>
+            <div class="bg-light p-3 rounded">{{ leave.notes }}</div>
+          </div>
+          {% endif %}
+          <div class="col-12">
+            <label class="text-muted small">تاريخ الإنشاء</label>
+            <div>{{ leave.created_at.strftime('%Y-%m-%d %H:%M') if leave.created_at else '-' }}</div>
+          </div>
+          {% if leave.status == 'rejected' %}
+          <div class="col-12">
+            <div class="alert alert-danger d-flex align-items-start py-3 mb-0">
+              <i class="bi bi-x-circle-fill fs-4 me-3 mt-1"></i>
+              <div>
+                <div class="fw-bold mb-1">تم رفض الطلب</div>
+                {% if leave.rejection_reason %}
+                <div>سبب الرفض: <span class="fw-bold">{{ leave.rejection_reason }}</span></div>
+                {% endif %}
+                {% if leave.rejected_by %}
+                <div class="small text-muted mt-1">مرفوض بواسطة: {{ leave.rejected_by }}</div>
+                {% endif %}
+                {% if leave.rejected_at %}
+                <div class="small text-muted">تاريخ الرفض: {{ leave.rejected_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if leave.status in ['pending', 'pending_executive'] %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-check2-all me-2"></i>إجراءات الاعتماد</h6>
+      </div>
+      <div class="card-body">
+        {% if leave.status == 'pending' %}
+        <form method="POST" action="{{ url_for('hr.leave_approve', id=leave.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">ملاحظات موافقة HR (اختياري)</label>
+            <textarea name="hr_notes" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>موافقة الموارد البشرية</button>
+          </div>
+        </form>
+        {% elif leave.status == 'pending_executive' %}
+        <form method="POST" action="{{ url_for('hr.leave_approve', id=leave.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">ملاحظات الاعتماد النهائي (اختياري)</label>
+            <textarea name="hr_notes" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check2-all me-1"></i>اعتماد نهائي — الموافقة وإضافة للحضور</button>
+          </div>
+        </form>
+        {% endif %}
+        <hr>
+        <form id="reject" method="POST" action="{{ url_for('hr.leave_reject', id=leave.id) }}" onsubmit="return confirm('هل أنت متأكد من رفض هذا الطلب؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">سبب الرفض</label>
+            <textarea name="rejection_reason" class="form-control" rows="2" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-lg me-1"></i>رفض الطلب</button>
+        </form>
+        <hr>
+        <form method="POST" action="{{ url_for('hr.leave_cancel', id=leave.id) }}" onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>إلغاء الطلب</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-wallet2 me-2"></i>رصيد الإجازات</h6>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>النوع</th>
+              <th>المستحق</th>
+              <th>المستخدم</th>
+              <th>المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in balances %}
+            <tr class="{{ 'table-success fw-bold' if b.is_leave_type else '' }}">
+              <td>{{ b.name }}{% if b.is_leave_type %}<span class="badge bg-primary ms-1" style="font-size:10px">نوع الطلب</span>{% endif %}</td>
+              <td>{{ b.entitled }}</td>
+              <td>{{ b.used }}</td>
+              <td class="fw-bold text-success">{{ b.remaining }}</td>
+            </tr>
+            {% endfor %}
+            {% if not balances %}
+            <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أرصدة</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

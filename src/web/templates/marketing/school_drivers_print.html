@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>كشف المستحقات الشهرية للسائقين — {{ current_year }}/{{ current_month }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+    @page { size: A4 landscape; margin: 3mm; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Cairo','Tahoma',sans-serif; color:#1e293b; background:#fff; padding:4mm; font-size:14px; line-height:1.4; }
+
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:6px 16px; margin-bottom:2mm;
+      background:linear-gradient(135deg, #0c1222 0%, #1a2744 50%, #0f1d36 100%);
+      border-radius:10px; color:#fff; position:relative; overflow:hidden;
+    }
+    .header::before {
+      content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px;
+      background:radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); border-radius:50%;
+    }
+    .header::after {
+      content:''; position:absolute; bottom:-20px; left:30%; width:80px; height:80px;
+      background:radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%); border-radius:50%;
+    }
+    .h-left { display:flex; flex-direction:column; gap:1px; z-index:1; }
+    .h-company { font-size:14px; font-weight:900; letter-spacing:-0.3px; }
+    .h-sub { font-size:14px; color:rgba(255,255,255,0.4); }
+    .accent-bar { height:3px; background:linear-gradient(90deg,#2563eb,#10b981,#2563eb); border-radius:2px; margin:2mm 0; }
+    .h-title {
+      font-size:14px; font-weight:800; padding:6px 20px; border-radius:6px;
+      background:linear-gradient(135deg, #2563eb, #3b82f6);
+      box-shadow:0 2px 8px rgba(37,99,235,0.4);
+    }
+    .h-date { font-size:14px; color:rgba(255,255,255,0.5); }
+
+    .stats-bar {
+      display:flex; gap:0; margin-bottom:2mm; border-radius:8px; overflow:hidden;
+      border:1px solid #e2e8f0;
+    }
+    .stat-item {
+      flex:1; padding:4px 10px; text-align:center;
+      border-left:1px solid #e2e8f0;
+    }
+    .stat-item:last-child { border-left:none; }
+    .stat-item .sv { font-size:14px; font-weight:800; color:#0f172a; }
+    .stat-item .sl { font-size:14px; color:#94a3b8; font-weight:600; }
+    .stat-item.green .sv { color:#16a34a; }
+
+    .driver-section { margin-bottom:2.5mm; }
+    .driver-header {
+      display:flex; align-items:center; gap:8px;
+      padding:3px 10px; margin-bottom:0;
+      background:linear-gradient(90deg, #1e40af 0%, #3b82f6 60%, #60a5fa 100%);
+      border-radius:6px 6px 0 0; color:#fff;
+    }
+    .driver-icon {
+      width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2);
+      display:flex; align-items:center; justify-content:center; font-size:14px;
+    }
+    .driver-name { font-size:14px; font-weight:800; }
+    .driver-meta { font-size:14px; color:rgba(255,255,255,0.6); margin-right:auto; }
+    .driver-badge {
+      font-size:14px; padding:2px 10px; border-radius:10px; font-weight:700;
+      background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25);
+    }
+
+    .trip-table { width:100%; border-collapse:collapse; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 6px 6px; overflow:hidden; }
+    .trip-table thead th {
+      background:#f1f5f9; color:#475569; padding:2px 5px; font-size:14px; font-weight:700;
+      white-space:nowrap; text-align:center; border-bottom:1px solid #e2e8f0;
+    }
+    .trip-table tbody td { padding:2px 5px; border-bottom:1px solid #f8fafc; white-space:nowrap; text-align:center; font-size:14px; }
+    .trip-table tbody tr:last-child td { border-bottom:none; }
+    .trip-table tbody tr:nth-child(even) { background:#fafbfd; }
+
+    .trip-total-row {
+      background:linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%) !important;
+      font-weight:700;
+    }
+    .trip-total-row td { border-top:2px solid #3b82f6 !important; padding:2px 5px; font-size:14px; }
+
+    .v-green { color:#16a34a; font-weight:700; }
+    .v-blue { color:#1e40af; font-weight:700; }
+    .v-muted { color:#94a3b8; }
+
+    .grand-footer {
+      display:flex; align-items:center; justify-content:center; gap:12px;
+      padding:5px 16px; margin:2mm 0;
+      background:linear-gradient(135deg, #0f172a, #1e293b);
+      border-radius:8px; color:#fff;
+    }
+    .gf-item { text-align:center; }
+    .gf-val { font-size:14px; font-weight:900; }
+    .gf-label { font-size:14px; color:rgba(255,255,255,0.5); }
+    .gf-sep { width:1px; height:24px; background:rgba(255,255,255,0.15); }
+    .gf-val.green { color:#4ade80; }
+
+    .approval-section { display:flex; gap:6mm; margin-top:3mm; }
+    .approval-box { flex:1; text-align:center; }
+    .approval-stamp-box {
+      padding:6px; border:2px dashed #e2e8f0; border-radius:8px;
+      min-height:70px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    }
+    .approval-title {
+      font-size:14px; font-weight:800; margin-bottom:4px; padding:3px 12px;
+      border-radius:4px; display:inline-block;
+    }
+    .at-blue { background:#dbeafe; color:#1d4ed8; }
+    .at-green { background:#d1fae5; color:#065f46; }
+    .at-orange { background:#ffedd5; color:#c2410c; }
+    .approval-line { display:flex; align-items:baseline; font-size:14px; color:#64748b; margin:3px 0; }
+    .approval-line .dots { flex:1; border-bottom:1px dotted #cbd5e1; margin:0 3px; min-width:20px; }
+    .approval-stamp {
+      font-size:14px; font-weight:800; margin-top:3px; padding:2px 12px;
+      border-radius:4px; display:inline-block;
+    }
+    .as-blue { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+    .as-green { background:#d1fae5; color:#065f46; border:1px solid #86efac; }
+
+    .footer-note { text-align:center; font-size:9px; color:#cbd5e1; margin-top:1mm; }
+
+    .btns { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:1000; }
+    .btn-print {
+      background:linear-gradient(135deg,#2563eb,#3b82f6); color:white; border:none; padding:8px 24px;
+      border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;
+      box-shadow:0 4px 16px rgba(37,99,235,0.35); display:flex; align-items:center; gap:6px;
+    }
+    .btn-print:hover { background:#1d4ed8; }
+    .btn-close {
+      background:#64748b; color:white; border:none; padding:8px 16px;
+      border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; gap:6px;
+    }
+
+    @media print {
+      .btns { display:none !important; }
+      body { padding:0; }
+      .driver-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .grand-footer { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .trip-total-row { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="h-left">
+      <div class="h-company">شركة اعمار ليبيا لنقل الركاب</div>
+      <div class="h-sub">شركة اعمار ليبيا القابضة</div>
+    </div>
+    <div class="h-center">
+      <div class="h-title">
+        <i class="bi bi-file-earmark-person me-1"></i>
+        كشف المستحقات الشهرية للسائقين — {{ months_ar[current_month-1] }} {{ current_year }}
+      </div>
+    </div>
+    <div class="h-right">
+      <div class="h-date"><i class="bi bi-calendar3 me-1"></i>{{ today }}</div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="sv">{{ grouped|length }}</div>
+      <div class="sl">عدد السائقين</div>
+    </div>
+    <div class="stat-item">
+      <div class="sv">{{ total_trips }}</div>
+      <div class="sl">اجمالي الرحلات</div>
+    </div>
+    <div class="stat-item green">
+      <div class="sv">{{ "{:,.0f}".format(total_value) }} د.ل</div>
+      <div class="sl">اجمالي المستحقات</div>
+    </div>
+  </div>
+
+  {% for driver_name, data in grouped.items() %}
+  <div class="driver-section">
+    <div class="driver-header">
+      <div class="driver-icon"><i class="bi bi-person-fill"></i></div>
+      <div class="driver-name">{{ driver_name }}</div>
+      <div class="driver-meta">
+        {% if data.trips|length > 1 %}
+          {{ data.trips|length }} رحلات — يومان {{ data.trips|map(attribute='trip_count')|sum }}
+        {% else %}
+          رحلة واحدة — {{ data.trips[0].trip_count }} يوم
+        {% endif %}
+      </div>
+      <div class="driver-badge">{{ "{:,.0f}".format(data.total_share) }} د.ل</div>
+    </div>
+
+    <table class="trip-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>رقم الأمر</th>
+          <th>التاريخ</th>
+          <th>الجهة</th>
+          <th>خط السير</th>
+          <th>قيمة الرحلة</th>
+          <th>نسبة السائق</th>
+          <th>المبيت</th>
+          <th>الاجمالي</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ent in data.trips %}
+        <tr>
+          <td class="v-muted">{{ loop.index }}</td>
+          <td>{{ ent.work_order_number or '-' }}</td>
+          <td class="v-muted" style="font-size:9px;">{{ ent.entitlement_date.strftime('%Y-%m-%d') if ent.entitlement_date else '-' }}</td>
+          <td style="text-align:right;">{{ ent.school_name }}</td>
+          <td style="text-align:right;">{{ ent.route or '-' }}</td>
+          <td>{{ "{:,.0f}".format(ent.trip_value) }}</td>
+          <td>{{ "{:,.0f}".format(ent.driver_share) }}</td>
+          <td>{{ "{:,.0f}".format(ent.overnight_stay) }}</td>
+          <td class="v-green">{{ "{:,.0f}".format(ent.total_share) }}</td>
+          <td>
+            {% if ent.status == 'paid' %}
+              <span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;">مدفوع</span>
+            {% else %}
+              <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;">انتظار</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if data.trips|length > 1 %}
+      <tbody>
+        <tr class="trip-total-row">
+          <td colspan="5" style="text-align:right;color:#1e40af;font-size:9px;">
+            <i class="bi bi-calculator me-1"></i>الاجمالي — {{ data.trips|length }} رحلات
+          </td>
+          <td class="v-blue">{{ "{:,.0f}".format(data.total_trip_value) }}</td>
+          <td class="v-blue">{{ "{:,.0f}".format(data.total_driver_share) }}</td>
+          <td class="v-blue">{{ "{:,.0f}".format(data.total_overnight) }}</td>
+          <td class="v-blue" style="font-size:11px;">{{ "{:,.0f}".format(data.total_share) }}</td>
+          <td></td>
+        </tr>
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+  {% endfor %}
+
+  <div class="grand-footer">
+    <div class="gf-item">
+      <div class="gf-val">{{ grouped|length }}</div>
+      <div class="gf-label">سائق</div>
+    </div>
+    <div class="gf-sep"></div>
+    <div class="gf-item">
+      <div class="gf-val">{{ total_trips }}</div>
+      <div class="gf-label">رحلة</div>
+    </div>
+    <div class="gf-sep"></div>
+    <div class="gf-item">
+      <div class="gf-val">{{ "{:,.0f}".format(entitlements|map(attribute='driver_share')|sum) }}</div>
+      <div class="gf-label">اجمالي النسب</div>
+    </div>
+    <div class="gf-sep"></div>
+    <div class="gf-item">
+      <div class="gf-val">{{ "{:,.0f}".format(entitlements|map(attribute='overnight_stay')|sum) }}</div>
+      <div class="gf-label">اجمالي المبيت</div>
+    </div>
+    <div class="gf-sep"></div>
+    <div class="gf-item">
+      <div class="gf-val green">{{ "{:,.0f}".format(total_value) }} د.ل</div>
+      <div class="gf-label">اجمالي المستحقات</div>
+    </div>
+  </div>
+
+  <div class="approval-section">
+    <div class="approval-box">
+      <div class="approval-stamp-box">
+        <div class="approval-title at-blue">ادارة التسويق التجاري</div>
+        <div class="approval-line">الاسم <span class="dots"></span></div>
+        <div class="approval-line">التوقيع <span class="dots"></span></div>
+        <div class="approval-line">التاريخ <span class="dots"></span></div>
+        {% if marketing_approved %}
+        <div class="approval-stamp as-blue"><i class="bi bi-check-circle me-1"></i>معتمد</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="approval-box">
+      <div class="approval-stamp-box">
+        <div class="approval-title at-green">المدير التنفيذي</div>
+        <div class="approval-line">الاسم <span class="dots"></span></div>
+        <div class="approval-line">التوقيع <span class="dots"></span></div>
+        <div class="approval-line">التاريخ <span class="dots"></span></div>
+        {% if executive_approved %}
+        <div class="approval-stamp as-green"><i class="bi bi-check-circle me-1"></i>معتمد</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="approval-box">
+      <div class="approval-stamp-box">
+        <div class="approval-title at-orange">المحاسب</div>
+        <div class="approval-line">الاسم <span class="dots"></span></div>
+        <div class="approval-line">التوقيع <span class="dots"></span></div>
+        <div class="approval-line">التاريخ <span class="dots"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">شركة اعمار ليبيا لنقل الركاب — جميع الحقوق محفوظة {{ current_year }}</div>
+
+  <div class="btns">
+    <button class="btn-print" onclick="window.print()">
+      <i class="bi bi-printer-fill"></i> طباعة
+    </button>
+    <button class="btn-close" onclick="window.close()">
+      <i class="bi bi-x-lg"></i> اغلاق
+    </button>
+  </div>
+
+</body>
+</html>

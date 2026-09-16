@@ -1,0 +1,136 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: #fff;
+  }
+  .info-label { font-weight: bold; color: #555; min-width: 140px; display: inline-block; }
+  .info-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .amendment-box { border: 2px dashed #ffc107; background: #fffde7; border-radius: 8px; padding: 15px; margin-top: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.contracts_list') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i>
+      العودة للعقود
+    </a>
+    <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> {{ page_title }}</h1>
+  </div>
+  <div class="page-actions d-flex gap-2">
+    <a href="{{ url_for('marketing.contract_edit', contract_id=contract.id) }}" class="btn btn-primary">
+      <i class="bi bi-pencil me-1"></i>تعديل
+    </a>
+    <a href="{{ url_for('marketing.contract_print', contract_id=contract.id) }}" class="btn btn-info" target="_blank">
+      <i class="bi bi-printer me-1"></i>طباعة
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <!-- البيانات الأساسية -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-1"></i> البيانات الأساسية</h5>
+        {% if contract.status == 'active' %}
+          <span class="badge bg-success fs-6">نشط</span>
+        {% elif contract.status == 'renewed' %}
+          <span class="badge bg-info fs-6">مجدد</span>
+        {% elif contract.status == 'completed' %}
+          <span class="badge bg-secondary fs-6">منتهي</span>
+        {% elif contract.status == 'cancelled' %}
+          <span class="badge bg-danger fs-6">ملغي</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="info-row"><span class="info-label">رقم العقد:</span> {{ contract.contract_number }}</div>
+        <div class="info-row"><span class="info-label">نوع العقد:</span> {{ contract.title }}</div>
+        <div class="info-row"><span class="info-label">الجهة:</span> {{ contract.client.name_ar if contract.client else '-' }}</div>
+        <div class="info-row"><span class="info-label">رقم هاتف الجهة:</span> {{ contract.client.phone if contract.client else '-' }}</div>
+        <div class="info-row"><span class="info-label">المسؤول:</span> {{ contract.responsible_name if contract.responsible_name else '-' }}</div>
+        <div class="info-row"><span class="info-label">تاريخ البدء:</span> {{ contract.start_date.strftime('%Y-%m-%d') }}</div>
+        <div class="info-row"><span class="info-label">تاريخ الانتهاء:</span> {{ contract.end_date.strftime('%Y-%m-%d') }}</div>
+        <div class="info-row"><span class="info-label">المدة:</span> {{ ((contract.end_date - contract.start_date).days + 1) }} يوم</div>
+        <div class="info-row"><span class="info-label">قيمة العقد:</span> <strong class="text-primary">{{ "{:,.0f}".format(contract.total_value) }} د.ل</strong></div>
+        <div class="info-row"><span class="info-label">عدد الحافلات:</span> {{ contract.bus_count if contract.bus_count else '-' }}</div>
+        {% if contract.description %}
+        <div class="info-row"><span class="info-label">الوصف:</span> {{ contract.description }}</div>
+        {% endif %}
+        {% if contract.notes %}
+        <div class="info-row"><span class="info-label">ملاحظات:</span> {{ contract.notes }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ملحق التعديل -->
+    {% if contract.amendment_bus_count or contract.amendment_value or contract.amendment_description %}
+    <div class="card mb-4">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-file-earmark-plus me-1"></i> ملحق تعديل</h5>
+      </div>
+      <div class="card-body">
+        {% if contract.amendment_bus_count %}
+        <div class="info-row"><span class="info-label">عدد الحافلات المعدلة:</span> {{ contract.amendment_bus_count }}</div>
+        {% endif %}
+        {% if contract.amendment_value %}
+        <div class="info-row"><span class="info-label">القيمة المعدلة:</span> <strong>{{ "{:,.0f}".format(contract.amendment_value) }} د.ل</strong></div>
+        {% endif %}
+        {% if contract.amendment_description %}
+        <div class="info-row"><span class="info-label">وصف الملحق:</span> {{ contract.amendment_description }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- اوامر التشغيل المرتبطة -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clipboard-data me-1"></i> اوامر التشغيل ({{ work_orders|length }})</h5>
+      </div>
+      <div class="card-body p-0">
+        {% if work_orders %}
+        <div class="list-group list-group-flush">
+          {% for wo in work_orders %}
+          <a href="{{ url_for('marketing.work_order_detail', order_id=wo.id) }}" class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>#{{ wo.order_number }}</strong>
+                <div class="text-muted small">{{ wo.client.name_ar if wo.client else '-' }}</div>
+              </div>
+              <span class="badge {% if wo.status == 'active' %}bg-success{% elif wo.status == 'draft' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ 'نشط' if wo.status == 'active' else 'مسودة' if wo.status == 'draft' else wo.status }}
+              </span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">لا توجد اوامر تشغيل مرتبطة</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,344 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}أنواع السيارات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('vehicles.vehicle_dashboard') }}">إدارة الأسطول</a></li>
+            <li class="breadcrumb-item active">أنواع السيارات</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-tags me-2"></i>أنواع السيارات</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <button type="button" class="btn btn-new" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+        <i class="bi bi-plus-circle me-1"></i>إضافة نوع جديد
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid #e0f2fe;background:linear-gradient(135deg,#f0f9ff,#e0f2fe)">
+      <div class="card-body d-flex align-items-center gap-3" style="padding:16px 20px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#0369a1,#0ea5e9);display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-tags" style="font-size:20px;color:#fff"></i>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#0c4a6e">{{ vehicle_types|length }}</div>
+          <div style="font-size:12px;color:#64748b;font-weight:600">إجمالي الأنواع</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid #d1fae5;background:linear-gradient(135deg,#f0fdf4,#d1fae5)">
+      <div class="card-body d-flex align-items-center gap-3" style="padding:16px 20px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-check-circle" style="font-size:20px;color:#fff"></i>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#065f46">{{ vehicle_types|selectattr('is_active')|list|length }}</div>
+          <div style="font-size:12px;color:#64748b;font-weight:600">أنواع نشطة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid #fef3c7;background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+      <div class="card-body d-flex align-items-center gap-3" style="padding:16px 20px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#d97706,#f59e0b);display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-person-standing" style="font-size:20px;color:#fff"></i>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#92400e">{{ vehicle_types|map(attribute='seats_count')|select|list|length }}</div>
+          <div style="font-size:12px;color:#64748b;font-weight:600">أنواع بها مقاعد</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="border-radius:14px;border:1px solid #ede9fe;background:linear-gradient(135deg,#f5f3ff,#ede9fe)">
+      <div class="card-body d-flex align-items-center gap-3" style="padding:16px 20px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#8b5cf6);display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-bus-front" style="font-size:20px;color:#fff"></i>
+        </div>
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#5b21b6">{{ vehicle_types|selectattr('is_active')|selectattr('seats_count')|list|length }}</div>
+          <div style="font-size:12px;color:#64748b;font-weight:600">أنواع بها مقاعد نشطة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Types Table -->
+<div class="card" style="border-radius:14px;border:1px solid var(--border-color,#e2e8f0)">
+  <div class="card-body p-0">
+    {% if vehicle_types %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" style="font-size:13px">
+        <thead>
+          <tr style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff">
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">#</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الكود</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">نوع السيارة</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الاسم بالإنجليزي</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">عدد المقاعد</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">الحالة</th>
+            <th style="padding:12px;text-align:center;font-size:11px;font-weight:700">العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vt in vehicle_types %}
+          <tr style="border-bottom:1px solid var(--border-color,#f1f5f9);transition:background .2s" onmouseover="this.style.background='var(--row-hover,#f8fafc)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:12px;text-align:center;color:#64748b;font-weight:600">{{ loop.index }}</td>
+            <td style="padding:12px;text-align:center">
+              <span style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;padding:4px 12px;border-radius:8px;font-weight:700;font-size:12px;letter-spacing:1px">{{ vt.code }}</span>
+            </td>
+            <td style="padding:12px;text-align:center;font-weight:700;color:#1e293b;font-size:14px">{{ vt.name_ar }}</td>
+            <td style="padding:12px;text-align:center;color:#64748b">{{ vt.name_en or '-' }}</td>
+            <td style="padding:12px;text-align:center">
+              {% if vt.seats_count %}
+              <span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:20px;font-weight:700;font-size:12px">
+                <i class="bi bi-person me-1"></i>{{ vt.seats_count }} راكب
+              </span>
+              {% else %}
+              <span style="color:#94a3b8;font-size:12px">-</span>
+              {% endif %}
+            </td>
+            <td style="padding:12px;text-align:center">
+              {% if vt.is_active %}
+              <span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-weight:600;font-size:12px">
+                <i class="bi bi-check-circle me-1"></i>نشط
+              </span>
+              {% else %}
+              <span style="background:#fee2e2;color:#991b1b;padding:4px 12px;border-radius:20px;font-weight:600;font-size:12px">
+                <i class="bi bi-x-circle me-1"></i>غير نشط
+              </span>
+              {% endif %}
+            </td>
+            <td style="padding:12px;text-align:center">
+              <div class="d-flex gap-1 justify-content-center">
+                <button type="button" class="btn btn-sm" style="background:#dbeafe;color:#1e40af;border-radius:8px;padding:5px 10px" title="عرض التفاصيل" onclick="viewType('{{ vt.id }}','{{ vt.code }}','{{ vt.name_ar }}','{{ vt.name_en or '' }}','{{ vt.seats_count or '' }}','{{ vt.description or '' }}','{{ 'نشط' if vt.is_active else 'غير نشط' }}')">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:5px 10px" title="تعديل" onclick="editType('{{ vt.id }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('vehicles.vehicle_type_toggle', id=vt.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm" style="background:{% if vt.is_active %}#fee2e2;color:#991b1b{% else %}#d1fae5;color:#065f46{% endif %};border-radius:8px;padding:5px 10px" title="{% if vt.is_active %}تعطيل{% else %}تفعيل{% endif %}">
+                    <i class="bi bi-{% if vt.is_active %}pause-circle{% else %}play-circle{% endif %}"></i>
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('vehicles.vehicle_type_delete', id=vt.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف نوع السيارة {{ vt.name_ar }}؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:5px 10px" title="حذف">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:60px 20px">
+      <i class="bi bi-tags" style="font-size:48px;color:#cbd5e1;margin-bottom:16px;display:block"></i>
+      <h5 style="color:#64748b;font-weight:600;margin-bottom:8px">لا توجد أنواع سيارات مسجلة</h5>
+      <p style="color:#94a3b8;font-size:13px">اضغط "إضافة نوع جديد" لبدء تسجيل أنواع السيارات</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Add Type Modal -->
+<div class="modal fade" id="addTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;border:2px solid #3182ce">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;border-radius:14px 14px 0 0">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>إضافة نوع سيارة جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('vehicles.vehicle_type_add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">الكود <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="code" required placeholder="مثال: S BUS" style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">نوع السيارة <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="name_ar" required placeholder="مثال: باص صغير" style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">الاسم بالإنجليزي</label>
+              <input type="text" class="form-control" name="name_en" placeholder="مثال: Small Bus" style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">عدد المقاعد</label>
+              <input type="number" class="form-control" name="seats_count" min="0" placeholder="0" style="border-radius:10px">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold">وصف</label>
+              <textarea class="form-control" name="description" rows="2" placeholder="وصف اختياري للنوع..." style="border-radius:10px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">الغاء</button>
+          <button type="submit" class="btn btn-primary" style="border-radius:10px;padding:10px 24px">
+            <i class="bi bi-check-lg me-1"></i>حفظ النوع
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Type Modal -->
+<div class="modal fade" id="editTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;border:2px solid #d97706">
+      <div class="modal-header" style="background:linear-gradient(135deg,#92400e,#d97706);color:#fff;border-radius:14px 14px 0 0">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>تعديل نوع السيارة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editTypeForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">الكود <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="code" id="editCode" required style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">نوع السيارة <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="name_ar" id="editNameAr" required style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">الاسم بالإنجليزي</label>
+              <input type="text" class="form-control" name="name_en" id="editNameEn" style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">عدد المقاعد</label>
+              <input type="number" class="form-control" name="seats_count" id="editSeatsCount" min="0" style="border-radius:10px">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold">وصف</label>
+              <textarea class="form-control" name="description" id="editDescription" rows="2" style="border-radius:10px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">الغاء</button>
+          <button type="submit" class="btn btn-warning" style="border-radius:10px;padding:10px 24px;background:linear-gradient(135deg,#d97706,#f59e0b);border:none;color:#fff">
+            <i class="bi bi-check-lg me-1"></i>تحديث النوع
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Type Modal -->
+<div class="modal fade" id="viewTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;border:2px solid #0ea5e9">
+      <div class="modal-header" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);color:#fff;border-radius:14px 14px 0 0">
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>تفاصيل نوع السيارة</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div style="background:#f0f9ff;border-radius:12px;padding:16px;border:1px solid #e0f2fe">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">الكود</div>
+              <div style="font-size:18px;font-weight:800;color:#0c4a6e" id="viewCode"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div style="background:#f0fdf4;border-radius:12px;padding:16px;border:1px solid #d1fae5">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">نوع السيارة</div>
+              <div style="font-size:18px;font-weight:800;color:#065f46" id="viewNameAr"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div style="background:#fffbeb;border-radius:12px;padding:16px;border:1px solid #fef3c7">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">الاسم بالإنجليزي</div>
+              <div style="font-size:16px;font-weight:700;color:#92400e" id="viewNameEn"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div style="background:#ede9fe;border-radius:12px;padding:16px;border:1px solid #ddd6fe">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">عدد المقاعد</div>
+              <div style="font-size:16px;font-weight:700;color:#5b21b6" id="viewSeatsCount"></div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div style="background:#f8fafc;border-radius:12px;padding:16px;border:1px solid #e2e8f0">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">الوصف</div>
+              <div style="font-size:14px;color:#334155;font-weight:500" id="viewDescription"></div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div style="background:#f8fafc;border-radius:12px;padding:16px;border:1px solid #e2e8f0">
+              <div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:4px">الحالة</div>
+              <div id="viewStatus"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewType(id, code, nameAr, nameEn, seats, desc, status) {
+  document.getElementById('viewCode').textContent = code;
+  document.getElementById('viewNameAr').textContent = nameAr;
+  document.getElementById('viewNameEn').textContent = nameEn || '-';
+  document.getElementById('viewSeatsCount').textContent = seats ? seats + ' راكب' : '-';
+  document.getElementById('viewDescription').textContent = desc || 'لا يوجد وصف';
+  document.getElementById('viewStatus').innerHTML = status === 'نشط'
+    ? '<span style="background:#d1fae5;color:#065f46;padding:4px 14px;border-radius:20px;font-weight:600;font-size:13px"><i class="bi bi-check-circle me-1"></i>نشط</span>'
+    : '<span style="background:#fee2e2;color:#991b1b;padding:4px 14px;border-radius:20px;font-weight:600;font-size:13px"><i class="bi bi-x-circle me-1"></i>غير نشط</span>';
+  new bootstrap.Modal(document.getElementById('viewTypeModal')).show();
+}
+
+function editType(id) {
+  fetch('/vehicles/api/types/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        document.getElementById('editTypeForm').action = '/vehicles/types/' + id + '/update';
+        document.getElementById('editCode').value = data.code;
+        document.getElementById('editNameAr').value = data.name_ar;
+        document.getElementById('editNameEn').value = data.name_en || '';
+        document.getElementById('editSeatsCount').value = data.seats_count || '';
+        document.getElementById('editDescription').value = data.description || '';
+        new bootstrap.Modal(document.getElementById('editTypeModal')).show();
+      }
+    });
+}
+</script>
+{% endblock %}

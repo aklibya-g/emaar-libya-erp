@@ -1,0 +1,268 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ page_title }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+    border-radius: 25px; text-decoration: none; font-weight: 500;
+    transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); color: #fff; }
+  .back-btn i { transition: transform 0.3s ease; }
+  .back-btn:hover i { transform: translateX(-3px); }
+  .stat-card {
+    background: var(--bs-body-bg, #fff); border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px;
+  }
+  .stat-icon {
+    width: 50px; height: 50px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  }
+  .stat-info .stat-value { font-size: 1.3rem; font-weight: bold; }
+  .stat-info .stat-label { font-size: 0.85rem; color: #888; }
+  .table th { font-size: 0.8rem; white-space: nowrap; background: #1a5276; color: #ffffff !important; }
+  .table td { font-size: 0.85rem; vertical-align: middle; }
+  .table tfoot td { background: #1a5276; color: #ffffff !important; font-weight: bold; }
+  .table th * { color: #ffffff !important; }
+  .discount-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+  .discount-reduce { background: #f8d7da; color: #721c24; }
+  .discount-increase { background: #d4edda; color: #155724; }
+
+  /* Print Styles - Landscape */
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body * { visibility: hidden; }
+    .print-area, .print-area * { visibility: visible; }
+    .print-area {
+      position: absolute; left: 0; top: 0; width: 100%; padding: 0;
+    }
+    .no-print { display: none !important; }
+
+    .print-header {
+      display: flex !important; justify-content: space-between; align-items: center;
+      border-bottom: 3px solid #1a5276; padding-bottom: 10px; margin-bottom: 10px;
+    }
+    .print-header .company-name { font-size: 16pt; font-weight: bold; color: #1a5276; }
+    .print-header .company-sub { font-size: 9pt; color: #666; }
+    .print-header .report-title { font-size: 14pt; font-weight: bold; color: #1a5276; text-align: center; }
+    .print-header .report-period { font-size: 10pt; color: #666; text-align: center; }
+    .print-header .print-date { font-size: 8pt; color: #999; text-align: left; }
+
+    .print-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    .print-table th {
+      background: #1a5276 !important; color: white; padding: 6px 5px;
+      text-align: center; font-weight: bold; border: 1px solid #1a5276;
+      white-space: nowrap;
+    }
+    .print-table td {
+      padding: 5px; border: 1px solid #ddd; text-align: center;
+    }
+    .print-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .print-table tbody tr:hover { background: #e9ecef; }
+    .print-table tfoot td {
+      background: #1a5276 !important; color: white; font-weight: bold;
+      padding: 6px 5px; border: 1px solid #1a5276;
+    }
+    .print-footer {
+      display: flex !important; justify-content: space-between;
+      margin-top: 15px; padding-top: 8px; border-top: 2px solid #1a5276;
+      font-size: 8pt; color: #666;
+    }
+    .print-approvals {
+      display: block !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 no-print">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('marketing.dashboard') }}" class="back-btn">
+      <i class="bi bi-arrow-right"></i> لوحة التحكم
+    </a>
+    <h1 class="mb-0"><i class="bi bi-person-badge"></i> {{ page_title }}</h1>
+  </div>
+</div>
+
+<!-- فلتر الشهر -->
+<div class="card mb-4 no-print">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">الشهر</label>
+        <select class="form-select" name="month">
+          {% for m in range(1, 13) %}
+          <option value="{{ m }}" {{ 'selected' if m == current_month }}>
+            {% if m == 1 %}يناير{% elif m == 2 %}فبراير{% elif m == 3 %}مارس{% elif m == 4 %}ابريل{% elif m == 5 %}مايو{% elif m == 6 %}يونيو{% elif m == 7 %}يوليو{% elif m == 8 %}اغسطس{% elif m == 9 %}سبتمبر{% elif m == 10 %}اكتوبر{% elif m == 11 %}نوفمبر{% elif m == 12 %}ديسمبر{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">السنة</label>
+        <input type="number" class="form-control" name="year" value="{{ current_year }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">&nbsp;</label>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> بحث</button>
+          <button type="button" class="btn btn-outline-success" onclick="window.print()"><i class="bi bi-printer"></i> طباعة</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ملخص الشهر -->
+<div class="row g-3 mb-4 no-print">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e3f2fd;color:#1565c0;"><i class="bi bi-bus-front"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ trip_data|length }}</div>
+        <div class="stat-label">عدد الرحلات</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="bi bi-cash-stack"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ "{:,.0f}".format(total_value) }} د.ل</div>
+        <div class="stat-label">اجمالي القيمة</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fff3e0;color:#e65100;"><i class="bi bi-moon-stars"></i></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ "{:,.0f}".format(total_maintenance) }} د.ل</div>
+        <div class="stat-label">اجمالي مبيت السائقين</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- منطقة الطباعة -->
+<div class="print-area">
+  <!-- رأس الطباعة -->
+  <div class="print-header" style="display:none;">
+    <div>
+      <div class="company-name">شركة اعمار ليبيا لنقل الركاب</div>
+      <div class="company-sub">subsidiary: شركة اعمار ليبيا القابضة</div>
+    </div>
+    <div style="text-align:center;">
+      <div class="report-title">كشف السائقين</div>
+      <div class="report-period">الفترة: {{ current_year }}/{{ current_month }}</div>
+    </div>
+    <div class="print-date">تاريخ الطباعة: {{ today }}</div>
+  </div>
+
+  <!-- جدول كشف السائقين -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center no-print">
+      <h5 class="mb-0">كشف السائقين - {{ current_year }}/{{ current_month }}</h5>
+      <span class="badge bg-primary fs-6">{{ trip_data|length }} رحلة</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered mb-0 print-table">
+          <thead>
+            <tr>
+              <th style="width:35px">#</th>
+              <th>اسم السائق</th>
+              <th>ر.ا.ت</th>
+              <th>رقم أمر التشغيل</th>
+              <th>تاريخ الاصدار</th>
+              <th>الجهة</th>
+              <th>من</th>
+              <th>الى</th>
+              <th>اجمالي الرحلة</th>
+              <th>التخفيض/الزيادة</th>
+              <th>مبيت السائق</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in trip_data %}
+            <tr>
+              <td class="fw-bold">{{ t.serial }}</td>
+              <td style="text-align:right;">{{ t.driver_name }}</td>
+              <td>{{ t.rat }}</td>
+              <td class="fw-bold">{{ t.order_number }}</td>
+              <td>{{ t.created_at }}</td>
+              <td style="text-align:right;">{{ t.client }}</td>
+              <td style="text-align:right;">{{ t.trip_from }}</td>
+              <td style="text-align:right;">{{ t.trip_to }}</td>
+              <td class="fw-bold">{{ "{:,.0f}".format(t.total_value) }}</td>
+              <td>
+                {% if t.discount %}
+                  {% if t.discount.startswith('+') %}
+                    <span class="discount-badge discount-increase">{{ t.discount }}</span>
+                  {% else %}
+                    <span class="discount-badge discount-reduce">{{ t.discount }}</span>
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ "{:,.0f}".format(t.bus_maintenance) }}</td>
+            </tr>
+            {% endfor %}
+            {% if not trip_data %}
+            <tr>
+              <td colspan="11" class="text-center text-muted py-4">
+                <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                <p class="mt-2">لا توجد رحلات في هذا الشهر</p>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8" class="text-start">الاجمالي ({{ trip_data|length }} رحلة)</td>
+              <td>{{ "{:,.0f}".format(total_value) }}</td>
+              <td></td>
+              <td>{{ "{:,.0f}".format(total_maintenance) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- تذييل الطباعة -->
+  <div class="print-footer" style="display:none;">
+    <span>شركة اعمار ليبيا لنقل الركاب</span>
+    {% if current_user.is_authenticated %}
+    <span>محرر المستند: {{ current_user.full_name_ar }} ({{ current_user.username }})</span>
+    {% endif %}
+    <span>تاريخ الطباعة: {{ today }}</span>
+  </div>
+
+  <!-- التوقيعات -->
+  <div class="print-approvals" style="display:none;">
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 30px; margin-top: 20px;">
+      <div style="text-align: center;">
+        <div style="height: 40px;"></div>
+        <div style="border-top: 1px solid #333; width: 70%; margin: 0 auto; padding-top: 5px;">
+          <strong style="font-size:10pt;">رئيس قسم التسويق</strong>
+        </div>
+      </div>
+      <div style="text-align: center;">
+        <div style="height: 40px;"></div>
+        <div style="border-top: 1px solid #333; width: 70%; margin: 0 auto; padding-top: 5px;">
+          <strong style="font-size:10pt;">المدير العام</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}لوحة تحكم السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title">لوحة تحكم السائقين</h4>
+    <p class="page-subtitle">إدارة شاملة لشؤون السائقين والمستندات</p>
+  </div>
+  <a href="{{ url_for('main.index') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> الرئيسية
+  </a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <a href="{{ url_for('driver_hr.driver_list') }}" class="text-decoration-none">
+      <div class="card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-body text-center">
+          <div class="fs-2 fw-bold" style="color:var(--accent)">{{ total_drivers }}</div>
+          <div class="text-muted">إجمالي السائقين</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none">
+      <div class="card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-body text-center">
+          <div class="fs-2 fw-bold" style="color:var(--accent-orange)">{{ expiring_soon }}</div>
+          <div class="text-muted">رخص تنتهي قريباً</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none">
+      <div class="card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-body text-center">
+          <div class="fs-2 fw-bold" style="color:var(--accent-red)">{{ expired_licenses }}</div>
+          <div class="text-muted">رخص منتهية</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{{ url_for('driver_hr.trips_list') }}" class="text-decoration-none">
+      <div class="card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-body text-center">
+          <div class="fs-2 fw-bold" style="color:var(--accent-blue)">{{ today_trips }}</div>
+          <div class="text-muted">رحلات اليوم</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <a href="{{ url_for('hr.driver_contracts_list') }}" class="text-decoration-none">
+      <div class="card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="card-body text-center">
+          <div class="fs-2 fw-bold" style="color:var(--accent-green)">{{ active_contracts }}</div>
+          <div class="text-muted">عقود نشطة</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-truck me-2"></i>إدارة السائقين</h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('driver_hr.driver_list') }}" class="btn btn-outline-primary text-start">
+            <i class="bi bi-list-ul me-2"></i>قائمة السائقين
+          </a>
+          <a href="{{ url_for('driver_hr.licenses_list') }}" class="btn btn-outline-warning text-start">
+            <i class="bi bi-card-list me-2"></i>الرخص
+          </a>
+          <a href="{{ url_for('driver_hr.trips_list') }}" class="btn btn-outline-info text-start">
+            <i class="bi bi-map me-2"></i>الرحلات
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
+        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-clock-history me-2"></i>آخر المستندات</h6>
+      </div>
+      <div class="card-body">
+        {% for doc in recent_docs %}
+        <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom:1px solid var(--border-light)">
+          <div>
+            <div style="color:var(--text-primary)">{{ doc.title }}</div>
+            <small class="text-muted">{{ doc.doc_type }}</small>
+          </div>
+          <small class="text-muted">{{ doc.created_at.strftime('%Y-%m-%d') if doc.created_at else '' }}</small>
+        </div>
+        {% endfor %}
+        {% if not recent_docs %}
+        <div class="text-center py-3 text-muted">لا توجد مستندات حديثة</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

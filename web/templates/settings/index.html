@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+{% block title %}الإعدادات | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">الإعدادات</h4>
+</div>
+
+<form method="POST" action="{{ url_for('settings.settings_update') }}">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h6 class="mb-0">بيانات الشركة</h6></div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">اسم الشركة بالعربي</label>
+            <input type="text" name="company_name_ar" class="form-control" value="{{ settings_dict.get('company_name_ar', company.name_ar if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">اسم الشركة بالإنجليزي</label>
+            <input type="text" name="company_name_en" class="form-control" value="{{ settings_dict.get('company_name_en', company.name_en if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الهاتف</label>
+            <input type="text" name="company_phone" class="form-control" value="{{ settings_dict.get('company_phone', company.phone if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">البريد الإلكتروني</label>
+            <input type="email" name="company_email" class="form-control" value="{{ settings_dict.get('company_email', company.email if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المدينة</label>
+            <input type="text" name="company_city" class="form-control" value="{{ settings_dict.get('company_city', company.city if company else '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">العنوان</label>
+            <textarea name="company_address" class="form-control" rows="2">{{ settings_dict.get('company_address', company.address if company else '') }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h6 class="mb-0">إعدادات النظام</h6></div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">صيغة الترقيم</label>
+            <input type="text" name="numbering_format" class="form-control" value="{{ settings_dict.get('numbering_format', '{prefix}/{type_code}/{year}/{sequence:05d}') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">بادئة الترقيم</label>
+            <input type="text" name="numbering_prefix" class="form-control" value="{{ settings_dict.get('numbering_prefix', '') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">اللغة الافتراضية</label>
+            <select name="default_language" class="form-select">
+              <option value="ar" {% if settings_dict.get('default_language') == 'ar' %}selected{% endif %}>العربية</option>
+              <option value="en" {% if settings_dict.get('default_language') == 'en' %}selected{% endif %}>English</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المنطقة الزمنية</label>
+            <select name="timezone" class="form-select">
+              <option value="Africa/Tripoli" {% if settings_dict.get('timezone') == 'Africa/Tripoli' %}selected{% endif %}>Africa/Tripoli</option>
+              <option value="UTC" {% if settings_dict.get('timezone') == 'UTC' %}selected{% endif %}>UTC</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>حفظ الإعدادات</button>
+  </div>
+</form>
+{% endblock %}

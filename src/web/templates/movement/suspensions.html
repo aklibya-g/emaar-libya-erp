@@ -1,0 +1,196 @@
+{% extends "layouts/base.html" %}
+{% block title %}ايقاف و تفعيل السائقين | ادارة الحركة{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title"><i class="bi bi-person-x me-2"></i>ايقاف و تفعيل السائقين</h4>
+  <a href="{{ url_for('movement.movement_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> لوحة التحكم
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card stat-green">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ drivers|selectattr('status','equalto','active')|list|length }}</div>
+          <div class="stat-label">السائقين النشطين</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-red">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ drivers|selectattr('status','equalto','inactive')|list|length }}</div>
+          <div class="stat-label">السائقين الموقوفين</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-blue">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ drivers|length }}</div>
+          <div class="stat-label">اجمالي السائقين</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-bus-front-fill"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-yellow">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ suspensions|length }}</div>
+          <div class="stat-label">اجمالي السجلات</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Suspension Form -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h6 class="mb-0"><i class="bi bi-toggle-on me-2"></i>تغيير حالة سائق</h6>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('movement.toggle_driver_status') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">اختر السائق <span class="text-danger">*</span></label>
+          <select name="driver_id" class="form-select" id="driverSelect" required>
+            <option value="">اختر السائق</option>
+            {% for driver in drivers %}
+            <option value="{{ driver.id }}" data-status="{{ driver.status }}">
+              {{ driver.full_name_ar }} ({{ driver.driver_number }}) - {% if driver.status == 'active' %}نشط{% else %}متوقف{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">التاريخ</label>
+          <input type="date" name="suspension_date" class="form-control" value="{{ today_str }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">السبب</label>
+          <input type="text" name="reason" class="form-control" placeholder="سبب التغيير">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ملاحظات</label>
+          <input type="text" name="notes" class="form-control" placeholder="ملاحظات اضافية">
+        </div>
+        <div class="col-md-12">
+          <div id="driverStatus" class="alert d-none mt-2"></div>
+          <button type="submit" class="btn btn-warning" id="submitBtn" onclick="return confirm('هل انت متأكد من تغيير حالة هذا السائق؟')">
+            <i class="bi bi-toggle-on me-1"></i>تغيير الحالة
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3">
+      <div class="col-md-6">
+        <input type="text" name="search" class="form-control" placeholder="بحث باسم السائق أو الرقم..." value="{{ search }}">
+      </div>
+      <div class="col-md-4">
+        <select name="status" class="form-select">
+          <option value="">جميع الحالات</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>مفعل</option>
+          <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>موقوف</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Suspensions History -->
+<div class="card">
+  <div class="card-header">
+    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>سجل التغييرات</h6>
+  </div>
+  <div class="card-body">
+    {% if suspensions %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>اسم السائق</th>
+            <th>رقم السائق</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+            <th>السبب</th>
+            <th>ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in suspensions %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="fw-medium">{{ s.driver.full_name_ar if s.driver else '-' }}</td>
+            <td>{{ s.driver.driver_number if s.driver else '-' }}</td>
+            <td>
+              {% if s.status == 'active' %}
+                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>تفعيل</span>
+              {% else %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>ايقاف</span>
+              {% endif %}
+            </td>
+            <td>{{ s.suspension_date.strftime('%Y-%m-%d') if s.suspension_date else '-' }}</td>
+            <td>{{ s.reason or '-' }}</td>
+            <td>{{ s.notes or '-' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-clock-history fs-1 d-block mb-3" style="color:var(--text-muted)"></i>
+      <h6 class="text-muted">لا توجد سجلات</h6>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.getElementById('driverSelect').addEventListener('change', function() {
+  var option = this.options[this.selectedIndex];
+  var status = option.getAttribute('data-status');
+  var statusEl = document.getElementById('driverStatus');
+  var submitBtn = document.getElementById('submitBtn');
+  if (status === 'active') {
+    statusEl.className = 'alert alert-warning mt-2';
+    statusEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>هذا السائق <b>نشط</b> - سيتم <b>ايقافه</b>';
+    statusEl.classList.remove('d-none');
+    submitBtn.innerHTML = '<i class="bi bi-person-x me-1"></i>ايقاف السائق';
+    submitBtn.className = 'btn btn-danger';
+  } else if (status === 'inactive') {
+    statusEl.className = 'alert alert-success mt-2';
+    statusEl.innerHTML = '<i class="bi bi-check-circle me-1"></i>هذا السائق <b>متوقف</b> - سيتم <b>تفعيله</b>';
+    statusEl.classList.remove('d-none');
+    submitBtn.innerHTML = '<i class="bi bi-person-check me-1"></i>تفعيل السائق';
+    submitBtn.className = 'btn btn-success';
+  } else {
+    statusEl.classList.add('d-none');
+  }
+});
+</script>
+{% endblock %}

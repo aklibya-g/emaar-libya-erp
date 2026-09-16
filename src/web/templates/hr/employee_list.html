@@ -1,0 +1,126 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}قائمة الموظفين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('hr.hr_dashboard') }}">شؤون الموظفين</a></li>
+            <li class="breadcrumb-item active">قائمة الموظفين</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-people me-2"></i>قائمة الموظفين</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('employees.employees_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة موظف</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-2">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-muted)"><i class="bi bi-search"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="بحث في الاسم أو الرقم الوظيفي أو الهاتف..." value="{{ search | default('') }}" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="department_id" class="form-select" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+          <option value="">جميع الأقسام</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {% if department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel me-1"></i>تصفية</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الرقم الوظيفي</th>
+            <th>الاسم</th>
+            <th>القسم</th>
+            <th>الوظيفة</th>
+            <th>الهاتف</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td><span class="fw-bold" style="color:var(--accent)">{{ emp.employee_number | default('-') }}</span></td>
+            <td>
+              <a href="{{ url_for('hr.employee_file', id=emp.id) }}" class="text-decoration-none" style="color:var(--text-primary)">
+                <div class="d-flex align-items-center gap-2">
+                  {% if emp.photo %}
+                  <img src="{{ emp.photo }}" alt="" class="rounded-circle" style="width:32px;height:32px;object-fit:cover">
+                  {% else %}
+                  <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;background:var(--accent);color:#fff;font-size:13px;font-weight:600">{{ emp.full_name_ar[0] if emp.full_name_ar else '?' }}</div>
+                  {% endif %}
+                  <div>
+                    <div class="fw-medium">{{ emp.full_name_ar | default('-') }}</div>
+                    <small class="text-muted">{{ emp.full_name_en | default('') }}</small>
+                  </div>
+                </div>
+              </a>
+            </td>
+            <td>{{ emp.department.name_ar | default('-') }}</td>
+            <td>{{ emp.position | default('-') }}</td>
+            <td dir="ltr" style="text-align:right">{{ emp.phone | default('-') }}</td>
+            <td>
+              {% if emp.status == 'active' %}
+              <span class="badge" style="background:rgba(72,187,120,0.15);color:var(--accent-green)">نشط</span>
+              {% elif emp.status == 'inactive' %}
+              <span class="badge" style="background:rgba(100,116,139,0.15);color:var(--text-muted)">غير نشط</span>
+              {% elif emp.status == 'suspended' %}
+              <span class="badge" style="background:rgba(252,129,129,0.15);color:var(--accent-red)">موقوف</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ emp.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('hr.employee_file', id=emp.id) }}" class="btn btn-outline-info" title="الملف الوظيفي"><i class="bi bi-folder2-open"></i></a>
+                <a href="{{ url_for('employees.employees_edit', id=emp.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('employees.employees_delete', id=emp.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا الموظف؟')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not employees %}
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <div style="color:var(--text-muted)">
+                <i class="bi bi-people fs-1 d-block mb-2"></i>
+                <p class="mb-0">لا يوجد موظفين حالياً</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

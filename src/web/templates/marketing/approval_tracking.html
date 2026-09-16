@@ -1,0 +1,166 @@
+{% extends "layouts/base.html" %}
+{% block title %}تتبع الاعتمادات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-clipboard-data me-2"></i>تتبع اعتماد اوامر التشغيل</h4>
+    <small class="text-muted">{{ orders_data|length }} أمر تشغيل</small>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="d-flex gap-1 mb-4 flex-wrap">
+  {% set tabs = [('pending','بانتظار الاعتماد','bi-hourglass-split','warning'), ('approved','المعتمدة','bi-check-circle-fill','success'), ('cancelled','الملغاة','bi-x-circle-fill','danger'), ('all','الكل','bi-list','secondary')] %}
+  {% for code, label, icon, color in tabs %}
+  <a href="{{ url_for('marketing.approval_tracking', status=code) }}"
+     class="btn btn-sm {% if status_filter == code %}btn-{{ color }}{% else %}btn-outline-{{ color }}{% endif %}"
+     style="border-radius:20px;padding:6px 16px">
+    <i class="bi {{ icon }} me-1"></i>{{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Orders -->
+{% for item in orders_data %}
+{% set order = item.order %}
+<div class="card mb-3 {% if item.delayed_dept and item.days_since >= 7 %}border-danger{% elif item.delayed_dept and item.days_since >= 3 %}border-warning{% endif %}">
+  <div class="card-body">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) }}" class="text-decoration-none">
+        <h6 class="mb-1" style="color:var(--accent-color)">
+          <i class="bi bi-box-arrow-in-left me-1"></i>
+          أمر التشغيل رقم {{ order.order_number }}
+        </h6>
+      </a>
+      <div class="d-flex gap-2 align-items-center">
+        {% if order.status == 'draft' and item.delayed_dept %}
+          {% if item.days_since >= 7 %}
+          <span class="badge bg-danger" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-exclamation-triangle me-1"></i>متأخر {{ item.days_since }} يوم</span>
+          {% elif item.days_since >= 3 %}
+          <span class="badge bg-warning text-dark" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-clock me-1"></i>{{ item.days_since }} يوم</span>
+          {% endif %}
+        {% endif %}
+        {% if order.status == 'approved' %}
+        <span class="badge bg-success" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-check-circle-fill me-1"></i>تم التنفيذ</span>
+        {% elif order.status == 'active' %}
+        <span class="badge bg-primary" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-hourglass-split me-1"></i>قيد التنفيذ</span>
+        {% elif order.status == 'marketing_approved' %}
+        <span class="badge bg-primary" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-hourglass-split me-1"></i>قيد التنفيذ</span>
+        {% elif order.status == 'movement_approved' %}
+        <span class="badge bg-primary" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-hourglass-split me-1"></i>قيد التنفيذ</span>
+        {% elif order.status == 'finance_approved' %}
+        <span class="badge bg-primary" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-hourglass-split me-1"></i>قيد التنفيذ</span>
+        {% elif order.status == 'cancelled' %}
+        <span class="badge bg-danger" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-x-circle-fill me-1"></i>ملغي</span>
+        {% elif order.status == 'draft' %}
+        <span class="badge bg-secondary" style="font-size:0.8em;padding:5px 10px"><i class="bi bi-pencil me-1"></i>مسودة</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Client & Date -->
+    <div class="d-flex gap-4 mb-3" style="font-size:0.9em">
+      <span><i class="bi bi-building me-1 text-muted"></i>{{ item.client_name }}</span>
+      <span><i class="bi bi-calendar me-1 text-muted"></i>{{ order.created_at.strftime('%Y-%m-%d') if order.created_at else '-' }}</span>
+      {% if item.days_since > 0 %}
+      <span><i class="bi bi-clock-history me-1 text-muted"></i>منذ {{ item.days_since }} يوم</span>
+      {% endif %}
+    </div>
+
+    <!-- Approval Steps -->
+    <div class="row g-2">
+      <!-- 1. التسويق -->
+      <div class="col-md-3">
+        <div class="p-2 rounded text-center" style="border:1px solid {% if order.marketing_approved %}#198754{% elif item.delayed_dept == 'التسويق' and item.mkt_delay >= 7 %}#dc3545{% elif item.delayed_dept == 'التسويق' %}#ffc107{% else %}#e9ecef{% endif %}; background:{% if order.marketing_approved %}#d1e7dd{% elif item.delayed_dept == 'التسويق' and item.mkt_delay >= 7 %}#f8d7da{% elif item.delayed_dept == 'التسويق' %}#fff3cd{% else %}#f8f9fa{% endif %}">
+          <div style="font-size:0.75em" class="text-muted mb-1">1. التسويق</div>
+          {% if order.marketing_approved %}
+            <div style="font-size:0.8em;color:#198754"><i class="bi bi-check-circle-fill me-1"></i>تم</div>
+            <div style="font-size:0.7em" class="text-muted">{{ order.marketing_approved_by }}</div>
+            <div style="font-size:0.65em" class="text-muted">{{ order.marketing_approved_at.strftime('%m/%d %H:%M') if order.marketing_approved_at else '' }}</div>
+          {% elif item.delayed_dept == 'التسويق' %}
+            <div style="font-size:0.8em;color:{% if item.mkt_delay >= 7 %}#dc3545{% else %}#ffc107{% endif %}"><i class="bi bi-hourglass-split me-1"></i>بانتظار</div>
+            <div style="font-size:0.65em" class="text-muted">{{ item.mkt_delay }} يوم</div>
+          {% else %}
+            <div style="font-size:0.8em;color:#adb5bd"><i class="bi bi-lock-fill me-1"></i>قفل</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 2. الحركة -->
+      <div class="col-md-3">
+        <div class="p-2 rounded text-center" style="border:1px solid {% if order.movement_approved %}#198754{% elif item.delayed_dept == 'الحركة' and item.mov_delay >= 7 %}#dc3545{% elif item.delayed_dept == 'الحركة' %}#0d6efd{% else %}#e9ecef{% endif %}; background:{% if order.movement_approved %}#d1e7dd{% elif item.delayed_dept == 'الحركة' and item.mov_delay >= 7 %}#f8d7da{% elif item.delayed_dept == 'الحركة' %}#cfe2ff{% else %}#f8f9fa{% endif %}">
+          <div style="font-size:0.75em" class="text-muted mb-1">2. الحركة</div>
+          {% if order.movement_approved %}
+            <div style="font-size:0.8em;color:#198754"><i class="bi bi-check-circle-fill me-1"></i>تم</div>
+            <div style="font-size:0.7em" class="text-muted">{{ order.movement_approved_by }}</div>
+            <div style="font-size:0.65em" class="text-muted">{{ order.movement_approved_at.strftime('%m/%d %H:%M') if order.movement_approved_at else '' }}</div>
+          {% elif item.delayed_dept == 'الحركة' %}
+            <div style="font-size:0.8em;color:{% if item.mov_delay >= 7 %}#dc3545{% else %}#0d6efd{% endif %}"><i class="bi bi-hourglass-split me-1"></i>بانتظار</div>
+            <div style="font-size:0.65em" class="text-muted">{{ item.mov_delay }} يوم</div>
+          {% else %}
+            <div style="font-size:0.8em;color:#adb5bd"><i class="bi bi-lock-fill me-1"></i>قفل</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 3. المالية -->
+      <div class="col-md-3">
+        <div class="p-2 rounded text-center" style="border:1px solid {% if order.finance_approved %}#198754{% elif item.delayed_dept == 'المالي' and item.fin_delay >= 7 %}#dc3545{% elif item.delayed_dept == 'المالي' %}#fd7e14{% else %}#e9ecef{% endif %}; background:{% if order.finance_approved %}#d1e7dd{% elif item.delayed_dept == 'المالي' and item.fin_delay >= 7 %}#f8d7da{% elif item.delayed_dept == 'المالي' %}#fff3cd{% else %}#f8f9fa{% endif %}">
+          <div style="font-size:0.75em" class="text-muted mb-1">3. المالية</div>
+          {% if order.finance_approved %}
+            <div style="font-size:0.8em;color:#198754"><i class="bi bi-check-circle-fill me-1"></i>تم</div>
+            <div style="font-size:0.7em" class="text-muted">{{ order.finance_approved_by }}</div>
+            <div style="font-size:0.65em" class="text-muted">{{ order.finance_approved_at.strftime('%m/%d %H:%M') if order.finance_approved_at else '' }}</div>
+          {% elif item.delayed_dept == 'المالي' %}
+            <div style="font-size:0.8em;color:{% if item.fin_delay >= 7 %}#dc3545{% else %}#fd7e14{% endif %}"><i class="bi bi-hourglass-split me-1"></i>بانتظار</div>
+            <div style="font-size:0.65em" class="text-muted">{{ item.fin_delay }} يوم</div>
+          {% else %}
+            <div style="font-size:0.8em;color:#adb5bd"><i class="bi bi-lock-fill me-1"></i>قفل</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 4. المدير التنفيذي -->
+      <div class="col-md-3">
+        <div class="p-2 rounded text-center" style="border:1px solid {% if order.executive_approved %}#198754{% elif item.delayed_dept == 'المدير التنفيذي' and item.exe_delay >= 7 %}#dc3545{% elif item.delayed_dept == 'المدير التنفيذي' %}#6f42c1{% else %}#e9ecef{% endif %}; background:{% if order.executive_approved %}#d1e7dd{% elif item.delayed_dept == 'المدير التنفيذي' and item.exe_delay >= 7 %}#f8d7da{% elif item.delayed_dept == 'المدير التنفيذي' %}#e2d9f3{% else %}#f8f9fa{% endif %}">
+          <div style="font-size:0.75em" class="text-muted mb-1">4. المدير التنفيذي</div>
+          {% if order.executive_approved %}
+            <div style="font-size:0.8em;color:#198754"><i class="bi bi-check-circle-fill me-1"></i>تم</div>
+            <div style="font-size:0.7em" class="text-muted">{{ order.executive_approved_by }}</div>
+            <div style="font-size:0.65em" class="text-muted">{{ order.executive_approved_at.strftime('%m/%d %H:%M') if order.executive_approved_at else '' }}</div>
+          {% elif item.delayed_dept == 'المدير التنفيذي' %}
+            <div style="font-size:0.8em;color:{% if item.exe_delay >= 7 %}#dc3545{% else %}#6f42c1{% endif %}"><i class="bi bi-hourglass-split me-1"></i>بانتظار</div>
+            <div style="font-size:0.65em" class="text-muted">{{ item.exe_delay }} يوم</div>
+          {% else %}
+            <div style="font-size:0.8em;color:#adb5bd"><i class="bi bi-lock-fill me-1"></i>قفل</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2" style="border-top:1px solid #eee">
+      <div class="d-flex gap-3" style="font-size:0.8em">
+        {% if order.marketing_approved %}<span class="text-success"><i class="bi bi-check-circle me-1"></i>التسويق</span>{% endif %}
+        {% if order.movement_approved %}<span class="text-success"><i class="bi bi-check-circle me-1"></i>الحركة</span>{% endif %}
+        {% if order.finance_approved %}<span class="text-success"><i class="bi bi-check-circle me-1"></i>المالي</span>{% endif %}
+        {% if order.executive_approved %}<span class="text-success"><i class="bi bi-check-circle me-1"></i>المدير</span>{% endif %}
+      </div>
+      <a href="{{ url_for('marketing.work_order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary" style="border-radius:15px">
+        <i class="bi bi-eye me-1"></i>عرض التفاصيل
+      </a>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% if not orders_data %}
+<div class="text-center py-5">
+  <i class="bi bi-clipboard-check text-muted" style="font-size:3em"></i>
+  <p class="text-muted mt-2">لا توجد اوامر تشغيل</p>
+</div>
+{% endif %}
+
+{% endblock %}

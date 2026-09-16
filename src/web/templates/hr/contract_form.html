@@ -1,0 +1,86 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}عقد عمل جديد | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">{{ 'تعديل العقد' if contract else 'عقد عمل جديد' }}</h4>
+  <a href="{{ url_for('hr.contracts_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> العقود
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('hr.contracts_add') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">الموظف <span class="text-danger">*</span></label>
+          <select name="employee_id" class="form-select" required>
+            <option value="">اختر الموظف</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.full_name_ar }} - {{ emp.employee_number }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم العقد <span class="text-danger">*</span></label>
+          <input type="text" name="contract_number" class="form-control" value="{{ contract.contract_number | default('') }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع العقد <span class="text-danger">*</span></label>
+          <select name="contract_type" class="form-select" required>
+            <option value="permanent" {% if contract and contract.contract_type == 'permanent' %}selected{% endif %}>دائم</option>
+            <option value="temporary" {% if contract and contract.contract_type == 'temporary' %}selected{% endif %}>مؤقت</option>
+            <option value="probation" {% if contract and contract.contract_type == 'probation' %}selected{% endif %}>فترة اختبار</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ البدء <span class="text-danger">*</span></label>
+          <input type="date" name="start_date" class="form-control" value="{{ contract.start_date.strftime('%Y-%m-%d') if contract and contract.start_date else '' }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">تاريخ الانتهاء</label>
+          <input type="date" name="end_date" class="form-control" value="{{ contract.end_date.strftime('%Y-%m-%d') if contract and contract.end_date else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">فترة التجربة (شهور)</label>
+          <input type="number" name="probation_period_months" class="form-control" value="{{ contract.probation_period_months | default('') }}" min="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الراتب</label>
+          <input type="number" name="salary" class="form-control" step="0.01" value="{{ contract.salary | default('') }}">
+        </div>
+        <div class="col-md-12"><hr></div>
+        <div class="col-md-4">
+          <label class="form-label">الإعانات</label>
+          <input type="number" name="allowances" class="form-control" step="0.01" value="{{ contract.allowances | default('') }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if contract and contract.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="expired" {% if contract and contract.status == 'expired' %}selected{% endif %}>منتهي</option>
+            <option value="terminated" {% if contract and contract.status == 'terminated' %}selected{% endif %}>ملغي</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">批准人</label>
+          <input type="text" name="approved_by" class="form-control" value="{{ contract.approved_by | default('') }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">الشروط والأحكام</label>
+          <textarea name="terms_and_conditions" class="form-control" rows="3">{{ contract.terms_and_conditions | default('') }}</textarea>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">الملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ contract.notes | default('') }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>{{ 'تعديل' if contract else 'إنشاء' }}</button>
+        <a href="{{ url_for('hr.contracts_list') }}" class="btn btn-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

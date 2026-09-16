@@ -1,0 +1,122 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}المعاملات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">معاملات المخزون</h4>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal"><i class="bi bi-plus-lg me-1"></i>إضافة معاملة</button>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_list') }}">المخازن</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_items') }}">الأصناف</a></li>
+  <li class="nav-item"><a class="nav-link active" href="{{ url_for('warehouses.warehouses_transactions') }}">المعاملات</a></li>
+</ul>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>رقم المعاملة</th>
+            <th>التاريخ</th>
+            <th>النوع</th>
+            <th>الصنف</th>
+            <th>المخزن</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for txn in transactions %}
+          <tr>
+            <td>{{ txn.transaction_number }}</td>
+            <td>{{ txn.date.strftime('%Y-%m-%d') if txn.date else '-' }}</td>
+            <td>
+              {% if txn.transaction_type == 'IN' %}<span class="badge bg-success">وارد</span>
+              {% else %}<span class="badge bg-danger">صادر</span>{% endif %}
+            </td>
+            <td>{{ txn.item.name_ar if txn.item else '-' }}</td>
+            <td>{{ txn.warehouse.name_ar if txn.warehouse else '-' }}</td>
+            <td>{{ txn.quantity }}</td>
+            <td>{{ '{:,.2f}'.format(txn.total_price) if txn.total_price else '-' }} د.ل</td>
+          </tr>
+          {% endfor %}
+          {% if not transactions %}
+          <tr><td colspan="7" class="text-center text-muted py-4">لا توجد معاملات</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addTransactionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('warehouses.warehouses_transaction_add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title">إضافة معاملة مخزون</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">نوع المعاملة <span class="text-danger">*</span></label>
+            <select name="transaction_type" class="form-select" required>
+              <option value="IN">وارد (إدخال)</option>
+              <option value="OUT">صارد (إخراج)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الصنف <span class="text-danger">*</span></label>
+            <select name="item_id" class="form-select" required>
+              <option value="">اختر الصنف</option>
+              {% for item in items %}
+              <option value="{{ item.id }}">{{ item.name_ar }} ({{ item.code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">المخزن <span class="text-danger">*</span></label>
+            <select name="warehouse_id" class="form-select" required>
+              <option value="">اختر المخزن</option>
+              {% for wh in warehouses %}
+              <option value="{{ wh.id }}">{{ wh.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الكمية <span class="text-danger">*</span></label>
+              <input type="number" step="0.01" name="quantity" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">سعر الوحدة</label>
+              <input type="number" step="0.01" name="unit_price" class="form-control">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">التاريخ</label>
+            <input type="date" name="date" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الجهة المصدر / الوجهة</label>
+            <input type="text" name="source" class="form-control" placeholder="الجهة">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ملاحظات</label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
+          </div>
+          <input type="hidden" name="reference_number" value="">
+          <input type="hidden" name="destination" value="">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ المعاملة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

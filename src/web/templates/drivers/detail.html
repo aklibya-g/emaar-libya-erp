@@ -1,0 +1,69 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}{{ driver.full_name_ar }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <h4 class="page-title">بيانات السائق: {{ driver.full_name_ar }}</h4>
+  <a href="{{ url_for('drivers.drivers_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة السائقين
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">البيانات الأساسية</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong>رقم السائق:</strong><p>{{ driver.driver_number }}</p></div>
+          <div class="col-md-4"><strong>الاسم بالعربي:</strong><p>{{ driver.full_name_ar }}</p></div>
+          <div class="col-md-4"><strong>الاسم بالإنجليزي:</strong><p>{{ driver.full_name_en or '-' }}</p></div>
+          <div class="col-md-4"><strong>رقم الهوية:</strong><p>{{ driver.national_id or '-' }}</p></div>
+          <div class="col-md-4"><strong>الهاتف:</strong><p>{{ driver.phone or '-' }}</p></div>
+          <div class="col-md-4"><strong>تاريخ الالتحاق:</strong><p>{{ driver.join_date.strftime('%Y-%m-%d') if driver.join_date else '-' }}</p></div>
+          <div class="col-md-12"><strong>العنوان:</strong><p>{{ driver.address or '-' }}</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h6 class="mb-0">بيانات الرخصة</h6></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><strong>رقم الرخصة:</strong><p>{{ driver.license_number or '-' }}</p></div>
+          <div class="col-md-4"><strong>نوع الرخصة:</strong><p>{{ driver.license_type or '-' }}</p></div>
+          <div class="col-md-4"><strong>جهة الإصدار:</strong><p>{{ driver.license_issuing_authority or '-' }}</p></div>
+          <div class="col-md-4"><strong>تاريخ الإصدار:</strong><p>{{ driver.license_issue_date.strftime('%Y-%m-%d') if driver.license_issue_date else '-' }}</p></div>
+          <div class="col-md-4"><strong>تاريخ الانتهاء:</strong><p>{{ driver.license_expiry_date.strftime('%Y-%m-%d') if driver.license_expiry_date else '-' }}</p></div>
+          <div class="col-md-4"><strong>الحالة:</strong>
+            <p>{% if driver.status == 'active' %}<span class="badge bg-success">نشط</span>{% else %}<span class="badge bg-secondary">{{ driver.status }}</span>{% endif %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">الإجراءات</h6></div>
+      <div class="card-body d-grid gap-2">
+        <a href="{{ url_for('drivers.drivers_edit', id=driver.id) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>تعديل البيانات</a>
+        <form method="POST" action="{{ url_for('drivers.drivers_delete', id=driver.id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا السائق؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash me-1"></i>حذف السائق</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h6 class="mb-0">معلومات إضافية</h6></div>
+      <div class="card-body">
+        <p><strong>تاريخ الإنشاء:</strong> {{ driver.created_at.strftime('%Y-%m-%d') if driver.created_at else '-' }}</p>
+        {% if driver.notes %}
+        <p><strong>ملاحظات:</strong></p>
+        <p class="text-muted">{{ driver.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

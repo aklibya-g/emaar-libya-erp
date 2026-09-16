@@ -1,0 +1,117 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل موظف' if employee else 'إضافة موظف' }} | امارات ليبيا{% endblock %}
+{% block content %}
+<div class="page-header mb-4">
+  <h4 class="page-title">{{ 'تعديل بيانات الموظف' if employee else 'إضافة موظف جديد' }}</h4>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">رقم الموظف <span class="text-danger">*</span></label>
+          <input type="text" name="employee_number" class="form-control" value="{{ employee.employee_number if employee else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالعربي <span class="text-danger">*</span></label>
+          <input type="text" name="full_name_ar" class="form-control" value="{{ employee.full_name_ar if employee else '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الاسم بالإنجليزي</label>
+          <input type="text" name="full_name_en" class="form-control" value="{{ employee.full_name_en if employee and employee.full_name_en else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">رقم الهوية</label>
+          <input type="text" name="national_id" class="form-control" value="{{ employee.national_id if employee and employee.national_id else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الجنس</label>
+          <select name="gender" class="form-select">
+            <option value="">اختر</option>
+            <option value="male" {% if employee and employee.gender == 'male' %}selected{% endif %}>ذكر</option>
+            <option value="female" {% if employee and employee.gender == 'female' %}selected{% endif %}>أنثى</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الجنسية</label>
+          <input type="text" name="nationality" class="form-control" value="{{ employee.nationality if employee and employee.nationality else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة الاجتماعية</label>
+          <select name="marital_status" class="form-select">
+            <option value="">اختر</option>
+            <option value="single" {% if employee and employee.marital_status == 'single' %}selected{% endif %}>أعزب</option>
+            <option value="married" {% if employee and employee.marital_status == 'married' %}selected{% endif %}>متزوج</option>
+            <option value="divorced" {% if employee and employee.marital_status == 'divorced' %}selected{% endif %}>مطلق</option>
+            <option value="widowed" {% if employee and employee.marital_status == 'widowed' %}selected{% endif %}>أرمل</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الهاتف</label>
+          <input type="text" name="phone" class="form-control" value="{{ employee.phone if employee and employee.phone else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input type="email" name="email" class="form-control" value="{{ employee.email if employee and employee.email else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">العنوان</label>
+          <textarea name="address" class="form-control" rows="2">{{ employee.address if employee and employee.address else '' }}</textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">القسم</label>
+          <select name="department_id" class="form-select">
+            <option value="">اختر القسم</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if employee and employee.department_id == dept.id %}selected{% endif %}>{{ dept.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">المنصب</label>
+          <select name="position_id" class="form-select">
+            <option value="">اختر المنصب</option>
+            {% for pos in positions %}
+            <option value="{{ pos.id }}" {% if employee and employee.position_id == pos.id %}selected{% endif %}>{{ pos.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">تاريخ التعيين</label>
+          <input type="date" name="hire_date" class="form-control" value="{{ employee.hire_date.strftime('%Y-%m-%d') if employee and employee.hire_date else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">نوع العقد</label>
+          <select name="contract_type" class="form-select">
+            <option value="">اختر</option>
+            <option value="permanent" {% if employee and employee.contract_type == 'permanent' %}selected{% endif %}>دائم</option>
+            <option value="temporary" {% if employee and employee.contract_type == 'temporary' %}selected{% endif %}>مؤقت</option>
+            <option value="contract" {% if employee and employee.contract_type == 'contract' %}selected{% endif %}>تعاقد</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الراتب</label>
+          <input type="number" step="0.01" name="salary" class="form-control" value="{{ employee.salary if employee and employee.salary else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">الحالة</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if employee and employee.status == 'active' %}selected{% endif %}>نشط</option>
+            <option value="inactive" {% if employee and employee.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+            <option value="on_leave" {% if employee and employee.status == 'on_leave' %}selected{% endif %}>إجازة</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2">{{ employee.notes if employee and employee.notes else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if employee else 'إضافة الموظف' }}</button>
+        <a href="{{ url_for('employees.employees_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

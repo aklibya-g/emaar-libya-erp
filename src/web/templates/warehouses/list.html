@@ -1,0 +1,67 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}المخازن | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>
+        لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item active">المخازن</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-box-seam me-2"></i>المخازن</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-3 header-actions">
+      <a href="{{ url_for('warehouses.warehouses_item_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>اضافة مخزن</a>
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link active" href="{{ url_for('warehouses.warehouses_list') }}">المخازن</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_items') }}">الأصناف</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('warehouses.warehouses_transactions') }}">المعاملات</a></li>
+</ul>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>الكود</th>
+            <th>الاسم بالعربي</th>
+            <th>الموقع</th>
+            <th>عدد الأصناف</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for wh in warehouses %}
+          <tr>
+            <td>{{ wh.code }}</td>
+            <td>{{ wh.name_ar }}</td>
+            <td>{{ wh.location or '-' }}</td>
+            <td>{{ wh.items|length if wh.items else 0 }}</td>
+            <td>
+              {% if wh.status == 'active' %}<span class="badge bg-success">نشط</span>
+              {% else %}<span class="badge bg-secondary">{{ wh.status }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not warehouses %}
+          <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد مخازن</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

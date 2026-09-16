@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>طباعة المطالبة {{ claim.claim_number }} | شركة اعمار ليبيا لنقل الركاب</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { font-size: 11px; }
+      .print-container { border: none !important; box-shadow: none !important; }
+    }
+    @page { size: A4; margin: 15mm; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f8fafc; color: #1e293b; font-size: 12px; }
+    .print-container { max-width: 800px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; }
+    .header-section { text-align: center; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
+    .header-section h1 { font-size: 20px; font-weight: 800; color: #1a365d; margin: 0; }
+    .header-section h2 { font-size: 14px; font-weight: 600; color: #2b6cb0; margin: 4px 0 0; }
+    .header-section .subtitle { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+    .info-item { display: flex; justify-content: space-between; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #f1f5f9; }
+    .info-item .label { font-size: 11px; color: #64748b; font-weight: 500; }
+    .info-item .value { font-size: 12px; font-weight: 700; color: #1e293b; }
+    .section-title { font-size: 13px; font-weight: 700; color: #1a365d; margin: 15px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #e2e8f0; }
+    .amount-box { text-align: center; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
+    .amount-box .label { font-size: 10px; color: #64748b; margin-bottom: 2px; }
+    .amount-box .amount { font-size: 20px; font-weight: 900; }
+    table { width: 100%; border-collapse: collapse; }
+    table th { background: #f1f5f9; color: #475569; padding: 8px; font-size: 10px; font-weight: 700; text-align: center; border-bottom: 2px solid #e2e8f0; }
+    table td { padding: 8px; font-size: 11px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+    .approval-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; padding-top: 15px; border-top: 2px solid #e2e8f0; }
+    .approval-item { text-align: center; padding: 15px; border: 1px solid #e2e8f0; border-radius: 10px; }
+    .approval-item .title { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 10px; }
+    .approval-item .signature-line { border-bottom: 1px solid #1e293b; width: 80%; margin: 20px auto 8px; }
+    .approval-item .name { font-size: 11px; font-weight: 600; color: #1e293b; }
+    .approval-item .date { font-size: 10px; color: #94a3b8; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .print-btn { position: fixed; top: 20px; left: 20px; z-index: 1000; }
+  </style>
+</head>
+<body>
+  <div class="no-print print-btn">
+    <button onclick="window.print()" class="btn btn-primary btn-lg" style="border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2)">
+      <i class="bi bi-printer me-2"></i>طباعة
+    </button>
+    <button onclick="window.close()" class="btn btn-secondary btn-lg ms-2" style="border-radius:10px">
+      <i class="bi bi-x-lg me-1"></i>إغلاق
+    </button>
+  </div>
+
+  <div class="print-container">
+    <!-- Header -->
+    <div class="header-section">
+      <h1>شركة اعمار ليبيا لنقل الركاب</h1>
+      <h2>المطالبة المالية رقم: {{ claim.claim_number }}</h2>
+      <div class="subtitle">تاريخ الطباعة: {{ now_date.strftime('%Y-%m-%d') if now_date else '-' }}</div>
+    </div>
+
+    <!-- Claim Info -->
+    <div class="section-title"><i class="bi bi-info-circle me-1"></i>بيانات المطالبة</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="label">رقم أمر التشغيل</span>
+        <span class="value">{{ claim.order_number or '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">الجهة</span>
+        <span class="value">{{ claim.client.name_ar if claim.client else '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">المسار</span>
+        <span class="value">{{ claim.route_description or '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">نوع الرحلة</span>
+        <span class="value">{% if claim.trip_type == 'external' %}خارج المدينة{% else %}داخل المدينة{% endif %}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">رحلة من</span>
+        <span class="value">{{ claim.trip_from or '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">رحلة الى</span>
+        <span class="value">{{ claim.trip_to or '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">المدة (أيام)</span>
+        <span class="value">{{ claim.duration_days }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">عدد الحافلات</span>
+        <span class="value">{{ claim.bus_count }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">تاريخ الخروج</span>
+        <span class="value">{{ claim.departure_date.strftime('%Y-%m-%d') if claim.departure_date else '-' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">تاريخ العودة</span>
+        <span class="value">{{ claim.return_date.strftime('%Y-%m-%d') if claim.return_date else '-' }}</span>
+      </div>
+    </div>
+
+    <!-- Cost Details -->
+    <div class="section-title"><i class="bi bi-calculator me-1"></i>تفاصيل التكاليف</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="label">إيجار الحافلة</span>
+        <span class="value">{{ "{:,.0f}".format(claim.bus_rental_value|default(0)) }} د.ل</span>
+      </div>
+      <div class="info-item">
+        <span class="label">الصيانة</span>
+        <span class="value">{{ "{:,.0f}".format(claim.bus_maintenance_value|default(0)) }} د.ل</span>
+      </div>
+      <div class="info-item">
+        <span class="label">نقل السائق</span>
+        <span class="value">{{ "{:,.0f}".format(claim.driver_transport_value|default(0)) }} د.ل</span>
+      </div>
+      <div class="info-item">
+        <span class="label">سعر الرحلة</span>
+        <span class="value">{{ "{:,.0f}".format(claim.trip_price|default(0)) }} د.ل</span>
+      </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="section-title"><i class="bi bi-cash-stack me-1"></i>الملخص المالي</div>
+    <div class="row g-2 mb-3">
+      <div class="col-md-3">
+        <div class="amount-box" style="background:#eff6ff;border:1px solid #bfdbfe">
+          <div class="label">القيمة الإجمالية</div>
+          <div class="amount" style="color:#1e40af">{{ "{:,.0f}".format(claim.total_value) }} د.ل</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="amount-box" style="background:#fff7ed;border:1px solid #fed7aa">
+          <div class="label">التخفيض</div>
+          <div class="amount" style="color:#ea580c">-{{ "{:,.0f}".format(claim.adjustment_value|default(0) + claim.executive_discount_value|default(0)) }} د.ل</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="amount-box" style="background:#f0fdf4;border:1px solid #bbf7d0">
+          <div class="label">القيمة النهائية</div>
+          <div class="amount" style="color:#166534">{{ "{:,.0f}".format(claim.final_value) }} د.ل</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="amount-box" style="background:{% if claim.remaining_amount > 0 %}#fef2f2{% else %}#f0fdf4{% endif %};border:1px solid {% if claim.remaining_amount > 0 %}#fecaca{% else %}#bbf7d0{% endif %}">
+          <div class="label">المتبقي</div>
+          <div class="amount" style="color:{% if claim.remaining_amount > 0 %}#dc2626{% else %}#166534{% endif %}">{{ "{:,.0f}".format(claim.remaining_amount) }} د.ل</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="text-center mb-3">
+      <span style="font-size:12px;color:#64748b;margin-left:8px;">حالة المطالبة:</span>
+      {% if claim.status == 'pending' %}
+        <span class="status-badge" style="background:#dcfce7;color:#166534">قيد التحصيل</span>
+      {% elif claim.status == 'collecting' %}
+        <span class="status-badge" style="background:#dcfce7;color:#166534">قيد التحصيل</span>
+      {% elif claim.status == 'partially_paid' %}
+        <span class="status-badge" style="background:#fef9c3;color:#854d0e">تحصيل جزئي</span>
+      {% elif claim.status == 'collected' or claim.status == 'fully_paid' %}
+        <span class="status-badge" style="background:#bbf7d0;color:#166534">تم التحصيل</span>
+      {% else %}
+        <span class="status-badge" style="background:#f3f4f6;color:#374151">{{ claim.status }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Receipts Table -->
+    {% if receipts %}
+    <div class="section-title"><i class="bi bi-receipt me-1"></i>سندات الاستلام</div>
+    <table>
+      <thead>
+        <tr>
+          <th>رقم الإيصال</th>
+          <th>المبلغ</th>
+          <th>طريقة الدفع</th>
+          <th>التاريخ</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for receipt in receipts %}
+        <tr>
+          <td style="font-weight:700;color:#1e40af">{{ receipt.receipt_number }}</td>
+          <td style="font-weight:700;color:#10b981">{{ "{:,.0f}".format(receipt.amount_received) }} د.ل</td>
+          <td>
+            {% if receipt.payment_method == 'cash' %}نقدي
+            {% elif receipt.payment_method == 'transfer' %}تحويل بنكي
+            {% elif receipt.payment_method == 'check' %}شيك
+            {% else %}{{ receipt.payment_method }}{% endif %}
+          </td>
+          <td>{{ receipt.receipt_date.strftime('%Y-%m-%d') if receipt.receipt_date else '-' }}</td>
+          <td>
+            {% if receipt.status == 'confirmed' %}
+              <span style="color:#166534;font-weight:600">مؤكد</span>
+            {% else %}
+              <span style="color:#854d0e;font-weight:600">مسودة</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Approvals -->
+    <div class="approval-box">
+      <div class="approval-item">
+        <div class="title">اعتماد قسم التسويق</div>
+        <div class="signature-line"></div>
+        <div class="name">{{ claim.work_order.marketing_approved_by if claim.work_order and claim.work_order.marketing_approved_by else '-------------------' }}</div>
+        <div class="date">{{ claim.work_order.marketing_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.marketing_approved_at else '' }}</div>
+      </div>
+      <div class="approval-item">
+        <div class="title">اعتماد قسم الحركة</div>
+        <div class="signature-line"></div>
+        <div class="name">{{ claim.work_order.movement_approved_by if claim.work_order and claim.work_order.movement_approved_by else '-------------------' }}</div>
+        <div class="date">{{ claim.work_order.movement_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.movement_approved_at else '' }}</div>
+      </div>
+      <div class="approval-item">
+        <div class="title">اعتماد الادارة المالية</div>
+        <div class="signature-line"></div>
+        <div class="name">{{ finance_approved_by if finance_approved_by else '-------------------' }}</div>
+        <div class="date">{{ finance_approved_at.strftime('%Y-%m-%d') if finance_approved_at else '' }}</div>
+      </div>
+      <div class="approval-item">
+        <div class="title">اعتماد المدير التنفيذي</div>
+        <div class="signature-line"></div>
+        <div class="name">{{ claim.work_order.executive_approved_by if claim.work_order and claim.work_order.executive_approved_by else '-------------------' }}</div>
+        <div class="date">{{ claim.work_order.executive_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.executive_approved_at else '' }}</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;margin-top:20px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8">
+      <div>شركة اعمار ليبيا لنقل الركاب - نظام إدارة الموارد البشرية</div>
+    </div>
+  </div>
+</body>
+</html>

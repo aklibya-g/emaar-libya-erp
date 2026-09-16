@@ -1,0 +1,325 @@
+﻿{% extends "layouts/base.html" %}
+{% block title %}إنشاء مراسلة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-envelope-plus me-2"></i>إنشاء مراسلة</h4>
+  </div>
+  <a href="{{ url_for('correspondence.correspondence_list') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-right me-1"></i>العودة
+  </a>
+</div>
+
+<form method="POST" action="{{ url_for('correspondence.correspondence_add') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+
+      <!-- Subject & Type -->
+      <div class="card mb-4">
+        <div class="card-header bg-transparent">
+          <i class="bi bi-info-circle me-2"></i>بيانات أساسية
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label">نوع المراسلة <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <select name="type_code" class="form-select" id="typeSelect">
+                  <option value="">اختر النوع</option>
+                  {% for ct in cor_types %}
+                  <option value="{{ ct.code }}">{{ ct.name_ar }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="btn btn-outline-success" id="addTypeBtn" title="إضافة نوع جديد"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="btn btn-outline-danger" id="cancelTypeBtn" title="إلغاء" style="display:none"><i class="bi bi-x-lg"></i></button>
+              </div>
+              <input type="text" id="newTypeInput" class="form-control form-control-sm mt-1" placeholder="اكتب اسم النوع..." style="display:none">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">تاريخ المراسلة</label>
+              <input type="date" name="date" class="form-control" value="{{ today }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">الأهمية</label>
+              <select name="importance" class="form-select">
+                <option value="normal">عادي</option>
+                <option value="high">مهم</option>
+                <option value="critical">عاجل</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">الموضوع <span class="text-danger">*</span></label>
+              <input type="text" name="subject" class="form-control" placeholder="موضوع المراسلة" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="card mb-4">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-file-text me-2"></i>المحتوى</span>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" id="voiceBtn" title="تسجيل صوتي">
+              <i class="bi bi-mic"></i> تسجيل
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="rephraseBtn" title="إعادة صياغة بالذكاء الاصطناعي">
+              <i class="bi bi-magic"></i> إعادة صياغة
+            </button>
+            <span id="voiceStatus" class="align-self-center text-muted" style="font-size:0.8em"></span>
+          </div>
+        </div>
+        <div class="card-body">
+          <textarea name="body" class="form-control" rows="6" placeholder="نص المراسلة..." id="bodyTextarea" style="border:none;resize:none"></textarea>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات إضافية..." style="border:none;resize:none"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+      <!-- Sender Info -->
+      <div class="card mb-4">
+        <div class="card-header bg-transparent">
+          <i class="bi bi-person me-2"></i>المرسل
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <small class="text-muted">الاسم</small>
+            <div class="fw-semibold">{{ current_user.full_name_ar }}</div>
+          </div>
+          <div class="mb-2">
+            <small class="text-muted">القسم</small>
+            <div class="fw-semibold">{{ sender_dept_name }}</div>
+          </div>
+          <input type="hidden" name="sender_department_id" value="{{ current_user.department_id or '' }}">
+        </div>
+      </div>
+
+      <!-- Receiver -->
+      <div class="card mb-4">
+        <div class="card-header bg-transparent">
+          <i class="bi bi-person-check me-2"></i>المستلم
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">القسم المستلم</label>
+            <select name="receiver_department_id" class="form-select" id="receiverDept">
+              <option value="">اختر القسم</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">الموظف المسؤول</label>
+            <select name="responsible_employee_id" class="form-select" id="responsibleEmployee" disabled>
+              <option value="">اختر القسم أولاً</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.full_name_ar }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="form-label">تاريخ الاستحقاق</label>
+            <input type="date" name="due_date" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Confidential -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_confidential" id="is_confidential">
+            <label class="form-check-label" for="is_confidential">
+              <i class="bi bi-lock me-1"></i>مراسلة سرية
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-send me-1"></i>إرسال المراسلة
+        </button>
+        <a href="{{ url_for('correspondence.correspondence_list') }}" class="btn btn-outline-secondary">إلغاء</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // === Filter employees by department ===
+  var receiverDept = document.getElementById('receiverDept');
+  var responsibleEmployee = document.getElementById('responsibleEmployee');
+
+  receiverDept.addEventListener('change', function() {
+    var deptId = this.value;
+    if (!deptId) {
+      responsibleEmployee.innerHTML = '<option value="">اختر القسم أولاً</option>';
+      responsibleEmployee.disabled = true;
+      return;
+    }
+    responsibleEmployee.disabled = true;
+    responsibleEmployee.innerHTML = '<option value="">جاري التحميل...</option>';
+    fetch('/correspondence/api/employees-by-department/' + deptId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var html = '<option value="">اختر الموظف</option>';
+        data.forEach(function(emp) {
+          html += '<option value="' + emp.id + '">' + emp.name + '</option>';
+        });
+        responsibleEmployee.innerHTML = html;
+        responsibleEmployee.disabled = false;
+      })
+      .catch(function() {
+        responsibleEmployee.innerHTML = '<option value="">خطأ في التحميل</option>';
+        responsibleEmployee.disabled = false;
+      });
+  });
+
+  var addBtn = document.getElementById('addTypeBtn');
+  var cancelBtn = document.getElementById('cancelTypeBtn');
+  var typeSelect = document.getElementById('typeSelect');
+  var newInput = document.getElementById('newTypeInput');
+  var adding = false;
+
+  addBtn.addEventListener('click', function() {
+    if (!adding) {
+      typeSelect.style.display = 'none';
+      newInput.style.display = '';
+      newInput.focus();
+      addBtn.innerHTML = '<i class="bi bi-check-lg"></i>';
+      cancelBtn.style.display = '';
+      adding = true;
+    } else {
+      var nameAr = newInput.value.trim();
+      if (!nameAr) { alert('اكتب اسم النوع'); return; }
+      var code = nameAr.substring(0, 3).toUpperCase();
+      fetch('/correspondence/api/type-add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
+        body: JSON.stringify({name_ar: nameAr, code: code})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var opt = new Option(nameAr, code, true, true);
+          typeSelect.add(opt);
+          typeSelect.style.display = '';
+          newInput.style.display = 'none';
+          newInput.value = '';
+          addBtn.innerHTML = '<i class="bi bi-plus-lg"></i>';
+          cancelBtn.style.display = 'none';
+          adding = false;
+        } else {
+          alert(data.message || 'خطأ');
+        }
+      })
+      .catch(function() { alert('خطأ في الاتصال'); });
+    }
+  });
+
+  cancelBtn.addEventListener('click', function() {
+    typeSelect.style.display = '';
+    newInput.style.display = 'none';
+    newInput.value = '';
+    addBtn.innerHTML = '<i class="bi bi-plus-lg"></i>';
+    cancelBtn.style.display = 'none';
+    adding = false;
+  });
+
+  var voiceBtn = document.getElementById('voiceBtn');
+  var voiceStatus = document.getElementById('voiceStatus');
+  var bodyTextarea = document.getElementById('bodyTextarea');
+  var recognition = null;
+  var listening = false;
+
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = function(event) {
+      var final = '';
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        }
+      }
+      if (final) { bodyTextarea.value += final; }
+    };
+
+    recognition.onend = function() {
+      listening = false;
+      voiceBtn.innerHTML = '<i class="bi bi-mic"></i> تسجيل';
+      voiceBtn.classList.remove('btn-danger');
+      voiceBtn.classList.add('btn-outline-danger');
+      voiceStatus.textContent = '';
+    };
+
+    recognition.onerror = function(e) {
+      listening = false;
+      voiceBtn.innerHTML = '<i class="bi bi-mic"></i> تسجيل';
+      voiceBtn.classList.remove('btn-danger');
+      voiceBtn.classList.add('btn-outline-danger');
+      voiceStatus.textContent = 'خطأ: ' + e.error;
+    };
+  }
+
+  voiceBtn.addEventListener('click', function() {
+    if (!recognition) { alert('المتصفح لا يدعم التسجيل الصوتي'); return; }
+    if (!listening) {
+      recognition.start();
+      listening = true;
+      voiceBtn.innerHTML = '<i class="bi bi-stop-circle"></i> إيقاف';
+      voiceBtn.classList.remove('btn-outline-danger');
+      voiceBtn.classList.add('btn-danger');
+      voiceStatus.textContent = 'جاري التسجيل...';
+    } else {
+      recognition.stop();
+    }
+  });
+
+  var rephraseBtn = document.getElementById('rephraseBtn');
+  rephraseBtn.addEventListener('click', function() {
+    var text = bodyTextarea.value.trim();
+    if (!text) { alert('اكتب نصاً أولاً'); return; }
+    rephraseBtn.disabled = true;
+    rephraseBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري الصياغة...';
+    fetch('/correspondence/api/rephrase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'},
+      body: JSON.stringify({text: text})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) { bodyTextarea.value = data.text; }
+      else { alert(data.message || 'خطأ في إعادة الصياغة'); }
+    })
+    .catch(function() { alert('خطأ في الاتصال'); })
+    .finally(function() {
+      rephraseBtn.disabled = false;
+      rephraseBtn.innerHTML = '<i class="bi bi-magic"></i> إعادة صياغة';
+    });
+  });
+});
+</script>
+{% endblock %}
