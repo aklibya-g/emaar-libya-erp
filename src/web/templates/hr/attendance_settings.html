@@ -71,6 +71,12 @@
               <label class="form-check-label fw-bold" for="enable_national_transport">النقل الدولي</label>
             </div>
           </div>
+          <div class="col-md-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="enable_drivers_public" id="enable_drivers_public" value="true" {% if settings.get('enable_drivers_public', 'true') == 'true' %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="enable_drivers_public">السائقين - ركوبة عامة</label>
+            </div>
+          </div>
         </div>
       </div>
     </div>

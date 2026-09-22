@@ -104,9 +104,9 @@
           {% else %}
           <select id="contractFilter" class="filter-select" onchange="applyFilter()">
             <option value="all" {% if contract_filter == 'all' %}selected{% endif %}>جميع الانواع</option>
-            <option value="موسمي" {% if contract_filter == 'موسمي' %}selected{% endif %}>موسمي</option>
-            <option value="احتياطي" {% if contract_filter == 'احتياطي' %}selected{% endif %}>احتياطي</option>
-            <option value="ايجار لغرض التمليك" {% if contract_filter == 'ايجار لغرض التمليك' %}selected{% endif %}>ايجار لغرض التمليك</option>
+            {% for value, label in driver_contract_types %}
+            <option value="{{ label }}" {% if contract_filter == label %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
           </select>
           {% endif %}
         </div>

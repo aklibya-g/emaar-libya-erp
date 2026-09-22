@@ -577,6 +577,7 @@ def work_order_add():
                 related_order_id=request.form.get("related_order_id") or None,
                 amendment_reason=request.form.get("amendment_reason") or None,
                 trip_type=request.form.get("trip_type") or "internal",
+                is_auto_pricing=request.form.get("is_auto_pricing") == "1",
             )
             session.add(order)
             session.flush()
@@ -766,6 +767,7 @@ def work_order_edit(order_id):
             order.is_draft = True
             order.status = "draft"
             order.trip_type = request.form.get("trip_type") or "internal"
+            order.is_auto_pricing = request.form.get("is_auto_pricing") == "1"
             # حذف الحافلات القديمة وإعادة اضافتها
             for old_bus in order.buses:
                 session.delete(old_bus)
@@ -2094,6 +2096,29 @@ def bus_rental_price_delete(price_id):
             session.delete(price)
             session.commit()
             flash("تم حذف السعر بنجاح", "success")
+        return redirect(url_for("marketing.bus_rental_prices"))
+
+
+@marketing_bp.route("/bus-rental-prices/<price_id>/edit", methods=["POST"])
+@login_required
+def bus_rental_price_edit(price_id):
+    with get_web_session() as session:
+        from src.core.models.marketing_models import BusRentalPrice
+        price = session.query(BusRentalPrice).get(price_id)
+        if not price:
+            flash("السعر غير موجود", "danger")
+            return redirect(url_for("marketing.bus_rental_prices"))
+        seats_count = request.form.get("seats_count") or None
+        daily_price = float(request.form.get("daily_price") or 0)
+        notes = request.form.get("notes") or None
+        if daily_price <= 0:
+            flash("يجب ادخال سعر صحيح", "danger")
+            return redirect(url_for("marketing.bus_rental_prices"))
+        price.seats_count = int(seats_count) if seats_count else None
+        price.daily_price = daily_price
+        price.notes = notes
+        session.commit()
+        flash("تم تحديث السعر بنجاح", "success")
         return redirect(url_for("marketing.bus_rental_prices"))
 
 

@@ -53,6 +53,21 @@ class FlaskUser:
     def role_name(self):
         return self.role.name if self.role else ""
 
+    @property
+    def is_finance(self):
+        if self.username == "admin":
+            return True
+        if self.department and self.department.code == "FIN":
+            return True
+        if self.role:
+            role_name = getattr(self.role, 'name', '') or ''
+            role_name_ar = getattr(self.role, 'name_ar', '') or ''
+            finance_keywords = ['finance', 'financial', 'مالية', 'مالي']
+            for kw in finance_keywords:
+                if kw.lower() in role_name.lower() or kw.lower() in role_name_ar.lower():
+                    return True
+        return False
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -111,6 +126,7 @@ def create_app() -> Flask:
     from src.web.routes.movement import movement_bp
     from src.web.routes.recycle_bin import recycle_bp
     from src.web.routes.finance import finance_bp
+    from src.web.routes.maintenance import maintenance_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -134,6 +150,7 @@ def create_app() -> Flask:
     app.register_blueprint(movement_bp)
     app.register_blueprint(recycle_bp)
     app.register_blueprint(finance_bp)
+    app.register_blueprint(maintenance_bp)
     csrf.exempt(app.view_functions["finance.generate_claims"])
     csrf.exempt(app.view_functions["finance.add_receipt"])
     csrf.exempt(app.view_functions["finance.confirm_receipt"])
@@ -151,9 +168,12 @@ def create_app() -> Flask:
     @app.context_processor
     def inject_globals():
         from flask_login import current_user
+        from src.web.contract_types import DEFAULT_CONTRACT_TYPES, DEFAULT_ACTIVITY_TYPES, get_contract_types, get_activity_types
         sidebar_perms = {}
         corr_perms = {}
         unread_notifications = 0
+        driver_contract_types = DEFAULT_CONTRACT_TYPES
+        driver_activity_types = DEFAULT_ACTIVITY_TYPES
         if current_user.is_authenticated:
             session = get_web_session()
             from src.core.models.base_models import UserSidebarPermission, UserCorrespondencePermission, Notification
@@ -165,12 +185,20 @@ def create_app() -> Flask:
                 Notification.user_id == current_user.id,
                 Notification.is_read == False,
             ).count()
+            try:
+                driver_contract_types = get_contract_types(session)
+                driver_activity_types = get_activity_types(session)
+            except Exception:
+                driver_contract_types = DEFAULT_CONTRACT_TYPES
+                driver_activity_types = DEFAULT_ACTIVITY_TYPES
         return {
             "app_name": "منظومة امارات ليبيا",
             "company_name": "شركة امارات ليبيا لنقل الركاب",
             "sidebar_perms": sidebar_perms,
             "corr_perms": corr_perms,
             "unread_notifications": unread_notifications,
+            "driver_contract_types": driver_contract_types,
+            "driver_activity_types": driver_activity_types,
         }
 
     return app

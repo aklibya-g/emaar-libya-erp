@@ -35,6 +35,30 @@ def drivers_list():
     return render_template("drivers/list.html", drivers=drivers, search=search)
 
 
+def _next_driver_number(session):
+    from sqlalchemy import func
+    import re
+    from src.core.models.base_models import Department
+    ops_dept = session.query(Department).filter(
+        Department.is_deleted == False,
+        (Department.code == "OPS") | (Department.name_ar.like("%حركة%")) | (Department.name_ar.like("%عمليات%"))
+    ).first()
+    dept_code = (ops_dept.code if ops_dept else "OPS")
+    max_num = session.query(func.max(Driver.driver_number)).filter(
+        Driver.driver_number.like(f"ELT.{dept_code}-%")
+    ).scalar()
+    if max_num:
+        m = re.search(r'(\d+)$', max_num)
+        num = int(m.group(1)) + 1 if m else 1
+    else:
+        num = 1
+    driver_number = f"ELT.{dept_code}-{num:03d}"
+    while session.query(Driver).filter(Driver.driver_number == driver_number).first():
+        num += 1
+        driver_number = f"ELT.{dept_code}-{num:03d}"
+    return driver_number
+
+
 @drivers_bp.route("/add", methods=["GET", "POST"])
 @login_required
 def drivers_add():
@@ -44,25 +68,15 @@ def drivers_add():
             full_name_ar = request.form.get("full_name_ar", "").strip()
             if not full_name_ar:
                 flash("الاسم بالعربي مطلوب", "danger")
-                return render_template("drivers/form.html", driver=None)
+                return render_template("drivers/form.html", driver=None, next_number=_next_driver_number(session))
+
+            if not request.form.get("join_date", "").strip():
+                flash("تاريخ المباشرة مطلوب", "danger")
+                return render_template("drivers/form.html", driver=None, next_number=_next_driver_number(session))
 
             driver_number = request.form.get("driver_number", "").strip()
             if not driver_number:
-                from sqlalchemy import func
-                max_num = session.query(func.max(Driver.driver_number)).scalar()
-                if max_num and max_num.startswith("D"):
-                    import re
-                    m = re.match(r'^[A-Za-z]*(\d+)$', max_num)
-                    if m:
-                        num = int(m.group(1)) + 1
-                    else:
-                        num = 1
-                else:
-                    num = 1
-                driver_number = f"D{num:03d}"
-                while session.query(Driver).filter(Driver.driver_number == driver_number).first():
-                    num += 1
-                    driver_number = f"D{num:03d}"
+                driver_number = _next_driver_number(session)
             else:
                 existing = session.query(Driver).filter(Driver.driver_number == driver_number).first()
                 if existing:
@@ -88,6 +102,7 @@ def drivers_add():
                 license_issuing_authority=request.form.get("license_issuing_authority", "").strip() or None,
                 join_date=_parse_date(request.form.get("join_date")),
                 contract_type=request.form.get("contract_type", "").strip() or None,
+                activity_type=request.form.get("activity_type", "").strip() or None,
                 status=request.form.get("status", "active"),
                 notes=request.form.get("notes", "").strip() or None,
                 created_by=current_user.id,
@@ -100,9 +115,9 @@ def drivers_add():
             import traceback
             traceback.print_exc()
             flash(f"خطأ في حفظ البيانات: {str(e)}", "danger")
-            return render_template("drivers/form.html", driver=None)
+            return render_template("drivers/form.html", driver=None, next_number=_next_driver_number(session))
 
-    return render_template("drivers/form.html", driver=None)
+    return render_template("drivers/form.html", driver=None, next_number=_next_driver_number(session))
 
 
 @drivers_bp.route("/<id>")
@@ -157,6 +172,7 @@ def drivers_edit(id):
             license_issuing_authority=request.form.get("license_issuing_authority", "").strip() or None,
             join_date=_parse_date(request.form.get("join_date")),
             contract_type=request.form.get("contract_type", "").strip() or None,
+            activity_type=request.form.get("activity_type", "").strip() or None,
             status=request.form.get("status", "active"),
             notes=request.form.get("notes", "").strip() or None,
             updated_by=current_user.id,

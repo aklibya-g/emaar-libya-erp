@@ -322,6 +322,10 @@ def confirm_receipt(receipt_id):
 @finance_bp.route("/claims/<claim_id>/approve", methods=["POST"])
 @login_required
 def approve_claim(claim_id):
+    if not current_user.is_finance and not current_user.is_admin:
+        flash("ليس لديك صلاحية لاعتماد المطالبات المالية", "danger")
+        return redirect(url_for("finance.claim_detail", claim_id=claim_id))
+
     with get_web_session() as session:
         claim = session.query(FinancialClaim).filter(FinancialClaim.id == claim_id).first()
         if not claim:

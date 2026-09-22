@@ -2,196 +2,216 @@
 {% block title %}ادارة الحركة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
 {% block content %}
 
+<!-- Page Header -->
 <div class="page-header">
   <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
     <div class="d-flex align-items-center gap-4">
       <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
-        <i class="bi bi-arrow-right"></i>
-        لوحة التحكم
+        <i class="bi bi-arrow-right"></i>لوحة التحكم
       </a>
       <div>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-2">
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
-            <li class="breadcrumb-item active">لوحة تحكم الحركة</li>
+            <li class="breadcrumb-item active">إدارة الحركة</li>
           </ol>
         </nav>
         <h1><i class="bi bi-arrow-left-right me-2"></i>لوحة تحكم الحركة</h1>
       </div>
     </div>
-    <div class="d-flex gap-3 header-actions">
+    <div class="d-flex gap-2 header-actions">
+      <a href="{{ url_for('movement.driver_vehicle_binding') }}" class="btn" style="background:rgba(var(--accent-rgb),0.1);color:var(--accent);border-radius:10px;font-weight:600;">
+        <i class="bi bi-link-45deg me-1"></i>ربط سائق
+      </a>
+      <a href="{{ url_for('drivers.drivers_add') }}" class="btn" style="background:var(--gradient-brand);color:white;border-radius:10px;font-weight:600;">
+        <i class="bi bi-person-plus-lg me-1"></i>سائق جديد
+      </a>
     </div>
   </div>
 </div>
 
-<!-- Stats Row 1: Vehicles + Drivers + Contracts + Licenses -->
+<!-- Stats Row: Fleet + Drivers + Orders -->
 <div class="row g-3 mb-3">
-  <div class="col-md-2">
+  <div class="col-md-4">
     <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body py-3">
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <div style="font-size:11px;opacity:0.8;">اجمالي الاسطول</div>
+            <div style="font-size:12px;opacity:0.85;">اجمالي الاسطول</div>
             <h3 class="mb-0 fw-bold">{{ total_vehicles }}</h3>
+            <div class="mt-2 d-flex gap-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">نشط: {{ active_vehicles }}</span>
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">صيانة: {{ maintenance_vehicles }}</span>
+            </div>
           </div>
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-car-front-fill" style="font-size:1.3rem;"></i>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-car-front-fill" style="font-size:1.6rem;"></i>
           </div>
-        </div>
-        <div class="mt-2 d-flex gap-1" style="font-size:10px;">
-          <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:20px;">نشطة: {{ active_vehicles }}</span>
-          <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:20px;">صيانة: {{ maintenance_vehicles }}</span>
         </div>
       </div>
     </div>
     </a>
   </div>
-  <div class="col-md-2">
-    <a href="{{ url_for('driver_hr.driver_list') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body py-3">
+  <div class="col-md-4">
+    <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="text-decoration-none">
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <div style="font-size:11px;opacity:0.8;">السائقون</div>
+            <div style="font-size:12px;opacity:0.85;">السائقون</div>
             <h3 class="mb-0 fw-bold">{{ active_drivers }}</h3>
+            <div class="mt-2 d-flex gap-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">نشط: {{ active_drivers }}</span>
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">متوقف: {{ inactive_drivers }}</span>
+            </div>
           </div>
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-person-check-fill" style="font-size:1.3rem;"></i>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-person-check-fill" style="font-size:1.6rem;"></i>
           </div>
-        </div>
-        <div class="mt-2 d-flex gap-1" style="font-size:10px;">
-          <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:20px;">نشط: {{ active_drivers }}</span>
-          <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:20px;">متوقف: {{ inactive_drivers }}</span>
         </div>
       </div>
     </div>
     </a>
   </div>
-  <div class="col-md-2">
+  <div class="col-md-4">
     <a href="{{ url_for('marketing.work_orders_list') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body py-3">
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <div style="font-size:11px;opacity:0.8;">امور التشغيل</div>
+            <div style="font-size:12px;opacity:0.85;">امور التشغيل</div>
             <h3 class="mb-0 fw-bold">{{ active_orders }}</h3>
+            <div class="mt-2" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">{{ today_trips }} رحلة اليوم</span>
+            </div>
           </div>
-          <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-clipboard-data" style="font-size:1.3rem;"></i>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-clipboard-data" style="font-size:1.6rem;"></i>
           </div>
         </div>
-        <div class="mt-2" style="font-size:10px;">
-          <span style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:20px;">{{ today_trips }} رحلة</span>
-        </div>
-      </div>
-    </div>
-    </a>
-  </div>
-
-</div>
-
-<!-- تنبيهات سريعة -->
-<div class="row g-3 mb-3">
-  <div class="col-md-4">
-    <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="border-radius:14px;cursor:pointer;transition:transform 0.2s;border:2px solid {{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_licenses_count > 0 else '#f0fdf4' }};" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body d-flex align-items-center gap-3 py-3">
-        <div style="width:48px;height:48px;border-radius:12px;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="bi bi-card-heading" style="font-size:1.3rem;color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};"></i>
-        </div>
-        <div class="flex-grow-1">
-          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">رخص السائقين</div>
-          <div style="font-size:11px;color:var(--text-secondary);">انتهاء صلاحية</div>
-        </div>
-        <span class="badge rounded-pill" style="font-size:14px;font-weight:700;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};">{{ expired_licenses_count }}</span>
-        <i class="bi bi-chevron-left" style="color:var(--text-secondary);font-size:0.8rem;"></i>
-      </div>
-    </div>
-    </a>
-  </div>
-  <div class="col-md-4">
-    <a href="{{ url_for('hr.driver_contracts_list') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="border-radius:14px;cursor:pointer;transition:transform 0.2s;border:2px solid {{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_contracts_count > 0 else '#f0fdf4' }};" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body d-flex align-items-center gap-3 py-3">
-        <div style="width:48px;height:48px;border-radius:12px;background:{{ '#fef3c7' if expired_contracts_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="bi bi-file-earmark-text" style="font-size:1.3rem;color:{{ '#d97706' if expired_contracts_count > 0 else '#10b981' }};"></i>
-        </div>
-        <div class="flex-grow-1">
-          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">عقود السائقين</div>
-          <div style="font-size:11px;color:var(--text-secondary);">انتهاء وتجديد</div>
-        </div>
-        <span class="badge rounded-pill" style="font-size:14px;font-weight:700;background:{{ '#fef3c7' if expired_contracts_count > 0 else '#d1fae5' }};color:{{ '#d97706' if expired_contracts_count > 0 else '#10b981' }};">{{ expired_contracts_count }}</span>
-        <i class="bi bi-chevron-left" style="color:var(--text-secondary);font-size:0.8rem;"></i>
-      </div>
-    </div>
-    </a>
-  </div>
-  <div class="col-md-4">
-    <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="text-decoration-none">
-    <div class="card border-0 shadow-sm" style="border-radius:14px;cursor:pointer;transition:transform 0.2s;border:2px solid {{ '#fee2e2' if expired_insurance_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_insurance_count > 0 else '#f0fdf4' }};" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
-      <div class="card-body d-flex align-items-center gap-3 py-3">
-        <div style="width:48px;height:48px;border-radius:12px;background:{{ '#ede9fe' if expired_insurance_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="bi bi-shield-check" style="font-size:1.3rem;color:{{ '#7c3aed' if expired_insurance_count > 0 else '#10b981' }};"></i>
-        </div>
-        <div class="flex-grow-1">
-          <div style="font-size:13px;font-weight:600;color:var(--text-primary);">تأمين المركبات</div>
-          <div style="font-size:11px;color:var(--text-secondary);">انتهاء التأمين</div>
-        </div>
-        <span class="badge rounded-pill" style="font-size:14px;font-weight:700;background:{{ '#ede9fe' if expired_insurance_count > 0 else '#d1fae5' }};color:{{ '#7c3aed' if expired_insurance_count > 0 else '#10b981' }};">{{ expired_insurance_count }}</span>
-        <i class="bi bi-chevron-left" style="color:var(--text-secondary);font-size:0.8rem;"></i>
       </div>
     </div>
     </a>
   </div>
 </div>
 
+<!-- Alert KPI Cards -->
+<div class="card border-0 shadow-sm mb-3" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+  <div class="card-header py-2 border-0 d-flex justify-content-between" style="background:transparent;">
+    <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+      <i class="bi bi-exclamation-triangle me-1" style="color:#f59e0b;"></i>تنبيهات المتابعة
+    </h6>
+    <span class="badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;font-size:11px;border-radius:8px;padding:3px 8px;">اضغط للتفاصيل</span>
+  </div>
+  <div class="card-body py-2 px-3">
+    <div class="row g-2">
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_licenses_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-card-heading" style="font-size:1.2rem;color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">رخص السائقين</div>
+            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};">{{ expired_licenses_count }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('hr.driver_contracts_list') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_contracts_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-file-earmark-text" style="font-size:1.2rem;color:{{ '#dc3545' if expired_contracts_count > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">عقود السائقين</div>
+            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};color:{{ '#dc3545' if expired_contracts_count > 0 else '#10b981' }};">{{ expired_contracts_count }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('vehicles.expiring_insurance') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expired_insurance_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-shield-check" style="font-size:1.2rem;color:{{ '#2563eb' if expired_insurance_count > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">تأمين المركبات</div>
+            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};color:{{ '#2563eb' if expired_insurance_count > 0 else '#10b981' }};">{{ expired_insurance_count }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('vehicles.expiring_registration') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expiring_registration_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-clipboard2-check" style="font-size:1.2rem;color:{{ '#2563eb' if expiring_registration_count > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">الفحص الفني</div>
+            <div style="font-size:11px;color:var(--text-secondary);">ينتهي قريباً</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};color:{{ '#2563eb' if expiring_registration_count > 0 else '#10b981' }};">{{ expiring_registration_count }}</span>
+        </div>
+        </a>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-
-<!-- Quick Actions + تنبيهات الحركة -->
+<!-- Quick Actions + Alerts -->
 <div class="row g-3 mb-3">
-  <!-- Quick Actions -->
   <div class="col-md-8">
-    <div class="card border-0 shadow-sm" style="background: var(--bg-secondary); border-radius:14px;">
-      <div class="card-body">
-        <h6 class="mb-3" style="color:var(--text-primary);font-size:13px;font-weight:600;">
+    <div class="card border-0 shadow-sm h-100" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
           <i class="bi bi-lightning-charge me-1" style="color:#f59e0b;"></i>الوصول السريع
         </h6>
+      </div>
+      <div class="card-body pt-0">
         <div class="row g-2">
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('movement.driver_vehicle_binding') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#667eea20,#764ba220);border:1px solid #667eea30;">
-              <i class="bi bi-link-45deg mb-1" style="font-size:1.5rem;color:#667eea;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">ربط السائق</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('movement.driver_vehicle_binding') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#667eea15,#764ba215);border:1px solid #667eea30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-link-45deg mb-1" style="font-size:1.6rem;color:#667eea;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ربط السائق</div>
             </a>
           </div>
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#11998e20,#38ef7d20);border:1px solid #11998e30;">
-              <i class="bi bi-car-front-fill mb-1" style="font-size:1.5rem;color:#11998e;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">ادارة السيارات</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#11998e15,#38ef7d15);border:1px solid #11998e30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-car-front-fill mb-1" style="font-size:1.6rem;color:#11998e;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ادارة السيارات</div>
             </a>
           </div>
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#4facfe20,#00f2fe20);border:1px solid #4facfe30;">
-              <i class="bi bi-person-badge mb-1" style="font-size:1.5rem;color:#4facfe;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">ادارة السائقين</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#4facfe15,#00f2fe15);border:1px solid #4facfe30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-person-badge mb-1" style="font-size:1.6rem;color:#4facfe;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ادارة السائقين</div>
             </a>
           </div>
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('marketing.trips_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#f5576c20,#ff6b6b20);border:1px solid #f5576c30;">
-              <i class="bi bi-map mb-1" style="font-size:1.5rem;color:#f5576c;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">الرحلات</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('marketing.trips_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#f5576c15,#ff6b6b15);border:1px solid #f5576c30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-map mb-1" style="font-size:1.6rem;color:#f5576c;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">الرحلات</div>
             </a>
           </div>
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('movement.driver_trips_overview') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#0dcaf020,#0dcaf010);border:1px solid #0dcaf030;">
-              <i class="bi bi-person-lines-fill mb-1" style="font-size:1.5rem;color:#0dcaf0;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">كشف رحلات السائقين</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('movement.driver_trips_overview') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#0dcaf015,#0dcaf010);border:1px solid #0dcaf030;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-person-lines-fill mb-1" style="font-size:1.6rem;color:#0dcaf0;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">كشف رحلات السائقين</div>
             </a>
           </div>
-          <div class="col-md-3 col-6">
-            <a href="{{ url_for('movement.suspensions_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#dc354520,#dc354510);border:1px solid #dc354530;">
-              <i class="bi bi-person-x mb-1" style="font-size:1.5rem;color:#dc3545;"></i>
-              <div style="color:var(--text-primary);font-size:12px;font-weight:500;">ايقاف و تفعيل</div>
+          <div class="col-md-4 col-6">
+            <a href="{{ url_for('movement.suspensions_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#dc354515,#dc354510);border:1px solid #dc354530;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-person-x mb-1" style="font-size:1.6rem;color:#dc3545;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ايقاف و تفعيل</div>
             </a>
           </div>
         </div>
@@ -199,16 +219,18 @@
     </div>
   </div>
 
-  <!-- تنبيهات الحركة -->
+  <!-- Work Order Alerts -->
   <div class="col-md-4">
-    <div class="card border-0 shadow-sm" style="background: var(--bg-secondary); border-radius:14px;">
-      <div class="card-body">
-        <h6 class="mb-3" style="color:var(--text-primary);font-size:13px;font-weight:600;">
-          <i class="bi bi-exclamation-triangle me-1" style="color:#f59e0b;"></i>تنبيهات الحركة
+    <div class="card border-0 shadow-sm h-100" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+          <i class="bi bi-bell me-1" style="color:#dc3545;"></i>تنبيهات امور التشغيل
         </h6>
-        <div id="dashboardAlertsContent" style="max-height:200px;overflow-y:auto;">
+      </div>
+      <div class="card-body pt-0">
+        <div id="dashboardAlertsContent" style="max-height:220px;overflow-y:auto;">
           <div class="text-center py-3">
-            <i class="bi bi-bell-slash" style="font-size:2rem;color:#10b981;"></i>
+            <i class="bi bi-hourglass-split" style="font-size:2rem;color:var(--accent);"></i>
             <p class="text-muted mt-2 mb-0" style="font-size:12px;">جاري التحقق...</p>
           </div>
         </div>
@@ -220,47 +242,47 @@
 <!-- Recent Activity -->
 <div class="row g-3">
   <div class="col-md-6">
-    <div class="card border-0 shadow-sm" style="background: var(--bg-secondary); border-radius:14px;">
-      <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background:transparent;">
-        <h6 class="mb-0" style="color:var(--text-primary);font-size:13px;font-weight:600;">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
           <i class="bi bi-clipboard-data me-1" style="color:#667eea;"></i>اخر امور التشغيل
         </h6>
-        <a href="{{ url_for('marketing.work_orders_list') }}" style="font-size:11px;color:#667eea;text-decoration:none;">عرض الكل</a>
+        <a href="{{ url_for('marketing.work_orders_list') }}" style="font-size:11px;color:#667eea;text-decoration:none;font-weight:600;">عرض الكل <i class="bi bi-arrow-left"></i></a>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>
-              <tr>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">رقم الأمر</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">العميل</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">الوجهة</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">الحالة</th>
+              <tr style="border-bottom:2px solid var(--border-color);">
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">رقم الأمر</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">العميل</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">الوجهة</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">الحالة</th>
               </tr>
             </thead>
             <tbody>
               {% for order in recent_orders[:7] %}
-              <tr>
-                <td style="color:var(--text-primary);font-size:12px;">{{ order.order_number }}</td>
-                <td style="color:var(--text-primary);font-size:12px;">{{ order.client.name_ar if order.client else '-' }}</td>
-                <td style="color:var(--text-primary);font-size:12px;">{{ order.destination or '-' }}</td>
-                <td>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="color:var(--text-primary);font-size:12px;padding:10px 14px;font-weight:600;">{{ order.order_number }}</td>
+                <td style="color:var(--text-primary);font-size:12px;padding:10px 14px;">{{ order.client.name_ar if order.client else '-' }}</td>
+                <td style="color:var(--text-secondary);font-size:12px;padding:10px 14px;">{{ order.destination or '-' }}</td>
+                <td style="padding:10px 14px;">
                   {% if order.status == 'approved' %}
-                  <span class="badge" style="background:#d1fae5;color:#065f46;font-size:10px;">تم التنفيذ</span>
+                  <span class="badge" style="background:#d1fae5;color:#065f46;font-size:10px;border-radius:6px;">تم التنفيذ</span>
                   {% elif order.status in ['marketing_approved','movement_approved','finance_approved'] %}
-                  <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;">قيد التنفيذ</span>
+                  <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;border-radius:6px;">قيد التنفيذ</span>
                   {% elif order.status == 'draft' %}
-                  <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;">مسودة</span>
+                  <span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;border-radius:6px;">مسودة</span>
                   {% elif order.status == 'cancelled' %}
-                  <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;">ملغي</span>
+                  <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;border-radius:6px;">ملغي</span>
                   {% else %}
-                  <span class="badge" style="background:#e5e7eb;color:#374151;font-size:10px;">{{ order.status }}</span>
+                  <span class="badge" style="background:#e5e7eb;color:#374151;font-size:10px;border-radius:6px;">{{ order.status }}</span>
                   {% endif %}
                 </td>
               </tr>
               {% endfor %}
               {% if not recent_orders %}
-              <tr><td colspan="4" class="text-center text-muted py-3" style="font-size:12px;">لا توجد بيانات</td></tr>
+              <tr><td colspan="4" class="text-center text-muted py-4" style="font-size:12px;">لا توجد بيانات</td></tr>
               {% endif %}
             </tbody>
           </table>
@@ -269,43 +291,43 @@
     </div>
   </div>
   <div class="col-md-6">
-    <div class="card border-0 shadow-sm" style="background: var(--bg-secondary); border-radius:14px;">
-      <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background:transparent;">
-        <h6 class="mb-0" style="color:var(--text-primary);font-size:13px;font-weight:600;">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
           <i class="bi bi-map me-1" style="color:#11998e;"></i>اخر الرحلات
         </h6>
-        <a href="{{ url_for('marketing.trips_list') }}" style="font-size:11px;color:#11998e;text-decoration:none;">عرض الكل</a>
+        <a href="{{ url_for('marketing.trips_list') }}" style="font-size:11px;color:#11998e;text-decoration:none;font-weight:600;">عرض الكل <i class="bi bi-arrow-left"></i></a>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>
-              <tr>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">الاتجاه</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">التاريخ</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">السائق</th>
-                <th style="color:var(--text-secondary);font-size:11px;font-weight:600;">الحالة</th>
+              <tr style="border-bottom:2px solid var(--border-color);">
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">الاتجاه</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">التاريخ</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">السائق</th>
+                <th style="color:var(--text-muted);font-size:11px;font-weight:700;padding:10px 14px;">الحالة</th>
               </tr>
             </thead>
             <tbody>
               {% for trip in recent_trips[:7] %}
-              <tr>
-                <td style="color:var(--text-primary);font-size:12px;">{{ trip.direction or '-' }}</td>
-                <td style="color:var(--text-primary);font-size:12px;">{{ trip.trip_date.strftime('%d/%m') if trip.trip_date else '-' }}</td>
-                <td style="color:var(--text-primary);font-size:12px;">{{ trip.driver.full_name_ar if trip.driver else '-' }}</td>
-                <td>
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="color:var(--text-primary);font-size:12px;padding:10px 14px;font-weight:600;">{{ trip.direction or '-' }}</td>
+                <td style="color:var(--text-secondary);font-size:12px;padding:10px 14px;">{{ trip.trip_date.strftime('%d/%m') if trip.trip_date else '-' }}</td>
+                <td style="color:var(--text-primary);font-size:12px;padding:10px 14px;">{{ trip.driver.full_name_ar if trip.driver else '-' }}</td>
+                <td style="padding:10px 14px;">
                   {% if trip.status == 'active' %}
-                  <span class="badge" style="background:#d1fae5;color:#065f46;font-size:10px;">نشط</span>
+                  <span class="badge" style="background:#d1fae5;color:#065f46;font-size:10px;border-radius:6px;">نشط</span>
                   {% elif trip.status == 'completed' %}
-                  <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;">مكتمل</span>
+                  <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;border-radius:6px;">مكتمل</span>
                   {% else %}
-                  <span class="badge" style="background:#e5e7eb;color:#374151;font-size:10px;">{{ trip.status }}</span>
+                  <span class="badge" style="background:#e5e7eb;color:#374151;font-size:10px;border-radius:6px;">{{ trip.status }}</span>
                   {% endif %}
                 </td>
               </tr>
               {% endfor %}
               {% if not recent_trips %}
-              <tr><td colspan="4" class="text-center text-muted py-3" style="font-size:12px;">لا توجد بيانات</td></tr>
+              <tr><td colspan="4" class="text-center text-muted py-4" style="font-size:12px;">لا توجد بيانات</td></tr>
               {% endif %}
             </tbody>
           </table>
@@ -321,26 +343,26 @@ fetch('/movement/api/alerts').then(r => r.json()).then(data => {
   var items = [];
   if (data.ending_today && data.ending_today.length > 0) {
     data.ending_today.forEach(function(o) {
-      items.push('<div class="d-flex align-items-center gap-2 p-2 mb-1 rounded" style="background:#fee2e2;"><div style="width:28px;height:28px;border-radius:6px;background:#dc3545;display:flex;align-items:center;justify-content:center;"><i class="bi bi-exclamation" style="color:white;font-size:0.7rem;"></i></div><div><div style="font-size:11px;color:var(--text-primary);font-weight:500;">' + o.order_number + '</div><div style="font-size:10px;color:#dc3545;">تنتهي اليوم</div></div></div>');
+      items.push('<a href="/marketing/work-orders/' + o.id + '" class="d-block text-decoration-none"><div class="d-flex align-items-center gap-2 p-2 mb-1 rounded-3" style="background:#fee2e2;border:1px solid #fecaca;cursor:pointer;"><div style="width:30px;height:30px;border-radius:8px;background:#dc3545;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-exclamation" style="color:white;font-size:0.8rem;"></i></div><div class="flex-grow-1"><div style="font-size:12px;color:var(--text-primary);font-weight:600;">' + o.order_number + '</div><div style="font-size:11px;color:#dc3545;">تنتهي اليوم</div></div><i class="bi bi-chevron-left" style="color:#dc3545;font-size:0.7rem;"></i></div></a>');
     });
   }
   if (data.ending_soon && data.ending_soon.length > 0) {
     data.ending_soon.forEach(function(o) {
-      items.push('<div class="d-flex align-items-center gap-2 p-2 mb-1 rounded" style="background:#fef3c7;"><div style="width:28px;height:28px;border-radius:6px;background:#f59e0b;display:flex;align-items:center;justify-content:center;"><i class="bi bi-clock" style="color:white;font-size:0.7rem;"></i></div><div><div style="font-size:11px;color:var(--text-primary);font-weight:500;">' + o.order_number + '</div><div style="font-size:10px;color:#f59e0b;">تنتهي خلال 3 ايام</div></div></div>');
+      items.push('<a href="/marketing/work-orders/' + o.id + '" class="d-block text-decoration-none"><div class="d-flex align-items-center gap-2 p-2 mb-1 rounded-3" style="background:#fef3c7;border:1px solid #fde68a;cursor:pointer;"><div style="width:30px;height:30px;border-radius:8px;background:#f59e0b;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-clock" style="color:white;font-size:0.8rem;"></i></div><div class="flex-grow-1"><div style="font-size:12px;color:var(--text-primary);font-weight:600;">' + o.order_number + '</div><div style="font-size:11px;color:#d97706;">تنتهي خلال 3 ايام</div></div><i class="bi bi-chevron-left" style="color:#d97706;font-size:0.7rem;"></i></div></a>');
     });
   }
   if (data.starting_today && data.starting_today.length > 0) {
     data.starting_today.forEach(function(o) {
-      items.push('<div class="d-flex align-items-center gap-2 p-2 mb-1 rounded" style="background:#dbeafe;"><div style="width:28px;height:28px;border-radius:6px;background:#3b82f6;display:flex;align-items:center;justify-content:center;"><i class="bi bi-play" style="color:white;font-size:0.7rem;"></i></div><div><div style="font-size:11px;color:var(--text-primary);font-weight:500;">' + o.order_number + '</div><div style="font-size:10px;color:#3b82f6;">تبدأ اليوم</div></div></div>');
+      items.push('<a href="/marketing/work-orders/' + o.id + '" class="d-block text-decoration-none"><div class="d-flex align-items-center gap-2 p-2 mb-1 rounded-3" style="background:#dbeafe;border:1px solid #bfdbfe;cursor:pointer;"><div style="width:30px;height:30px;border-radius:8px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-play" style="color:white;font-size:0.8rem;"></i></div><div class="flex-grow-1"><div style="font-size:12px;color:var(--text-primary);font-weight:600;">' + o.order_number + '</div><div style="font-size:11px;color:#2563eb;">تبدأ اليوم</div></div><i class="bi bi-chevron-left" style="color:#2563eb;font-size:0.7rem;"></i></div></a>');
     });
   }
   if (data.starting_soon && data.starting_soon.length > 0) {
     data.starting_soon.forEach(function(o) {
-      items.push('<div class="d-flex align-items-center gap-2 p-2 mb-1 rounded" style="background:#d1fae5;"><div style="width:28px;height:28px;border-radius:6px;background:#10b981;display:flex;align-items:center;justify-content:center;"><i class="bi bi-play" style="color:white;font-size:0.7rem;"></i></div><div><div style="font-size:11px;color:var(--text-primary);font-weight:500;">' + o.order_number + '</div><div style="font-size:10px;color:#10b981;">تبدأ خلال 3 ايام</div></div></div>');
+      items.push('<a href="/marketing/work-orders/' + o.id + '" class="d-block text-decoration-none"><div class="d-flex align-items-center gap-2 p-2 mb-1 rounded-3" style="background:#d1fae5;border:1px solid #a7f3d0;cursor:pointer;"><div style="width:30px;height:30px;border-radius:8px;background:#10b981;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-play" style="color:white;font-size:0.8rem;"></i></div><div class="flex-grow-1"><div style="font-size:12px;color:var(--text-primary);font-weight:600;">' + o.order_number + '</div><div style="font-size:11px;color:#059669;">تبدأ خلال 3 ايام</div></div><i class="bi bi-chevron-left" style="color:#059669;font-size:0.7rem;"></i></div></a>');
     });
   }
   if (items.length === 0) {
-    container.innerHTML = '<div class="text-center py-3"><i class="bi bi-bell-slash" style="font-size:2rem;color:#10b981;"></i><p class="text-muted mt-2 mb-0" style="font-size:12px;">لا توجد تنبيهات حالياً</p></div>';
+    container.innerHTML = '<div class="text-center py-4"><i class="bi bi-check-circle" style="font-size:2.5rem;color:#10b981;"></i><p style="color:var(--text-secondary);margin-top:8px;font-size:13px;">لا توجد تنبيهات حالياً</p></div>';
   } else {
     container.innerHTML = items.join('');
   }

@@ -1,160 +1,341 @@
 ﻿{% extends "layouts/base.html" %}
 {% block title %}لوحة تحكم السيارات | شركة اعمار ليبيا لنقل الركاب{% endblock %}
 {% block content %}
-<style>
-  .tile-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-  .tile-card:active { transform: translateY(0); }
-</style>
+
+<!-- Page Header -->
 <div class="page-header">
   <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
     <div class="d-flex align-items-center gap-4">
       <a href="{{ url_for('movement.movement_dashboard') }}" class="back-btn-header">
-        <i class="bi bi-arrow-right"></i>
-        لوحة الحركة
+        <i class="bi bi-arrow-right"></i>لوحة الحركة
       </a>
       <div>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-2">
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
-            <li class="breadcrumb-item active">لوحة تحكم إدارة السيارات</li>
+            <li class="breadcrumb-item"><a href="{{ url_for('movement.movement_dashboard') }}">إدارة الحركة</a></li>
+            <li class="breadcrumb-item active">إدارة السيارات</li>
           </ol>
         </nav>
         <h1><i class="bi bi-truck me-2"></i>لوحة تحكم إدارة السيارات</h1>
       </div>
     </div>
-    <div class="d-flex gap-3 header-actions">
+    <div class="d-flex gap-2 header-actions">
+      <a href="{{ url_for('vehicles.vehicle_add') }}" class="btn" style="background:var(--gradient-brand);color:white;border-radius:10px;font-weight:600;">
+        <i class="bi bi-plus-lg me-1"></i>سيارة جديدة
+      </a>
     </div>
   </div>
 </div>
 
-<div class="row g-4 mb-4">
+<!-- Fleet Stats -->
+<div class="row g-3 mb-3">
   <div class="col-md-3">
     <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-2 fw-bold" style="color:var(--accent)">{{ total_vehicles }}</div>
-          <div class="text-muted">إجمالي السيارات</div>
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:12px;opacity:0.85;">اجمالي الأسطول</div>
+            <h3 class="mb-0 fw-bold">{{ total_vehicles }}</h3>
+            <div class="mt-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">{{ vehicle_types|length }} نوع</span>
+            </div>
+          </div>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-truck" style="font-size:1.6rem;"></i>
+          </div>
         </div>
       </div>
+    </div>
     </a>
   </div>
   <div class="col-md-3">
     <a href="{{ url_for('vehicles.vehicle_list', status='active') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-2 fw-bold" style="color:var(--accent-green)">{{ active_vehicles }}</div>
-          <div class="text-muted">نشطة</div>
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:12px;opacity:0.85;">مركبات نشطة</div>
+            <h3 class="mb-0 fw-bold">{{ active_vehicles }}</h3>
+            <div class="mt-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">{{ assigned_count }} بسائق</span>
+            </div>
+          </div>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-truck-flatbed" style="font-size:1.6rem;"></i>
+          </div>
         </div>
       </div>
+    </div>
     </a>
   </div>
   <div class="col-md-3">
     <a href="{{ url_for('vehicles.vehicle_list', status='maintenance') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-2 fw-bold" style="color:var(--accent-orange)">{{ maintenance_vehicles }}</div>
-          <div class="text-muted">تحت الصيانة</div>
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#f5af19 0%,#f12711 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:12px;opacity:0.85;">تحت الصيانة</div>
+            <h3 class="mb-0 fw-bold">{{ maintenance_vehicles }}</h3>
+            <div class="mt-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">{{ pending_maintenance }} طلب مفتوح</span>
+            </div>
+          </div>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-tools" style="font-size:1.6rem;"></i>
+          </div>
         </div>
       </div>
+    </div>
     </a>
   </div>
   <div class="col-md-3">
     <a href="{{ url_for('vehicles.vehicle_list', status='inactive') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-2 fw-bold" style="color:var(--accent-red)">{{ inactive_vehicles }}</div>
-          <div class="text-muted">متوقفة</div>
-        </div>
-      </div>
-    </a>
-  </div>
-</div>
-
-<div class="row g-4 mb-4">
-  <div class="col-md-3">
-    <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-4 fw-bold" style="color:var(--accent-orange)">{{ pending_maintenance }}</div>
-          <div class="text-muted">صيانة معلقة</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3">
-    <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-4 fw-bold" style="color:var(--accent-red)">{{ expiring_insurance }}</div>
-          <div class="text-muted">تأمين ينتهي قريباً</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3">
-    <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-4 fw-bold" style="color:var(--accent-orange)">{{ expiring_registration }}</div>
-          <div class="text-muted">تسجيل ينتهي قريباً</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3">
-    <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
-      <div class="card tile-card" style="background:var(--bg-card);border-color:var(--border-color);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s">
-        <div class="card-body text-center">
-          <div class="fs-4 fw-bold" style="color:var(--accent-blue)">{{ '{:,.0f}'.format(total_expenses + total_fuel) }}</div>
-          <div class="text-muted">مصاريف الشهر (د.ل)</div>
-        </div>
-      </div>
-    </a>
-  </div>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-6">
-    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
-      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
-        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-gear me-2"></i>الإدارة</h6>
-      </div>
-      <div class="card-body">
-        <div class="d-grid gap-2">
-          <a href="{{ url_for('vehicles.vehicle_list') }}" class="btn btn-outline-primary text-start">
-            <i class="bi bi-list-ul me-2"></i>قائمة السيارات
-          </a>
-          <a href="{{ url_for('vehicles.vehicle_add') }}" class="btn btn-outline-success text-start">
-            <i class="bi bi-plus-lg me-2"></i>إضافة سيارة جديدة
-          </a>
-          <a href="{{ url_for('vehicles.vehicle_types_list') }}" class="btn btn-outline-info text-start">
-            <i class="bi bi-tags me-2"></i>أنواع السيارات
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-6">
-    <div class="card" style="background:var(--bg-card);border-color:var(--border-color)">
-      <div class="card-header" style="background:transparent;border-color:var(--border-color)">
-        <h6 class="mb-0" style="color:var(--text-primary)"><i class="bi bi-wrench me-2"></i>آخر أعمال الصيانة</h6>
-      </div>
-      <div class="card-body">
-        {% for m in recent_maintenance %}
-        <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom:1px solid var(--border-light)">
+    <div class="card border-0 shadow-sm h-100" style="background:linear-gradient(135deg,#ed213a 0%,#93291e 100%);color:white;border-radius:14px;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div class="card-body py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center">
           <div>
-            <div style="color:var(--text-primary)">{{ m.vehicle.plate_number if m.vehicle else '-' }} - {{ m.maintenance_type }}</div>
-            <small class="text-muted">{{ m.description[:40] }}</small>
+            <div style="font-size:12px;opacity:0.85;">مركبات متوقفة</div>
+            <h3 class="mb-0 fw-bold">{{ inactive_vehicles }}</h3>
+            <div class="mt-1" style="font-size:10px;">
+              <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">خارج الخدمة</span>
+            </div>
           </div>
-          <small class="text-muted">{{ m.maintenance_date.strftime('%Y-%m-%d') if m.maintenance_date else '' }}</small>
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-pause-circle" style="font-size:1.6rem;"></i>
+          </div>
         </div>
-        {% endfor %}
-        {% if not recent_maintenance %}
-        <div class="text-center py-3 text-muted">لا توجد سجلات صيانة حديثة</div>
-        {% endif %}
+      </div>
+    </div>
+    </a>
+  </div>
+</div>
+
+<!-- Alert Cards -->
+<div class="card border-0 shadow-sm mb-3" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+  <div class="card-header py-2 border-0 d-flex justify-content-between" style="background:transparent;">
+    <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+      <i class="bi bi-exclamation-triangle me-1" style="color:#f59e0b;"></i>تنبيهات المتابعة
+    </h6>
+    <span class="badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;font-size:11px;border-radius:8px;padding:3px 8px;">اضغط للتفاصيل</span>
+  </div>
+  <div class="card-body py-2 px-3">
+    <div class="row g-2">
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('maintenance.dashboard') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if pending_maintenance > 0 else '#d1fae5' }};background:{{ '#fff5f5' if pending_maintenance > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if pending_maintenance > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-wrench" style="font-size:1.2rem;color:{{ '#dc3545' if pending_maintenance > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">طلبات الصيانة</div>
+            <div style="font-size:11px;color:var(--text-secondary);">معلقة / قيد التنفيذ</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if pending_maintenance > 0 else '#d1fae5' }};color:{{ '#dc3545' if pending_maintenance > 0 else '#10b981' }};">{{ pending_maintenance }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('vehicles.expiring_insurance') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if (expired_insurance + expiring_insurance) > 0 else '#d1fae5' }};background:{{ '#fff5f5' if (expired_insurance + expiring_insurance) > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if (expired_insurance + expiring_insurance) > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-shield-check" style="font-size:1.2rem;color:{{ '#dc3545' if (expired_insurance + expiring_insurance) > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">تأمين المركبات</div>
+            <div style="font-size:11px;color:var(--text-secondary);">{{ expired_insurance }} منتهي / {{ expiring_insurance }} يقارب الانتهاء</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if (expired_insurance + expiring_insurance) > 0 else '#d1fae5' }};color:{{ '#dc3545' if (expired_insurance + expiring_insurance) > 0 else '#10b981' }};">{{ expired_insurance + expiring_insurance }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('vehicles.expiring_registration') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#dbeafe' if (expired_registration + expiring_registration) > 0 else '#d1fae5' }};background:{{ '#eff6ff' if (expired_registration + expiring_registration) > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#dbeafe' if (expired_registration + expiring_registration) > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-clipboard2-check" style="font-size:1.2rem;color:{{ '#2563eb' if (expired_registration + expiring_registration) > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">الفحص الفني</div>
+            <div style="font-size:11px;color:var(--text-secondary);">{{ expired_registration }} منتهي / {{ expiring_registration }} يقارب الانتهاء</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#dbeafe' if (expired_registration + expiring_registration) > 0 else '#d1fae5' }};color:{{ '#2563eb' if (expired_registration + expiring_registration) > 0 else '#10b981' }};">{{ expired_registration + expiring_registration }}</span>
+        </div>
+        </a>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <a href="{{ url_for('vehicles.vehicle_list') }}" class="text-decoration-none">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fef3c7' if unresolved_breakdowns > 0 else '#d1fae5' }};background:{{ '#fffbeb' if unresolved_breakdowns > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fef3c7' if unresolved_breakdowns > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-exclamation-octagon" style="font-size:1.2rem;color:{{ '#d97706' if unresolved_breakdowns > 0 else '#10b981' }};"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">أعطال غير محلولة</div>
+            <div style="font-size:11px;color:var(--text-secondary);">تحتاج معالجة</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fef3c7' if unresolved_breakdowns > 0 else '#d1fae5' }};color:{{ '#d97706' if unresolved_breakdowns > 0 else '#10b981' }};">{{ unresolved_breakdowns }}</span>
+        </div>
+        </a>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Financial + Quick Access -->
+<div class="row g-3 mb-3">
+  <!-- Monthly Costs -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+          <i class="bi bi-wallet2 me-1" style="color:#667eea;"></i>مصاريف الشهر
+        </h6>
+      </div>
+      <div class="card-body pt-0">
+        <div class="text-center mb-3">
+          <div class="fw-bold" style="font-size:1.8rem;color:var(--text-primary);">{{ '{:,.0f}'.format(total_expenses + total_fuel) }}</div>
+          <div style="font-size:12px;color:var(--text-muted);">دينار ليبي — {{ today.strftime('%B %Y') }}</div>
+        </div>
+        <div class="d-flex justify-content-between p-2 rounded-3 mb-2" style="background:rgba(102,126,234,0.08);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-receipt" style="color:#667eea;"></i>
+            <span style="font-size:13px;color:var(--text-primary);">مصاريف تشغيل</span>
+          </div>
+          <span class="fw-bold" style="font-size:13px;color:var(--text-primary);">{{ '{:,.0f}'.format(total_expenses) }}</span>
+        </div>
+        <div class="d-flex justify-content-between p-2 rounded-3" style="background:rgba(17,153,142,0.08);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-fuel-pump" style="color:#11998e;"></i>
+            <span style="font-size:13px;color:var(--text-primary);">وقود</span>
+          </div>
+          <span class="fw-bold" style="font-size:13px;color:var(--text-primary);">{{ '{:,.0f}'.format(total_fuel) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Access -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm h-100" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+          <i class="bi bi-lightning-charge me-1" style="color:#f59e0b;"></i>الوصول السريع
+        </h6>
+      </div>
+      <div class="card-body pt-0">
+        <div class="row g-2">
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('vehicles.vehicle_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#667eea15,#764ba215);border:1px solid #667eea30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-list-ul mb-1" style="font-size:1.6rem;color:#667eea;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">قائمة السيارات</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('vehicles.vehicle_add') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#11998e15,#38ef7d15);border:1px solid #11998e30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-plus-lg mb-1" style="font-size:1.6rem;color:#11998e;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">إضافة سيارة</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('maintenance.dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#f5576c15,#ff6b6b15);border:1px solid #f5576c30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-wrench mb-1" style="font-size:1.6rem;color:#f5576c;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">إدارة الصيانة</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('vehicles.vehicle_types_list') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#4facfe15,#00f2fe15);border:1px solid #4facfe30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-tags mb-1" style="font-size:1.6rem;color:#4facfe;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">أنواع السيارات</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('vehicles.expiring_insurance') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#f59e0b15,#f59e0b10);border:1px solid #f59e0b30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-shield-check mb-1" style="font-size:1.6rem;color:#f59e0b;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">التأمينات</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('vehicles.expiring_registration') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#0dcaf015,#0dcaf010);border:1px solid #0dcaf030;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-clipboard2-check mb-1" style="font-size:1.6rem;color:#0dcaf0;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">الفحص الفني</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('movement.driver_vehicle_binding') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#667eea15,#764ba215);border:1px solid #667eea30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-person-vcard mb-1" style="font-size:1.6rem;color:#667eea;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ربط السائق</div>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="{{ url_for('movement.driver_trips_overview') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#11998e15,#38ef7d15);border:1px solid #11998e30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <i class="bi bi-diagram-3 mb-1" style="font-size:1.6rem;color:#11998e;"></i>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">توزيع السائقين</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Maintenance -->
+<div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+  <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+    <h6 class="mb-0 fw-bold" style="color:var(--text-primary);font-size:13px;">
+      <i class="bi bi-clock-history me-1" style="color:#f5576c;"></i>آخر أعمال الصيانة
+    </h6>
+    <a href="{{ url_for('maintenance.requests_list') }}" class="btn btn-sm" style="background:rgba(245,87,108,0.1);color:#f5576c;border-radius:8px;font-weight:600;">
+      عرض الكل <i class="bi bi-arrow-left me-1"></i>
+    </a>
+  </div>
+  <div class="card-body pt-0">
+    {% if recent_maintenance %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="font-size:13px;">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase;">
+            <th class="border-0 py-2">رقم اللوحة</th>
+            <th class="border-0 py-2">نوع الصيانة</th>
+            <th class="border-0 py-2">الوصف</th>
+            <th class="border-0 py-2">التاريخ</th>
+            <th class="border-0 py-2">الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in recent_maintenance %}
+          <tr>
+            <td class="py-2">
+              <a href="{{ url_for('vehicles.vehicle_detail', id=m.vehicle_id) }}" class="fw-bold text-decoration-none" style="color:var(--accent);">
+                {{ m.vehicle.plate_number if m.vehicle else '-' }}
+              </a>
+            </td>
+            <td class="py-2" style="color:var(--text-primary);">{{ m.maintenance_type }}</td>
+            <td class="py-2" style="color:var(--text-muted);max-width:250px;">{{ m.description[:45] }}{% if m.description and m.description|length > 45 %}...{% endif %}</td>
+            <td class="py-2" style="color:var(--text-muted);">{{ m.maintenance_date.strftime('%d/%m/%Y') if m.maintenance_date else '-' }}</td>
+            <td class="py-2">
+              {% if m.status == 'completed' %}
+              <span class="badge" style="background:#d1fae5;color:#10b981;border-radius:20px;font-size:11px;">مكتملة</span>
+              {% elif m.status == 'in_progress' %}
+              <span class="badge" style="background:#dbeafe;color:#2563eb;border-radius:20px;font-size:11px;">قيد التنفيذ</span>
+              {% elif m.status == 'pending' %}
+              <span class="badge" style="background:#fef3c7;color:#d97706;border-radius:20px;font-size:11px;">معلقة</span>
+              {% else %}
+              <span class="badge" style="background:#fee2e2;color:#dc3545;border-radius:20px;font-size:11px;">{{ m.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+      <i class="bi bi-inbox" style="font-size:2rem;color:var(--text-muted);"></i>
+      <p class="text-muted mt-2 mb-0" style="font-size:12px;">لا توجد سجلات صيانة حديثة</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
 {% endblock %}

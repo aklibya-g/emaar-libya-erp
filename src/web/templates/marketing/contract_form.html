@@ -51,12 +51,19 @@
           <div class="input-group">
             <select class="form-select" name="title" id="contractTypeSelect" required>
               <option value="">اختر نوع العقد</option>
-              <option value="موسمي بسائق" {{ 'selected' if contract and contract.title == 'موسمي بسائق' }}>موسمي بسائق</option>
-              <option value="موسمي بغير سائق" {{ 'selected' if contract and contract.title == 'موسمي بغير سائق' }}>موسمي بغير سائق</option>
+              {% for value, label in driver_contract_types %}
+              <option value="{{ label }}" {{ 'selected' if contract and contract.title == label }}>{{ label }}</option>
+              {% endfor %}
+              {% if contract and contract.title and contract.title not in driver_contract_types | map('last') | list %}
+              <option value="{{ contract.title }}" selected>{{ contract.title }}</option>
+              {% endif %}
             </select>
-            <button type="button" class="btn btn-outline-success" onclick="addNewType()" title="اضافة نوع جديد">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addContractTypeModal" title="إضافة نوع عقد جديد">
               <i class="bi bi-plus-lg"></i>
             </button>
+            <a href="{{ url_for('hr.contract_types_page') }}" class="btn btn-outline-warning btn-sm" title="إدارة أنواع العقود">
+              <i class="bi bi-gear"></i>
+            </a>
           </div>
         </div>
         <div class="col-md-6">
@@ -133,6 +140,32 @@
     </form>
   </div>
 </div>
+
+<!-- مودال اضافة نوع عقد جديد -->
+<div class="modal fade" id="addContractTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع عقد جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم النوع <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newContractTypeName" placeholder="أدخل اسم النوع">
+        </div>
+        <div id="contractTypeAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveContractType()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function addNewType() {
   var type = prompt("اكتب نوع العقد الجديد:");
@@ -144,6 +177,43 @@ function addNewType() {
     option.selected = true;
     select.appendChild(option);
   }
+}
+function saveContractType() {
+  const name = document.getElementById('newContractTypeName').value.trim();
+  const alertEl = document.getElementById('contractTypeAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم النوع';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const value = name.replace(/\s+/g, '_');
+  const csrf = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+  fetch('/hr/contract-types/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+    body: JSON.stringify({ action: 'add', kind: 'contract', label: name, value: value })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.ok) {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = data.message || 'تعذر الحفظ';
+        alertEl.classList.remove('d-none');
+        return;
+      }
+      const select = document.getElementById('contractTypeSelect');
+      select.appendChild(new Option(name, name, true, true));
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addContractTypeModal'));
+      if (modal) modal.hide();
+      document.getElementById('newContractTypeName').value = '';
+      alertEl.className = 'alert d-none';
+    })
+    .catch(function () {
+      alertEl.className = 'alert alert-danger';
+      alertEl.textContent = 'تعذر الاتصال بالخادم';
+      alertEl.classList.remove('d-none');
+    });
 }
 </script>
 {% endblock %}

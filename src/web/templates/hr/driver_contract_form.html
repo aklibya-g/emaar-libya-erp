@@ -60,9 +60,9 @@
           <label class="form-label">نوع العقد <span class="text-danger">*</span></label>
           <select name="contract_type" class="form-select" id="contractType" required onchange="onContractTypeChange(this.value)">
             <option value="">اختر النوع</option>
-            <option value="reserve" {% if contract and contract.contract_type == 'reserve' %}selected{% endif %}>احتياط</option>
-            <option value="seasonal" {% if contract and contract.contract_type == 'seasonal' %}selected{% endif %}>موسمي</option>
-            <option value="rent_to_own" {% if contract and contract.contract_type == 'rent_to_own' %}selected{% endif %}>ايجار لغرض التمليك</option>
+            {% for value, label in driver_contract_types %}
+            <option value="{{ value }}" {% if contract and contract.contract_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="col-md-4">
@@ -209,6 +209,10 @@ function onDriverChange(driverId) {
             for (var j = 0; j < durSelect.options.length; j++) {
               if (durSelect.options[j].value === 'end_of_season') { durSelect.selectedIndex = j; break; }
             }
+          } else if (data.contract_type === 'public_transport') {
+            for (var j = 0; j < durSelect.options.length; j++) {
+              if (durSelect.options[j].value === 'year') { durSelect.selectedIndex = j; break; }
+            }
           } else if (data.contract_type === 'rent_to_own') {
             for (var j = 0; j < durSelect.options.length; j++) {
               if (durSelect.options[j].value === '52_weeks') { durSelect.selectedIndex = j; break; }
@@ -224,6 +228,8 @@ function onContractTypeChange(type) {
   if (type === 'seasonal') {
     durationSelect.value = 'end_of_season';
   } else if (type === 'reserve') {
+    durationSelect.value = 'year';
+  } else if (type === 'public_transport') {
     durationSelect.value = 'year';
   } else if (type === 'rent_to_own') {
     durationSelect.value = '52_weeks';

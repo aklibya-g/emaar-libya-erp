@@ -1,0 +1,109 @@
+{% extends "layouts/base.html" %}
+{% block title %}إعادات القطع | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('maintenance.dashboard') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>لوحة التحكم
+      </a>
+      <div>
+        <h1><i class="bi bi-arrow-return-left me-2"></i>إعادات القطع للمخزن</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+  <div class="card-body py-3">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select name="status" class="form-select" style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);padding:10px 14px;font-size:13px;">
+          <option value="">جميع الحالات</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>بانتظار الاستلام</option>
+          <option value="received" {% if status_filter == 'received' %}selected{% endif %}>تم الاستلام</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn" style="background:var(--gradient-brand);color:white;border-radius:10px;font-weight:600;">فلتر</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+  <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+    <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-list-ul me-1" style="color:var(--accent-orange);"></i>إعادات القطع</h6>
+    <span class="badge" style="background:rgba(249,115,22,0.12);color:#f97316;font-size:11px;border-radius:8px;padding:4px 10px;">{{ returns|length }} إيعاد</span>
+  </div>
+  <div class="card-body p-0">
+    {% if returns %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr style="background:var(--bg-body);">
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">رقم الإيصال</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">السيارة</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">القطعة</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">الكمية</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">قيمة الشراء</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">المورد</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+            <th style="padding:12px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-align:center;">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ret in returns %}
+          <tr style="border-bottom:1px solid var(--border-light);">
+            <td style="padding:12px 16px;"><span style="font-weight:700;font-size:12px;color:var(--accent-orange);">{{ ret.return_number }}</span></td>
+            <td style="padding:12px 16px;">
+              <span style="font-weight:600;font-size:12px;color:var(--text-primary);">{{ ret.vehicle.plate_number if ret.vehicle else '-' }}</span>
+              {% if ret.vehicle %}<br><span style="font-size:11px;color:var(--text-muted);">{{ ret.vehicle.brand or '' }} {{ ret.vehicle.model or '' }}</span>{% endif %}
+            </td>
+            <td style="padding:12px 16px;font-weight:600;font-size:12px;color:var(--text-primary);">{{ ret.part_name }}</td>
+            <td style="padding:12px 16px;font-size:12px;color:var(--text-primary);">{{ ret.quantity }}</td>
+            <td style="padding:12px 16px;">
+              {% if ret.condition == 'damaged' %}<span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">تالف</span>
+              {% elif ret.condition == 'used' %}<span style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">مستعمل</span>
+              {% elif ret.condition == 'new' %}<span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">جديد</span>
+              {% else %}<span style="background:rgba(var(--accent-rgb),0.1);color:var(--accent);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">{{ ret.condition }}</span>{% endif %}
+            </td>
+            <td style="padding:12px 16px;font-size:12px;color:var(--text-primary);font-weight:600;">{{ "{:,.2f}".format(ret.purchase_value) }} د.ل</td>
+            <td style="padding:12px 16px;font-size:12px;color:var(--text-secondary);">{{ ret.supplier or '-' }}</td>
+            <td style="padding:12px 16px;">
+              {% if ret.status == 'received' %}
+              <span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">تم الاستلام</span>
+              {% else %}
+              <span style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار الاستلام</span>
+              {% endif %}
+            </td>
+            <td style="padding:12px 16px;text-align:center;">
+              {% if ret.status == 'pending' %}
+              <form method="POST" action="{{ url_for('maintenance.confirm_return', return_id=ret.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm" style="background:rgba(74,222,128,0.12);color:var(--accent-green);border-radius:8px;font-size:11px;font-weight:600;" onclick="return confirm('هل تريد تأكيد استلام هذه القطعة؟')">
+                  <i class="bi bi-check-lg me-1"></i>استلام
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <div style="width:80px;height:80px;border-radius:20px;background:rgba(249,115,22,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <i class="bi bi-arrow-return-left" style="font-size:2.2rem;color:#f97316;"></i>
+      </div>
+      <h5 class="mt-3" style="color:var(--text-primary);font-weight:600;">لا توجد إعادات</h5>
+      <p style="color:var(--text-muted);font-size:13px;">لم تُسجَّل أي إعادات قطع بعد</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

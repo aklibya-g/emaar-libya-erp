@@ -1,0 +1,169 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ 'تعديل طلب' if request_obj else 'طلب صيانة جديد' }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('maintenance.requests_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>طلبات الصيانة
+      </a>
+      <div>
+        <h1><i class="bi bi-clipboard-plus me-2"></i>{{ 'تعديل طلب صيانة' if request_obj else 'طلب صيانة جديد' }}</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <form method="POST" id="requestForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- البيانات الأساسية -->
+      <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+        <div class="card-header py-3 border-0" style="background:transparent;">
+          <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-info-circle me-1" style="color:var(--accent);"></i>بيانات الطلب</h6>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">رقم الطلب</label>
+              <input type="text" class="form-control" value="{{ next_code }}" readonly style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-muted);font-weight:700;">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">السيارة <span class="text-danger">*</span></label>
+              <select name="vehicle_id" class="form-select" required style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">
+                <option value="">اختر السيارة</option>
+                {% for v in vehicles %}
+                <option value="{{ v.id }}" {% if request_obj and request_obj.vehicle_id == v.id %}selected{% endif %}>
+                  {{ v.plate_number }} - {{ v.brand or '' }} {{ v.model or '' }} {% if v.emaar_number %}({{ v.emaar_number }}){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">نوع الصيانة <span class="text-danger">*</span></label>
+              <select name="maintenance_type" class="form-select" required style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">
+                <option value="">اختر النوع</option>
+                <option value="oil_change" {% if request_obj and request_obj.maintenance_type == 'oil_change' %}selected{% endif %}>تغيير زيت</option>
+                <option value="parts_replacement" {% if request_obj and request_obj.maintenance_type == 'parts_replacement' %}selected{% endif %}>استبدال قطع</option>
+                <option value="body_repair" {% if request_obj and request_obj.maintenance_type == 'body_repair' %}selected{% endif %}>إصلاح هيكل</option>
+                <option value="electrical" {% if request_obj and request_obj.maintenance_type == 'electrical' %}selected{% endif %}>كهرباء</option>
+                <option value="tire" {% if request_obj and request_obj.maintenance_type == 'tire' %}selected{% endif %}>إطارات</option>
+                <option value="general" {% if request_obj and request_obj.maintenance_type == 'general' %}selected{% endif %}>صيانة عامة</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">الأولوية</label>
+              <select name="priority" class="form-select" style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">
+                <option value="normal" {% if not request_obj or request_obj.priority == 'normal' %}selected{% endif %}>عادي</option>
+                <option value="urgent" {% if request_obj and request_obj.priority == 'urgent' %}selected{% endif %}>عاجل</option>
+                <option value="very_urgent" {% if request_obj and request_obj.priority == 'very_urgent' %}selected{% endif %}>عاجل جداً</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">عداد الكيلومتر</label>
+              <input type="number" name="current_km" class="form-control" step="0.1" placeholder="الكيلومتر الحالي" value="{{ request_obj.current_km if request_obj and request_obj.current_km else '' }}" style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">وصف المشكلة</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="اشرح المشكلة بالتفصيل..." style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">{{ request_obj.description if request_obj and request_obj.description else '' }}</textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="font-size:12px;color:var(--text-muted);font-weight:600;">ملاحظات</label>
+              <input type="text" name="notes" class="form-control" placeholder="ملاحظات إضافية..." value="{{ request_obj.notes if request_obj and request_obj.notes else '' }}" style="border-radius:10px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قطع الغيار المطلوبة -->
+      <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+        <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+          <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-box-seam me-1" style="color:var(--accent-purple);"></i>قطع الغيار المطلوبة</h6>
+          <button type="button" class="btn btn-sm" onclick="addPartRow()" style="background:rgba(var(--accent-rgb),0.1);color:var(--accent);border-radius:8px;font-weight:600;">
+            <i class="bi bi-plus-lg me-1"></i>إضافة قطعة
+          </button>
+        </div>
+        <div class="card-body pt-0">
+          <div id="partsContainer">
+            {% if items %}
+              {% for item in items %}
+              <div class="part-row row g-2 mb-2 align-items-center p-2 rounded" style="background:var(--bg-body);border:1px solid var(--border-light);">
+                <div class="col-md-4"><input type="text" name="part_name[]" class="form-control form-control-sm" placeholder="اسم القطعة" value="{{ item.part_name }}" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="text" name="part_number[]" class="form-control form-control-sm" placeholder="رقم القطعة" value="{{ item.part_number or '' }}" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="number" name="part_quantity[]" class="form-control form-control-sm" placeholder="الكمية" value="{{ item.quantity }}" step="0.1" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="text" name="part_unit[]" class="form-control form-control-sm" placeholder="الوحدة" value="{{ item.unit }}" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><button type="button" class="btn btn-sm w-100" onclick="this.closest('.part-row').remove()" style="background:rgba(248,113,113,0.1);color:var(--accent-red);border-radius:8px;"><i class="bi bi-trash"></i></button></div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="part-row row g-2 mb-2 align-items-center p-2 rounded" style="background:var(--bg-body);border:1px solid var(--border-light);">
+                <div class="col-md-4"><input type="text" name="part_name[]" class="form-control form-control-sm" placeholder="اسم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="text" name="part_number[]" class="form-control form-control-sm" placeholder="رقم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="number" name="part_quantity[]" class="form-control form-control-sm" placeholder="الكمية" value="1" step="0.1" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><input type="text" name="part_unit[]" class="form-control form-control-sm" placeholder="الوحدة" value="قطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+                <div class="col-md-2"><button type="button" class="btn btn-sm w-100" onclick="this.closest('.part-row').remove()" style="background:rgba(248,113,113,0.1);color:var(--accent-red);border-radius:8px;"><i class="bi bi-trash"></i></button></div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- أزرار الحفظ -->
+      <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn flex-grow-1" style="background:var(--gradient-brand);color:white;border-radius:10px;padding:12px;font-weight:700;font-size:14px;">
+          <i class="bi bi-check-lg me-1"></i>{{ 'حفظ التعديلات' if request_obj else 'إنشاء طلب الصيانة' }}
+        </button>
+        <a href="{{ url_for('maintenance.requests_list') }}" class="btn" style="background:var(--bg-input);color:var(--text-secondary);border-radius:10px;padding:12px 24px;font-weight:600;">إلغاء</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- معلومات جانبية -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-info-circle me-1" style="color:var(--accent);"></i>ملاحظات</h6>
+      </div>
+      <div class="card-body pt-0" style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
+        <div class="p-3 rounded mb-2" style="background:var(--bg-body);border:1px solid var(--border-light);">
+          <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;"><i class="bi bi-1-circle me-1" style="color:var(--accent);"></i>اختر السيارة</div>
+          <div>اختر السيارة المراد صيانتها من القائمة</div>
+        </div>
+        <div class="p-3 rounded mb-2" style="background:var(--bg-body);border:1px solid var(--border-light);">
+          <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;"><i class="bi bi-2-circle me-1" style="color:var(--accent);"></i>حدد نوع الصيانة</div>
+          <div>تغيير زيت، استبدال قطع، إصلاح هيكل، كهرباء، إطارات، صيانة عامة</div>
+        </div>
+        <div class="p-3 rounded mb-2" style="background:var(--bg-body);border:1px solid var(--border-light);">
+          <div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;"><i class="bi bi-3-circle me-1" style="color:var(--accent);"></i>أضف قطع الغيار</div>
+          <div>حدد القطع المطلوبة إن وجدت</div>
+        </div>
+        <div class="p-3 rounded" style="background:rgba(var(--accent-rgb),0.05);border:1px solid rgba(var(--accent-rgb),0.15);">
+          <div style="font-weight:600;color:var(--accent);margin-bottom:4px;"><i class="bi bi-lightbulb me-1"></i>تدفق العمل</div>
+          <div>طلب صيانة ← اعتماد الصيانة ← اعتماد المخزن ← تنفيذ ← إغلاق</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function addPartRow() {
+  const container = document.getElementById('partsContainer');
+  const row = document.createElement('div');
+  row.className = 'part-row row g-2 mb-2 align-items-center p-2 rounded';
+  row.style.cssText = 'background:var(--bg-body);border:1px solid var(--border-light);';
+  row.innerHTML = `
+    <div class="col-md-4"><input type="text" name="part_name[]" class="form-control form-control-sm" placeholder="اسم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+    <div class="col-md-2"><input type="text" name="part_number[]" class="form-control form-control-sm" placeholder="رقم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+    <div class="col-md-2"><input type="number" name="part_quantity[]" class="form-control form-control-sm" placeholder="الكمية" value="1" step="0.1" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+    <div class="col-md-2"><input type="text" name="part_unit[]" class="form-control form-control-sm" placeholder="الوحدة" value="قطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+    <div class="col-md-2"><button type="button" class="btn btn-sm w-100" onclick="this.closest('.part-row').remove()" style="background:rgba(248,113,113,0.1);color:var(--accent-red);border-radius:8px;"><i class="bi bi-trash"></i></button></div>
+  `;
+  container.appendChild(row);
+}
+</script>
+
+{% endblock %}

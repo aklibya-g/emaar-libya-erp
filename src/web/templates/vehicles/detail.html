@@ -8,7 +8,7 @@
       <p class="page-subtitle mb-0">{{ vehicle.vehicle_type.name_ar if vehicle.vehicle_type else '' }}</p>
     </div>
   </div>
-  <a href="{{ url_for('vehicles.vehicles_list') }}" class="back-btn-header">
+  <a href="{{ url_for('vehicles.vehicle_list') }}" class="back-btn-header">
     <i class="bi bi-arrow-right"></i> قائمة المركبات
   </a>
 </div>
@@ -67,7 +67,7 @@
           {% else %}<span class="badge bg-secondary">متوقف</span>{% endif %}
         </div>
         <div class="mb-2"><span class="text-muted">انتهاء التأمين:</span> {{ vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle.insurance_expiry else '-' }}</div>
-        <div class="mb-2"><span class="text-muted">انتهاء التسجيل:</span> {{ vehicle.registration_expiry.strftime('%Y-%m-%d') if vehicle.registration_expiry else '-' }}</div>
+        <div class="mb-2"><span class="text-muted">الفحص الفني:</span> {{ vehicle.registration_expiry.strftime('%Y-%m-%d') if vehicle.registration_expiry else '-' }}</div>
         <div><span class="text-muted">ملاحظات:</span> {{ vehicle.notes or '-' }}</div>
       </div>
     </div>
@@ -269,7 +269,7 @@
               <option value="">اختر</option>
               <option value="maintenance">صيانة</option>
               <option value="insurance">تأمين</option>
-              <option value="registration">تسجيل</option>
+              <option value="registration">فحص فني</option>
               <option value="fine">غرامة</option>
               <option value="toll">رسوم مرور</option>
               <option value="parking">موقف</option>

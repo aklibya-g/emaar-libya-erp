@@ -379,6 +379,7 @@ class Driver(Base, TimestampMixin, ActiveMixin, SoftDeleteMixin):
     )
     join_date: Mapped[Optional[date]] = mapped_column(Date, default=None)
     contract_type: Mapped[Optional[str]] = mapped_column(String(30), default=None)
+    activity_type: Mapped[Optional[str]] = mapped_column(String(50), default=None)
     status: Mapped[str] = mapped_column(String(20), default="active")
     notes: Mapped[Optional[str]] = mapped_column(Text, default=None)
     license_photo_path: Mapped[Optional[str]] = mapped_column(String(500), default=None)

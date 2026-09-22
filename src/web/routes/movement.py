@@ -55,6 +55,12 @@ def movement_dashboard():
             Vehicle.insurance_expiry < today,
         ).scalar() or 0
 
+        expiring_registration_count = session.query(func.count(Vehicle.id)).filter(
+            Vehicle.registration_expiry.isnot(None),
+            Vehicle.registration_expiry >= today,
+            Vehicle.registration_expiry <= today + timedelta(days=30),
+        ).scalar() or 0
+
         return render_template("movement/dashboard.html",
                              page_title="ادارة الحركة",
                              total_vehicles=total_vehicles,
@@ -72,6 +78,7 @@ def movement_dashboard():
                              expired_licenses_count=expired_licenses_count,
                              expired_contracts_count=expired_contracts_count,
                              expired_insurance_count=expired_insurance_count,
+                             expiring_registration_count=expiring_registration_count,
                              today=today)
 
 

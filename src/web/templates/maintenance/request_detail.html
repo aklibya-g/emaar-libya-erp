@@ -1,0 +1,340 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ req.request_number }} | طلب صيانة{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('maintenance.requests_list') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>طلبات الصيانة
+      </a>
+      <div>
+        <h1><i class="bi bi-clipboard-check me-2"></i>{{ req.request_number }}</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('maintenance.requests_edit', request_id=req.id) }}" class="btn" style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);border-radius:10px;font-weight:600;">
+        <i class="bi bi-pencil me-1"></i>تعديل
+      </a>
+      <a href="{{ url_for('maintenance.vehicle_history', vehicle_id=req.vehicle_id) }}" class="btn" style="background:rgba(34,211,238,0.12);color:var(--accent-cyan);border-radius:10px;font-weight:600;">
+        <i class="bi bi-clock-history me-1"></i>سجل السيارة
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <!-- تدفق العمل -->
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center justify-content-between" style="gap:4px;">
+          {% set statuses = [('draft', 'مسودة'), ('pending_maintenance', 'اعتماد الصيانة'), ('pending_warehouse', 'اعتماد المخزن'), ('in_progress', 'التنفيذ'), ('completed', 'مكتمل')] %}
+          {% set status_order = {'draft':0, 'pending_maintenance':1, 'pending_warehouse':2, 'in_progress':3, 'completed':4, 'cancelled':-1} %}
+          {% set current_idx = status_order.get(req.status, 0) %}
+          {% for s_key, s_label in statuses %}
+          <div class="flex-fill text-center" style="position:relative;">
+            <div style="width:32px;height:32px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+              {% if status_order.get(s_key, 0) < current_idx %}background:var(--accent-green);color:white;
+              {% elif status_order.get(s_key, 0) == current_idx %}background:var(--accent);color:white;
+              {% else %}background:var(--bg-body);color:var(--text-muted);border:2px solid var(--border-color);{% endif %}">
+              {% if status_order.get(s_key, 0) < current_idx %}<i class="bi bi-check-lg"></i>{% else %}{{ loop.index }}{% endif %}
+            </div>
+            <div style="font-size:10px;font-weight:600;color:{% if status_order.get(s_key, 0) <= current_idx %}var(--text-primary){% else %}var(--text-muted){% endif %};">{{ s_label }}</div>
+          </div>
+          {% if not loop.last %}
+          <div style="flex:0 0 20px;height:2px;margin-bottom:16px;background:{% if status_order.get(statuses[loop.index][0], 0) <= current_idx %}var(--accent-green){% else %}var(--border-color){% endif %};"></div>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الطلب -->
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-file-text me-1" style="color:var(--accent);"></i>بيانات الطلب</h6>
+      </div>
+      <div class="card-body pt-0">
+        <div class="row g-3">
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">السيارة</div><div style="font-weight:600;color:var(--text-primary);font-size:13px;">{{ req.vehicle.plate_number if req.vehicle else '-' }} - {{ req.vehicle.brand or '' }} {{ req.vehicle.model or '' }}</div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">نوع الصيانة</div><div style="font-weight:600;color:var(--text-primary);font-size:13px;">
+            {% if req.maintenance_type == 'oil_change' %}تغيير زيت{% elif req.maintenance_type == 'parts_replacement' %}استبدال قطع{% elif req.maintenance_type == 'body_repair' %}إصلاح هيكل{% elif req.maintenance_type == 'electrical' %}كهرباء{% elif req.maintenance_type == 'tire' %}إطارات{% elif req.maintenance_type == 'general' %}صيانة عامة{% else %}{{ req.maintenance_type }}{% endif %}
+          </div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">الأولوية</div><div>
+            {% if req.priority == 'very_urgent' %}<span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عاجل جداً</span>
+            {% elif req.priority == 'urgent' %}<span style="background:rgba(251,146,60,0.12);color:var(--accent-orange);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عاجل</span>
+            {% else %}<span style="background:rgba(var(--accent-rgb),0.1);color:var(--accent);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عادي</span>{% endif %}
+          </div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">عداد الكيلومتر</div><div style="font-weight:600;color:var(--text-primary);font-size:13px;">{{ "{:,.0f}".format(req.current_km) if req.current_km else '-' }} كم</div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">تاريخ الطلب</div><div style="font-weight:600;color:var(--text-primary);font-size:13px;">{{ req.request_date.strftime('%d/%m/%Y') if req.request_date else '-' }}</div></div>
+          <div class="col-md-4"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">الحالة</div><div>
+            {% if req.status == 'draft' %}<span style="background:rgba(148,163,184,0.12);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">مسودة</span>
+            {% elif req.status == 'pending_maintenance' %}<span style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار اعتماد الصيانة</span>
+            {% elif req.status == 'pending_warehouse' %}<span style="background:rgba(167,139,250,0.12);color:var(--accent-purple);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار اعتماد المخزن</span>
+            {% elif req.status == 'in_progress' %}<span style="background:rgba(251,146,60,0.12);color:var(--accent-orange);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">قيد التنفيذ</span>
+            {% elif req.status == 'completed' %}<span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">مكتمل</span>
+            {% elif req.status == 'cancelled' %}<span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">ملغي</span>
+            {% endif %}
+          </div></div>
+          {% if req.description %}
+          <div class="col-12"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">وصف المشكلة</div><div style="font-weight:500;color:var(--text-primary);font-size:13px;line-height:1.6;">{{ req.description }}</div></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- قطع الغيار المطلوبة -->
+    {% if items %}
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-box-seam me-1" style="color:var(--accent-purple);"></i>قطع الغيار المطلوبة ({{ items|length }})</h6>
+      </div>
+      <div class="card-body pt-0">
+        {% if req.status == 'pending_warehouse' %}
+        <form method="POST" action="{{ url_for('maintenance.warehouse_approve', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-color);">
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">#</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">اسم القطعة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">رقم القطعة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الكمية</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الوحدة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+                {% if req.status == 'pending_warehouse' %}
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">ملاحظات المخزن</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-muted);">{{ loop.index }}</td>
+                <td style="padding:10px 12px;font-weight:600;font-size:12px;color:var(--text-primary);">{{ item.part_name }}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-secondary);">{{ item.part_number or '-' }}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-primary);">{{ item.quantity }}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-secondary);">{{ item.unit }}</td>
+                <td style="padding:10px 12px;">
+                  {% if req.status == 'pending_warehouse' %}
+                  <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                  <select name="item_status[]" class="form-select form-select-sm" style="border-radius:6px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:11px;width:100px;">
+                    <option value="approved" {% if item.status == 'approved' %}selected{% endif %}>متوفر</option>
+                    <option value="not_available" {% if item.status == 'not_available' %}selected{% endif %}>غير متوفر</option>
+                    <option value="partial" {% if item.status == 'partial' %}selected{% endif %}>جزئي</option>
+                  </select>
+                  {% else %}
+                    {% if item.status == 'approved' or item.status == 'delivered' %}
+                    <span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">متوفر</span>
+                    {% elif item.status == 'not_available' %}
+                    <span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">غير متوفر</span>
+                    {% else %}
+                    <span style="background:rgba(148,163,184,0.12);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار</span>
+                    {% endif %}
+                  {% endif %}
+                </td>
+                {% if req.status == 'pending_warehouse' %}
+                <td style="padding:10px 12px;"><input type="text" name="item_notes[]" class="form-control form-control-sm" placeholder="ملاحظات" style="border-radius:6px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:11px;"></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if req.status == 'pending_warehouse' %}
+        <div class="mt-3 text-end">
+          <button type="submit" class="btn" style="background:var(--gradient-brand);color:white;border-radius:10px;font-weight:600;">
+            <i class="bi bi-check-lg me-1"></i>اعتماد القطع وبدء التنفيذ
+          </button>
+        </div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- الإعادات للمخزن -->
+    {% if part_returns %}
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-arrow-return-left me-1" style="color:var(--accent-orange);"></i>الإعادات للمخزن ({{ part_returns|length }})</h6>
+      </div>
+      <div class="card-body pt-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-color);">
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">رقم الإيصال</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">القطعة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">قيمة الشراء</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ret in part_returns %}
+              <tr style="border-bottom:1px solid var(--border-light);">
+                <td style="padding:10px 12px;"><span style="font-weight:700;font-size:12px;color:var(--accent-orange);">{{ ret.return_number }}</span></td>
+                <td style="padding:10px 12px;font-weight:600;font-size:12px;color:var(--text-primary);">{{ ret.part_name }}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-secondary);">
+                  {% if ret.condition == 'damaged' %}تالف
+                  {% elif ret.condition == 'used' %}مستعمل
+                  {% elif ret.condition == 'new' %}جديد
+                  {% elif ret.condition == 'refurbished' %}مجدد
+                  {% else %}{{ ret.condition }}{% endif %}
+                </td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-primary);">{{ "{:,.2f}".format(ret.purchase_value) }} د.ل</td>
+                <td style="padding:10px 12px;">
+                  {% if ret.status == 'received' %}
+                  <span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">تم الاستلام</span>
+                  {% else %}
+                  <span style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار الاستلام</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- الشريط الجانبي -->
+  <div class="col-lg-4">
+    <!-- أزرار العمل -->
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-gear me-1" style="color:var(--accent);"></i>إجراءات</h6>
+      </div>
+      <div class="card-body pt-0 d-grid gap-2">
+        {% if req.status == 'pending_maintenance' %}
+        <form method="POST" action="{{ url_for('maintenance.requests_approve', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="approve_maintenance">
+          <button type="submit" class="btn w-100" style="background:var(--gradient-success);color:white;border-radius:10px;font-weight:600;">
+            <i class="bi bi-check-circle me-1"></i>اعتماد الصيانة
+          </button>
+        </form>
+        {% endif %}
+
+        {% if req.status == 'pending_warehouse' or req.status == 'in_progress' %}
+        {% if req.status == 'pending_warehouse' %}
+        <div class="p-2 rounded text-center" style="background:rgba(167,139,250,0.1);font-size:12px;color:var(--accent-purple);">
+          <i class="bi bi-hourglass-split me-1"></i>بانتظار اعتماد المخزن على القطع
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if req.status == 'in_progress' %}
+        <form method="POST" action="{{ url_for('maintenance.requests_approve', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="complete">
+          <button type="submit" class="btn w-100" style="background:var(--gradient-success);color:white;border-radius:10px;font-weight:600;">
+            <i class="bi bi-check2-circle me-1"></i>إتمام الصيانة
+          </button>
+        </form>
+        {% endif %}
+
+        {% if req.status not in ['completed', 'cancelled'] %}
+        <form method="POST" action="{{ url_for('maintenance.requests_approve', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="cancel">
+          <button type="submit" class="btn w-100" onclick="return confirm('هل تريد إلغاء هذا الطلب؟')" style="background:rgba(248,113,113,0.1);color:var(--accent-red);border-radius:10px;font-weight:600;">
+            <i class="bi bi-x-circle me-1"></i>إلغاء الطلب
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if req.status == 'in_progress' or req.status == 'completed' %}
+    <!-- تركيب قطعة -->
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-plus-circle me-1" style="color:var(--accent-green);"></i>تركيب قطعة جديدة</h6>
+      </div>
+      <div class="card-body pt-0">
+        <form method="POST" action="{{ url_for('maintenance.install_part', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2"><input type="text" name="part_name" class="form-control form-control-sm" placeholder="اسم القطعة" required style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><input type="text" name="part_number" class="form-control form-control-sm" placeholder="رقم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+            <div class="col-6">
+              <select name="condition" class="form-select form-select-sm" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;">
+                <option value="new">جديد</option>
+                <option value="used">مستعمل</option>
+                <option value="refurbished">مجدد</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-2"><input type="number" name="expected_km_life" class="form-control form-control-sm" placeholder="العمر الافتراضي (كم)" step="100" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          <button type="submit" class="btn w-100" style="background:var(--gradient-success);color:white;border-radius:8px;font-weight:600;font-size:12px;">
+            <i class="bi bi-tools me-1"></i>تسجيل التركيب
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- إعادة قطعة للمخزن -->
+    <div class="card border-0 shadow-sm mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-arrow-return-left me-1" style="color:var(--accent-orange);"></i>إعادة قطعة للمخزن</h6>
+      </div>
+      <div class="card-body pt-0">
+        <form method="POST" action="{{ url_for('maintenance.return_part', request_id=req.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2"><input type="text" name="part_name" class="form-control form-control-sm" placeholder="اسم القطعة" required style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><input type="text" name="part_number" class="form-control form-control-sm" placeholder="رقم القطعة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+            <div class="col-6">
+              <select name="condition" class="form-select form-select-sm" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;">
+                <option value="used">مستعمل</option>
+                <option value="damaged">تالف</option>
+                <option value="new">جديد (لم يُستخدم)</option>
+                <option value="refurbished">مجدد</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><input type="number" name="quantity" class="form-control form-control-sm" placeholder="الكمية" value="1" step="0.1" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+            <div class="col-6"><input type="number" name="purchase_value" class="form-control form-control-sm" placeholder="قيمة الشراء" step="0.01" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><input type="text" name="invoice_number" class="form-control form-control-sm" placeholder="رقم الفاتورة" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+            <div class="col-6"><input type="date" name="invoice_date" class="form-control form-control-sm" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          </div>
+          <div class="mb-2"><input type="text" name="supplier" class="form-control form-control-sm" placeholder="المورد" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          <div class="mb-2"><input type="text" name="removed_reason" class="form-control form-control-sm" placeholder="سبب الفك" style="border-radius:8px;border:1.5px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px;"></div>
+          <button type="submit" class="btn w-100" style="background:linear-gradient(135deg,#f97316,#ea580c);color:white;border-radius:8px;font-weight:600;font-size:12px;">
+            <i class="bi bi-arrow-return-left me-1"></i>تسجيل الإعادة للمخزن
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- معلومات السيارة -->
+    {% if req.vehicle %}
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-bus-front me-1" style="color:var(--accent-cyan);"></i>بيانات السيارة</h6>
+      </div>
+      <div class="card-body pt-0" style="font-size:12px;">
+        <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid var(--border-light);"><span style="color:var(--text-muted);">رقم اللوحة</span><span style="font-weight:600;color:var(--text-primary);">{{ req.vehicle.plate_number }}</span></div>
+        <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid var(--border-light);"><span style="color:var(--text-muted);">رقم اعمار</span><span style="font-weight:600;color:var(--text-primary);">{{ req.vehicle.emaar_number or '-' }}</span></div>
+        <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid var(--border-light);"><span style="color:var(--text-muted);">الموديل</span><span style="font-weight:600;color:var(--text-primary);">{{ req.vehicle.brand or '' }} {{ req.vehicle.model or '' }}</span></div>
+        <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid var(--border-light);"><span style="color:var(--text-muted);">السنة</span><span style="font-weight:600;color:var(--text-primary);">{{ req.vehicle.year or '-' }}</span></div>
+        <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid var(--border-light);"><span style="color:var(--text-muted);">اللون</span><span style="font-weight:600;color:var(--text-primary);">{{ req.vehicle.color or '-' }}</span></div>
+        <div class="d-flex justify-content-between py-1"><span style="color:var(--text-muted);">الكيلومتر</span><span style="font-weight:600;color:var(--accent);">{{ "{:,.0f}".format(req.vehicle.current_km or 0) }} كم</span></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

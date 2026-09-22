@@ -160,6 +160,9 @@ class WorkOrder(Base, TimestampMixin):
     amendment_reason: Mapped[Optional[str]] = mapped_column(Text, default=None)
     amendment_details: Mapped[Optional[str]] = mapped_column(Text, default=None)  # JSON: تفاصيل التعديل قبل/بعد
 
+    # نوع التسعير (أوتوماتيك من جدول الاسعار / يدوي)
+    is_auto_pricing: Mapped[bool] = mapped_column(Boolean, default=False)  # False=يدوي(افتراضي), True=أوتوماتيك
+
     # نوع الرحلة (داخل المدينة / خارج المدينة)
     trip_type: Mapped[str] = mapped_column(String(20), default="internal")  # internal / external
 

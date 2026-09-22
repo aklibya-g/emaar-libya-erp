@@ -428,7 +428,7 @@ def attendance_monthly():
         if contract_filter and contract_filter != "all":
             contract_types_list = [c.strip() for c in contract_filter.split(",") if c.strip()]
             if contract_types_list:
-                ar_to_en = {"موسمي": "seasonal", "احتياطي": "reserve", "ايجار لغرض التمليك": "rent_to_own"}
+                ar_to_en = {"موسمي": "seasonal", "احتياطي": "reserve", "احتياط": "reserve", "ركوبة عامة": "public_transport", "ايجار لغرض التمليك": "rent_to_own"}
                 mapped = [ar_to_en.get(c, c) for c in contract_types_list]
                 q = q.filter(Driver.contract_type.in_(mapped))
         persons = q.order_by(Driver.full_name_ar).all()
@@ -888,7 +888,7 @@ def attendance_report():
     if "drivers_reserve" in person_types:
         drivers_q = session.query(Driver).filter(
             Driver.is_deleted == False, Driver.status == "active",
-            Driver.contract_type == "احتياط"
+            Driver.contract_type.in_(["احتياط", "reserve"])
         )
         for drv in drivers_q.order_by(Driver.full_name_ar).all():
             all_persons.append(drv)
@@ -897,7 +897,7 @@ def attendance_report():
     if "drivers_seasonal" in person_types:
         drivers_q = session.query(Driver).filter(
             Driver.is_deleted == False, Driver.status == "active",
-            Driver.contract_type == "موسمي"
+            Driver.contract_type.in_(["موسمي", "seasonal"])
         )
         for drv in drivers_q.order_by(Driver.full_name_ar).all():
             all_persons.append(drv)
@@ -906,11 +906,20 @@ def attendance_report():
     if "national_transport" in person_types:
         drivers_q = session.query(Driver).filter(
             Driver.is_deleted == False, Driver.status == "active",
-            Driver.contract_type == "ايجار لغرض التمليك"
+            Driver.contract_type.in_(["ايجار لغرض التمليك", "rent_to_own"])
         )
         for drv in drivers_q.order_by(Driver.full_name_ar).all():
             all_persons.append(drv)
             person_type_map[drv.id] = "national_transport"
+
+    if "drivers_public" in person_types:
+        drivers_q = session.query(Driver).filter(
+            Driver.is_deleted == False, Driver.status == "active",
+            Driver.contract_type.in_(["ركوبة عامة", "public_transport"])
+        )
+        for drv in drivers_q.order_by(Driver.full_name_ar).all():
+            all_persons.append(drv)
+            person_type_map[drv.id] = "drivers_public"
 
     total_days = 30
 
@@ -1139,7 +1148,7 @@ def attendance_report_pdf():
         if contract_filter and contract_filter != "all":
             contract_types_list = [c.strip() for c in contract_filter.split(",") if c.strip()]
             if contract_types_list:
-                ar_to_en = {"موسمي": "seasonal", "احتياطي": "reserve", "ايجار لغرض التمليك": "rent_to_own"}
+                ar_to_en = {"موسمي": "seasonal", "احتياطي": "reserve", "احتياط": "reserve", "ركوبة عامة": "public_transport", "ايجار لغرض التمليك": "rent_to_own"}
                 mapped = [ar_to_en.get(c, c) for c in contract_types_list]
                 q = q.filter(Driver.contract_type.in_(mapped))
         persons = q.order_by(Driver.full_name_ar).all()
@@ -1447,6 +1456,69 @@ def attendance_report_pdf():
 
 
 # ============================================================
+# CONTRACT TYPES & CLASSIFICATIONS
+# ============================================================
+
+@hr_bp.route("/contract-types")
+@login_required
+def contract_types_page():
+    from src.web.contract_types import get_contract_types, get_activity_types
+    session = get_web_session()
+    contract_types = get_contract_types(session)
+    activity_types = get_activity_types(session)
+    return render_template(
+        "hr/contract_types.html",
+        contract_types=contract_types,
+        activity_types=activity_types,
+    )
+
+
+@hr_bp.route("/contract-types/add", methods=["POST"])
+@login_required
+def contract_type_add():
+    from src.web.contract_types import add_type
+    session = get_web_session()
+    kind = request.form.get("kind", "contract").strip()
+    label = request.form.get("label", "").strip()
+    value = request.form.get("value", "").strip() or None
+    ok, msg = add_type(kind, label, value=value, session=session)
+    flash(msg, "success" if ok else "danger")
+    return redirect(url_for("hr.contract_types_page"))
+
+
+@hr_bp.route("/contract-types/delete", methods=["POST"])
+@login_required
+def contract_type_delete():
+    from src.web.contract_types import delete_type
+    session = get_web_session()
+    kind = request.form.get("kind", "contract").strip()
+    value = request.form.get("value", "").strip()
+    ok, msg = delete_type(kind, value, session=session)
+    flash(msg, "success" if ok else "danger")
+    return redirect(url_for("hr.contract_types_page"))
+
+
+@hr_bp.route("/contract-types/api", methods=["POST"])
+@login_required
+def contract_type_api():
+    from src.web.contract_types import add_type, delete_type, get_contract_types, get_activity_types
+    session = get_web_session()
+    data = request.get_json(silent=True) or {}
+    action = data.get("action", request.form.get("action", ""))
+    kind = data.get("kind", request.form.get("kind", "contract"))
+    if action == "add":
+        ok, msg = add_type(kind, data.get("label", ""), value=data.get("value") or None, session=session)
+        return jsonify({"ok": ok, "message": msg})
+    if action == "delete":
+        ok, msg = delete_type(kind, data.get("value", ""), session=session)
+        return jsonify({"ok": ok, "message": msg})
+    if action == "list":
+        pairs = get_activity_types(session) if kind == "activity" else get_contract_types(session)
+        return jsonify({"ok": True, "items": [{"value": v, "label": l} for v, l in pairs]})
+    return jsonify({"ok": False, "message": "إجراء غير صحيح"}), 400
+
+
+# ============================================================
 # ATTENDANCE SETTINGS
 # ============================================================
 
@@ -1473,6 +1545,7 @@ def attendance_settings_save():
         'enable_drivers_reserve': 'true' if request.form.get('enable_drivers_reserve') else 'false',
         'enable_drivers_seasonal': 'true' if request.form.get('enable_drivers_seasonal') else 'false',
         'enable_national_transport': 'true' if request.form.get('enable_national_transport') else 'false',
+        'enable_drivers_public': 'true' if request.form.get('enable_drivers_public') else 'false',
         'default_attendance': request.form.get('default_attendance', 'present'),
         'total_days': '30',
         'leave_annual': request.form.get('leave_annual', '30'),
@@ -1972,7 +2045,7 @@ def contracts_list():
             num = c.driver.driver_number if c.driver else ""
             if search and search not in name and search not in (c.contract_number or "") and search not in num:
                 continue
-            type_map = {"reserve": "احتياط", "seasonal": "موسمي", "rent_to_own": "ايجار لغرض التمليك"}
+            type_map = {"reserve": "احتياط", "seasonal": "موسمي", "public_transport": "ركوبة عامة", "rent_to_own": "ايجار لغرض التمليك"}
             results.append({
                 "id": c.id,
                 "contract_number": c.contract_number or "",

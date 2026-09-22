@@ -1,0 +1,261 @@
+{% extends "layouts/base.html" %}
+{% block title %}لوحة تحكم الصيانة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
+    <div class="d-flex align-items-center gap-4">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="back-btn-header">
+        <i class="bi bi-arrow-right"></i>لوحة التحكم
+      </a>
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
+            <li class="breadcrumb-item active">الصيانة</li>
+          </ol>
+        </nav>
+        <h1><i class="bi bi-tools me-2"></i>لوحة تحكم الصيانة</h1>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('maintenance.requests_add') }}" class="btn btn-primary" style="border-radius:10px;font-weight:600;">
+        <i class="bi bi-plus-lg me-1"></i>طلب صيانة جديد
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- إحصائيات -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">إجمالي الطلبات</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent);">{{ total_requests }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(var(--accent-rgb),0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-clipboard-data" style="font-size:1.3rem;color:var(--accent);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">قيد الانتظار</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent-yellow);">{{ pending }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(251,191,36,0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-hourglass-split" style="font-size:1.3rem;color:var(--accent-yellow);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">قيد التنفيذ</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent-orange);">{{ in_progress }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(251,146,60,0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-gear-wide-connected" style="font-size:1.3rem;color:var(--accent-orange);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">مكتملة</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent-green);">{{ completed }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(74,222,128,0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-check-circle" style="font-size:1.3rem;color:var(--accent-green);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- صف ثاني -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">السيارات</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent-cyan);">{{ vehicles_count }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(34,211,238,0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-bus-front" style="font-size:1.3rem;color:var(--accent-cyan);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">التكاليف الإجمالية</div>
+            <h3 class="mb-0 fw-bold" style="color:var(--accent-red);">{{ "{:,.0f}".format(total_cost) }} د.ل</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-cash-stack" style="font-size:1.3rem;color:var(--accent-red);"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{{ url_for('maintenance.requests_list', status='pending_warehouse') }}" class="text-decoration-none">
+      <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);">قطع بانتظار المخزن</div>
+              <h3 class="mb-0 fw-bold" style="color:var(--accent-purple);">{{ pending_parts }}</h3>
+            </div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center;">
+              <i class="bi bi-box-seam" style="font-size:1.3rem;color:var(--accent-purple);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{{ url_for('maintenance.returns_list', status='pending') }}" class="text-decoration-none">
+      <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div style="font-size:11px;color:var(--text-muted);">إعادات بانتظار الاستلام</div>
+              <h3 class="mb-0 fw-bold" style="color:var(--accent);">{{ pending_returns }}</h3>
+            </div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(var(--accent-rgb),0.1);display:flex;align-items:center;justify-content:center;">
+              <i class="bi bi-arrow-return-left" style="font-size:1.3rem;color:var(--accent);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- روابط سريعة + طلبات حديثة -->
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-lightning me-1" style="color:var(--accent-yellow);"></i>روابط سريعة</h6>
+      </div>
+      <div class="card-body pt-0">
+        <a href="{{ url_for('maintenance.requests_list') }}" class="d-flex align-items-center gap-3 p-2 rounded mb-1" style="text-decoration:none;color:var(--text-primary);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(var(--accent-rgb),0.1);display:flex;align-items:center;justify-content:center;"><i class="bi bi-clipboard-list" style="color:var(--accent);font-size:16px;"></i></div>
+          <div><div style="font-weight:600;font-size:13px;">طلبات الصيانة</div><div style="font-size:11px;color:var(--text-muted);">عرض وإدارة الطلبات</div></div>
+        </a>
+        <a href="{{ url_for('maintenance.logs_list') }}" class="d-flex align-items-center gap-3 p-2 rounded mb-1" style="text-decoration:none;color:var(--text-primary);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,222,128,0.1);display:flex;align-items:center;justify-content:center;"><i class="bi bi-journal-text" style="color:var(--accent-green);font-size:16px;"></i></div>
+          <div><div style="font-weight:600;font-size:13px;">سجل الصيانة</div><div style="font-size:11px;color:var(--text-muted);">جميع سجلات الصيانة</div></div>
+        </a>
+        <a href="{{ url_for('maintenance.returns_list') }}" class="d-flex align-items-center gap-3 p-2 rounded mb-1" style="text-decoration:none;color:var(--text-primary);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center;"><i class="bi bi-arrow-return-left" style="color:var(--accent-purple);font-size:16px;"></i></div>
+          <div><div style="font-weight:600;font-size:13px;">الإعادات للمخزن</div><div style="font-size:11px;color:var(--text-muted);">قطع تم فكها من السيارات</div></div>
+        </a>
+        <a href="{{ url_for('maintenance.schedules_list') }}" class="d-flex align-items-center gap-3 p-2 rounded mb-1" style="text-decoration:none;color:var(--text-primary);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(34,211,238,0.1);display:flex;align-items:center;justify-content:center;"><i class="bi bi-calendar-check" style="color:var(--accent-cyan);font-size:16px;"></i></div>
+          <div><div style="font-weight:600;font-size:13px;">الصيانة الدورية</div><div style="font-size:11px;color:var(--text-muted);">جدول الصيانة الدورية</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;">
+      <div class="card-header py-3 border-0 d-flex justify-content-between" style="background:transparent;">
+        <h6 class="mb-0 fw-bold" style="color:var(--text-primary);"><i class="bi bi-clock-history me-1" style="color:var(--accent);"></i>أحدث طلبات الصيانة</h6>
+        <a href="{{ url_for('maintenance.requests_list') }}" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;">عرض الكل</a>
+      </div>
+      <div class="card-body pt-0">
+        {% if recent_requests %}
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-color);">
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">رقم الطلب</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">السيارة</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">النوع</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الأولوية</th>
+                <th style="padding:10px 12px;font-size:11px;font-weight:700;color:var(--text-muted);">الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for req in recent_requests %}
+              <tr style="border-bottom:1px solid var(--border-light);cursor:pointer;" onclick="window.location='{{ url_for('maintenance.requests_detail', request_id=req.id) }}'">
+                <td style="padding:10px 12px;"><span style="font-weight:700;font-size:12px;color:var(--accent);">{{ req.request_number }}</span></td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-primary);">{{ req.vehicle.plate_number if req.vehicle else '-' }}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--text-secondary);">
+                  {% if req.maintenance_type == 'oil_change' %}تغيير زيت
+                  {% elif req.maintenance_type == 'parts_replacement' %}استبدال قطع
+                  {% elif req.maintenance_type == 'body_repair' %}إصلاح هيكل
+                  {% elif req.maintenance_type == 'electrical' %}كهرباء
+                  {% elif req.maintenance_type == 'tire' %}إطارات
+                  {% else %}{{ req.maintenance_type }}{% endif %}
+                </td>
+                <td style="padding:10px 12px;">
+                  {% if req.priority == 'very_urgent' %}
+                  <span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عاجل جداً</span>
+                  {% elif req.priority == 'urgent' %}
+                  <span style="background:rgba(251,146,60,0.12);color:var(--accent-orange);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عاجل</span>
+                  {% else %}
+                  <span style="background:rgba(var(--accent-rgb),0.1);color:var(--accent);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">عادي</span>
+                  {% endif %}
+                </td>
+                <td style="padding:10px 12px;">
+                  {% if req.status == 'draft' %}
+                  <span style="background:rgba(148,163,184,0.12);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">مسودة</span>
+                  {% elif req.status == 'pending_maintenance' %}
+                  <span style="background:rgba(251,191,36,0.12);color:var(--accent-yellow);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار الاعتماد</span>
+                  {% elif req.status == 'pending_warehouse' %}
+                  <span style="background:rgba(167,139,250,0.12);color:var(--accent-purple);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">بانتظار المخزن</span>
+                  {% elif req.status == 'in_progress' %}
+                  <span style="background:rgba(251,146,60,0.12);color:var(--accent-orange);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">قيد التنفيذ</span>
+                  {% elif req.status == 'completed' %}
+                  <span style="background:rgba(74,222,128,0.12);color:var(--accent-green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">مكتمل</span>
+                  {% elif req.status == 'cancelled' %}
+                  <span style="background:rgba(248,113,113,0.12);color:var(--accent-red);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;">ملغي</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4" style="color:var(--text-muted);">
+          <i class="bi bi-clipboard" style="font-size:2rem;"></i>
+          <p class="mt-2 mb-0" style="font-size:13px;">لا توجد طلبات صيانة بعد</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

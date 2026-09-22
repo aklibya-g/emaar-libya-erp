@@ -81,6 +81,7 @@ def init_database() -> None:
     import src.core.models  # noqa: F401
     import src.core.models.hr_models  # noqa: F401
     import src.core.models.marketing_models  # noqa: F401
+    import src.core.models.maintenance_models  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
 

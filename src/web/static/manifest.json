@@ -1,0 +1,24 @@
+{
+  "name": "شركة اعمار ليبيا لنقل الركاب - نظام ERP",
+  "short_name": "إعمار ERP",
+  "description": "نظام إدارة الموارد البشرية والنقل والتسويق",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#63b3ed",
+  "orientation": "any",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -356,6 +356,7 @@
         <a href="{{ url_for('finance.add_receipt', claim_id=claim.id) }}" class="btn btn-success" style="border-radius:10px;font-weight:600">
           <i class="bi bi-plus-circle me-1"></i>إضافة ايصال
         </a>
+        {% if current_user.is_finance or current_user.is_admin %}
         {% if not claim.finance_approved %}
         <form method="POST" action="{{ url_for('finance.approve_claim', claim_id=claim.id) }}" onsubmit="return confirm('هل تريد اعتماد هذه المطالبة مالياً؟')">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -367,6 +368,12 @@
         <div class="text-center p-3" style="background:#d1fae5;border-radius:10px">
           <i class="bi bi-check-circle-fill me-1" style="color:#065f46"></i>
           <span style="color:#065f46;font-weight:600;font-size:13px">تم الاعتماد المالي</span>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center p-3" style="background:#f1f5f9;border-radius:10px">
+          <i class="bi bi-lock me-1" style="color:#94a3b8"></i>
+          <span style="color:#94a3b8;font-size:12px">เฉพาะ قسم المالية</span>
         </div>
         {% endif %}
       </div>

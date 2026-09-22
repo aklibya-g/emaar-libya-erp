@@ -1,0 +1,168 @@
+{% extends "layouts/base.html" %}
+{% block title %}أنواع وتصنيفات العقود | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">الرئيسية</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('hr.hr_dashboard') }}">شؤون الموظفين</a></li>
+        <li class="breadcrumb-item active">أنواع وتصنيفات العقود</li>
+      </ol>
+    </nav>
+    <h4 class="page-title mb-0"><i class="bi bi-tags me-2"></i>أنواع وتصنيفات العقود</h4>
+    <p class="text-muted mb-0" style="font-size:13px">تظهر هذه القوائم في نماذج السائقين وعقود السائقين وعقود التسويق</p>
+  </div>
+  <a href="{{ url_for('hr.hr_dashboard') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> شؤون الموظفين
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
+        <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2" style="color:var(--accent-cyan)"></i>أنواع العقود</h6>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTypeModal" data-kind="contract">
+          <i class="bi bi-plus-lg me-1"></i>إضافة
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">#</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الاسم</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">القيمة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for value, label in contract_types %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-muted)">{{ loop.index }}</td>
+                <td style="color:var(--text-primary)" class="fw-medium">{{ label }}</td>
+                <td><code>{{ value }}</code></td>
+                <td class="text-end">
+                  <form method="POST" action="{{ url_for('hr.contract_type_delete') }}" class="d-inline"
+                        onsubmit="return confirm('هل تريد حذف \"{{ label }}\"؟')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="kind" value="contract">
+                    <input type="hidden" name="value" value="{{ value }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="حذف"><i class="bi bi-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not contract_types %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">لا توجد أنواع عقود</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100" style="background:var(--bg-card);border-color:var(--border-color)">
+      <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
+        <h6 class="mb-0"><i class="bi bi-bus-front me-2" style="color:var(--accent-green)"></i>تصنيفات النشاط</h6>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTypeModal" data-kind="activity">
+          <i class="bi bi-plus-lg me-1"></i>إضافة
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">#</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">الاسم</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)">القيمة</th>
+                <th style="color:var(--text-secondary);border-color:var(--border-color)"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for value, label in activity_types %}
+              <tr style="border-color:var(--border-light)">
+                <td style="color:var(--text-muted)">{{ loop.index }}</td>
+                <td style="color:var(--text-primary)" class="fw-medium">{{ label }}</td>
+                <td><code>{{ value }}</code></td>
+                <td class="text-end">
+                  <form method="POST" action="{{ url_for('hr.contract_type_delete') }}" class="d-inline"
+                        onsubmit="return confirm('هل تريد حذف \"{{ label }}\"؟')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="kind" value="activity">
+                    <input type="hidden" name="value" value="{{ value }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="حذف"><i class="bi bi-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+              {% if not activity_types %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">لا توجد تصنيفات نشاط</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background:var(--bg-card);border-color:var(--border-color)">
+      <form method="POST" action="{{ url_for('hr.contract_type_add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="kind" id="addTypeKind" value="contract">
+        <div class="modal-header" style="border-color:var(--border-color)">
+          <h5 class="modal-title" style="color:var(--text-primary)"><i class="bi bi-plus-circle me-2"></i>إضافة عنصر جديد</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">الاسم <span class="text-danger">*</span></label>
+            <input type="text" name="label" id="addTypeLabel" class="form-control" required
+                   placeholder="مثال: دائم" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-bold">القيمة (اختياري)</label>
+            <input type="text" name="value" id="addTypeValue" class="form-control"
+                   placeholder="تُترك فارغة للاستخدام الاسم تلقائياً" style="background:var(--bg-input);border-color:var(--border-color);color:var(--text-primary)">
+            <div class="form-text">القيمة هي ما يُحفظ في قاعدة البيانات (مثل reserve)</div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-color:var(--border-color)">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modalEl = document.getElementById('addTypeModal');
+  if (!modalEl) return;
+  modalEl.addEventListener('show.bs.modal', function (event) {
+    var btn = event.relatedTarget;
+    var kind = btn ? (btn.getAttribute('data-kind') || 'contract') : 'contract';
+    document.getElementById('addTypeKind').value = kind;
+    var title = modalEl.querySelector('.modal-title');
+    if (title) {
+      title.innerHTML = kind === 'activity'
+        ? '<i class="bi bi-plus-circle me-2"></i>إضافة تصنيف نشاط'
+        : '<i class="bi bi-plus-circle me-2"></i>إضافة نوع عقد';
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -33,12 +33,9 @@
               <small class="text-muted d-block">{{ contract.driver.driver_number if contract.driver else '' }}</small>
             </td>
             <td>
-              {% if contract.contract_type == 'permanent' %}دائم
-              {% elif contract.contract_type == 'temporary' %}مؤقت
-              {% elif contract.contract_type == 'reserve' %}احتياط
-              {% elif contract.contract_type == 'seasonal' %}موسمي
-              {% elif contract.contract_type == 'rent_to_own' %}ايجار لغرض التمليك
-              {% else %}{{ contract.contract_type }}{% endif %}
+              {% set ns = namespace(label=none) %}
+              {% for value, label in driver_contract_types %}{% if value == contract.contract_type %}{% set ns.label = label %}{% endif %}{% endfor %}
+              {{ ns.label or contract.contract_type or '-' }}
             </td>
             <td>{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '-' }}</td>
             <td>{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '-' }}</td>

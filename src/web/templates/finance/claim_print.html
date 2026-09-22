@@ -207,30 +207,12 @@
     {% endif %}
 
     <!-- Approvals -->
-    <div class="approval-box">
-      <div class="approval-item">
-        <div class="title">اعتماد قسم التسويق</div>
-        <div class="signature-line"></div>
-        <div class="name">{{ claim.work_order.marketing_approved_by if claim.work_order and claim.work_order.marketing_approved_by else '-------------------' }}</div>
-        <div class="date">{{ claim.work_order.marketing_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.marketing_approved_at else '' }}</div>
-      </div>
-      <div class="approval-item">
-        <div class="title">اعتماد قسم الحركة</div>
-        <div class="signature-line"></div>
-        <div class="name">{{ claim.work_order.movement_approved_by if claim.work_order and claim.work_order.movement_approved_by else '-------------------' }}</div>
-        <div class="date">{{ claim.work_order.movement_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.movement_approved_at else '' }}</div>
-      </div>
+    <div class="approval-box" style="grid-template-columns:1fr">
       <div class="approval-item">
         <div class="title">اعتماد الادارة المالية</div>
         <div class="signature-line"></div>
         <div class="name">{{ finance_approved_by if finance_approved_by else '-------------------' }}</div>
         <div class="date">{{ finance_approved_at.strftime('%Y-%m-%d') if finance_approved_at else '' }}</div>
-      </div>
-      <div class="approval-item">
-        <div class="title">اعتماد المدير التنفيذي</div>
-        <div class="signature-line"></div>
-        <div class="name">{{ claim.work_order.executive_approved_by if claim.work_order and claim.work_order.executive_approved_by else '-------------------' }}</div>
-        <div class="date">{{ claim.work_order.executive_approved_at.strftime('%Y-%m-%d') if claim.work_order and claim.work_order.executive_approved_at else '' }}</div>
       </div>
     </div>
 

@@ -200,4 +200,3 @@ def departments_quick_add_company():
     session.commit()
 
     return jsonify({"success": True, "id": company.id, "name_ar": company.name_ar})
-    return jsonify({"success": True, "id": dept.id, "name_ar": dept.name_ar, "code": dept.code})

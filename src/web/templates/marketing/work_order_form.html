@@ -222,6 +222,19 @@
       </button>
     </div>
     <div class="card-body">
+      <!-- نظام التسعير -->
+      <div class="row g-3 mb-3 pb-3" style="border-bottom:1px solid var(--border-color)">
+        <div class="col-md-12">
+          <label class="form-label fw-bold">نظام التسعير</label>
+          <div class="d-flex gap-4 align-items-center mt-1">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="is_auto_pricing" id="isAutoPricing" value="1" {% if order and order.is_auto_pricing %}checked{% endif %} onchange="onPricingModeChange()">
+              <label class="form-check-label fw-bold" for="isAutoPricing" id="pricingModeLabel" style="color:#dc2626">تسعير يدوي (ادخال يدوي)</label>
+            </div>
+          </div>
+          <small class="text-muted" id="pricingModeHint">سعر الحافلة هو الاجمالي لكل ايام الرحلة (لا يُضرب في عدد الايام)</small>
+        </div>
+      </div>
       <input type="hidden" name="bus_count" id="busCount" value="0">
       <div id="busesContainer">
         <!-- سيتم اضافة الحافلات هنا ديناميكياً -->
@@ -465,8 +478,9 @@ function addBus() {
             <input type="text" class="form-control" name="bus_notes_${busIndex}" placeholder="ملاحظات">
           </div>
           <div class="col-md-4">
-            <label class="form-label">سعر الحافلة باليوم (د.ل) <span class="text-danger">*</span></label>
+            <label class="form-label" id="busPriceLabel_${busIndex}">اجمالي سعر الحافلة لكل الايام (د.ل) <span class="text-danger">*</span></label>
             <input type="number" class="form-control bus-price" name="bus_price_${busIndex}" step="0.01" required onchange="calculateFinalCost()" oninput="calculateFinalCost()">
+            <small class="text-muted bus-price-hint" id="busPriceHint_${busIndex}">لا يُضرب في عدد الايام - سعر اجمالي</small>
           </div>
           <div class="col-md-3 driver-share-col">
             <label class="form-label">نسبة السائق (%)</label>
@@ -488,6 +502,7 @@ function addBus() {
 
   loadAvailableVehicles(busIndex - 1, startDate, endDate);
   onTripTypeChange();
+  onPricingModeChange();
 }
 
 function removeBus(index) {
@@ -763,10 +778,11 @@ function onVehicleSelect(select, index) {
     if (opt.dataset.driverId) {
       loadDriverTripInfo(opt.dataset.driverId);
     }
-    // Auto-fill bus price from rental prices
+    // Auto-fill bus price from rental prices (only in auto pricing mode)
     var vehicleTypeId = opt.dataset.vehicleTypeId || '';
     var seatsCount = opt.dataset.seatsCount || '';
-    if (vehicleTypeId) {
+    var isAuto = document.getElementById('isAutoPricing').checked;
+    if (vehicleTypeId && isAuto) {
       fetch('/marketing/api/bus-rental-price/' + vehicleTypeId).then(r => r.json()).then(data => {
         if (data.success && data.daily_price > 0) {
           var priceInput = document.querySelector('input[name="bus_price_' + index + '"]');
@@ -826,18 +842,25 @@ function refreshBusLists() {
   document.querySelectorAll('.vehicle-select').forEach((sel, i) => loadAvailableVehicles(i, startDate, endDate));
 }
 
-// حساب التكلفة النهائية = مجموع (سعر الحافلة * الايام) + مبيت الحافلة + اعاشة السائق +/- التخفيض/الزيادة
+// حساب التكلفة النهائية
+// أوتوماتيك: مجموع (سعر الحافلة * الايام) + مبيت + اعاشة +/- تعديل
+// يدوي: مجموع (سعر الحافلة) + مبيت + اعاشة +/- تعديل (سعر الحافلة = الاجمالي لا يُضرب في الايام)
 function calculateFinalCost() {
   const days = parseInt(document.getElementById('durationDays').value) || 0;
   const maintenance = parseFloat(document.getElementById('busMaintenance').value) || 0;
   const transport = parseFloat(document.getElementById('driverTransport').value) || 0;
+  const isAuto = document.getElementById('isAutoPricing').checked;
 
   var busPrices = document.querySelectorAll('.bus-price');
   var busTotal = 0;
   var priceDetails = [];
   busPrices.forEach(function(el) {
     var p = parseFloat(el.value) || 0;
-    busTotal += p * days;
+    if (isAuto) {
+      busTotal += p * days;
+    } else {
+      busTotal += p;
+    }
     if (p > 0) priceDetails.push(p.toFixed(2));
   });
 
@@ -875,7 +898,13 @@ function calculateFinalCost() {
   const text = document.getElementById('costBreakdownText');
   if (busTotal > 0 || maintenance > 0 || transport > 0) {
     breakdown.style.display = 'block';
-    text.textContent = priceDetails.length + ' حافلة × ' + days + ' يوم = ' + busTotal.toFixed(2) +
+    var formula = '';
+    if (isAuto) {
+      formula = priceDetails.length + ' حافلة × ' + days + ' يوم = ' + busTotal.toFixed(2);
+    } else {
+      formula = priceDetails.length + ' حافلة = ' + busTotal.toFixed(2) + ' (سعر اجمالي)';
+    }
+    text.textContent = formula +
       (maintenance > 0 ? ' + مبيت ' + maintenance.toFixed(2) : '') +
       (transport > 0 ? ' + اعاشة ' + transport.toFixed(2) : '') +
       adjustmentText +
@@ -883,6 +912,38 @@ function calculateFinalCost() {
   } else {
     breakdown.style.display = 'none';
   }
+}
+
+// تغيير وضع التسعير
+function onPricingModeChange() {
+  var isAuto = document.getElementById('isAutoPricing').checked;
+  var label = document.getElementById('pricingModeLabel');
+  var hint = document.getElementById('pricingModeHint');
+  if (isAuto) {
+    label.textContent = 'تسعير أوتوماتيك (يقرأ من جدول الاسعار)';
+    label.style.color = '#059669';
+    hint.textContent = 'سعر الحافلة باليوم يُقرأ تلقائياً من جدول اسعار ايجار الحافلات ويُضرب في عدد الايام';
+  } else {
+    label.textContent = 'تسعير يدوي (ادخال يدوي)';
+    label.style.color = '#dc2626';
+    hint.textContent = 'سعر الحافلة هو الاجمالي لكل ايام الرحلة (لا يُضرب في عدد الايام)';
+  }
+  // Update all bus price labels
+  document.querySelectorAll('[id^="busPriceLabel_"]').forEach(function(lbl) {
+    if (isAuto) {
+      lbl.innerHTML = 'سعر الحافلة باليوم (د.ل) <span class="text-danger">*</span>';
+    } else {
+      lbl.innerHTML = 'اجمالي سعر الحافلة لكل الايام (د.ل) <span class="text-danger">*</span>';
+    }
+  });
+  document.querySelectorAll('[id^="busPriceHint_"]').forEach(function(h) {
+    if (isAuto) {
+      h.textContent = 'يُضرب تلقائياً في عدد الايام';
+    } else {
+      h.textContent = 'لا يُضرب في عدد الايام - سعر اجمالي';
+    }
+  });
+  calculateFinalCost();
 }
 function addNewItem(inputId) {
   var select = document.getElementById(inputId);
@@ -921,10 +982,12 @@ function calcDriverShare(index) {
   var pct = parseFloat(pctInput.value) || 0;
   var days = parseInt(document.getElementById('durationDays').value) || 0;
   var tripType = document.querySelector('input[name="trip_type"]:checked').value;
+  var isAuto = document.getElementById('isAutoPricing').checked;
   if (tripType === 'internal' || pct === 0) {
     valueInput.value = '0.00';
   } else {
-    var shareValue = (price * days * pct) / 100;
+    var base = isAuto ? (price * days) : price;
+    var shareValue = (base * pct) / 100;
     valueInput.value = shareValue.toFixed(2);
   }
 }

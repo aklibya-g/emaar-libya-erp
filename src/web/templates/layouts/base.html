@@ -1,9 +1,15 @@
 ﻿<!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
+<html lang="ar" dir="rtl" data-theme="sky">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#63b3ed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="إعمار ERP">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <title>{% block title %}{{ page_title | default('لوحة التحكم') }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -15,13 +21,14 @@
 <body>
   <div class="app-wrapper">
 
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon"><i class="bi bi-building"></i></div>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="شعار اعمار ليبيا" style="width:48px;height:48px;object-fit:contain;border-radius:10px">
         <div class="brand-text">
-          <div style="font-weight:600;line-height:1.2">شركة اعمار ليبيا</div>
+          <div style="font-weight:700;line-height:1.2;font-size:0.95em">شركة اعمار ليبيا</div>
           <div style="font-size:0.7em;opacity:0.7;line-height:1.2">لنقل الركاب</div>
-          <div style="font-size:0.65em;opacity:0.5;line-height:1.2">شركة اعمار القابضة</div>
+          <div style="font-size:0.62em;opacity:0.5;line-height:1.2">شركة اعمار القابضة</div>
         </div>
       </div>
 
@@ -74,6 +81,29 @@
           </a>
         </div>
         {% endif %}
+
+        <div class="sidebar-section">
+          <a href="{{ url_for('maintenance.dashboard') }}" class="nav-item {% if request.endpoint == 'maintenance.dashboard' %}active{% endif %}">
+            <i class="bi bi-tools"></i>
+            <span>ادارة الصيانة</span>
+          </a>
+          {% if request.endpoint and request.endpoint.startswith('maintenance') and request.endpoint != 'maintenance.dashboard' %}
+          <div class="sidebar-submenu">
+            <a href="{{ url_for('maintenance.requests_list') }}" class="nav-item {% if request.endpoint in ['maintenance.requests_list','maintenance.requests_detail','maintenance.requests_add','maintenance.requests_edit'] %}active{% endif %}">
+              <i class="bi bi-clipboard-list"></i><span>طلبات الصيانة</span>
+            </a>
+            <a href="{{ url_for('maintenance.logs_list') }}" class="nav-item {% if request.endpoint == 'maintenance.logs_list' %}active{% endif %}">
+              <i class="bi bi-journal-text"></i><span>سجلات الصيانة</span>
+            </a>
+            <a href="{{ url_for('maintenance.returns_list') }}" class="nav-item {% if request.endpoint == 'maintenance.returns_list' %}active{% endif %}">
+              <i class="bi bi-arrow-return-left"></i><span>إعادات القطع</span>
+            </a>
+            <a href="{{ url_for('maintenance.schedules_list') }}" class="nav-item {% if request.endpoint == 'maintenance.schedules_list' %}active{% endif %}">
+              <i class="bi bi-calendar-check"></i><span>الصيانة الدورية</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
 
         <div class="sidebar-section">
           <a href="{{ url_for('finance.finance_dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('finance') %}active{% endif %}">
@@ -158,7 +188,7 @@
     <main class="main-content">
       <header class="topbar">
         <div class="topbar-right">
-          <button class="sidebar-toggle" id="sidebarToggle" onclick="document.getElementById('sidebar').classList.toggle('show')">
+          <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
           </button>
           <div class="topbar-search">
@@ -260,9 +290,40 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Mobile Sidebar Toggle
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('show');
+      document.getElementById('sidebarOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('show');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var sidebar = document.getElementById('sidebar');
+      if (sidebar.classList.contains('show')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+    // Close sidebar on link click (mobile)
+    document.querySelectorAll('.sidebar .nav-item').forEach(function(link) {
+      link.addEventListener('click', function() {
+        if (window.innerWidth < 992) closeSidebar();
+      });
+    });
+    // Close sidebar on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
     // Theme Switcher
     (function() {
-      const savedTheme = localStorage.getItem('emaar-theme') || 'dark';
+      const savedTheme = localStorage.getItem('emaar-theme') || 'sky';
       document.documentElement.setAttribute('data-theme', savedTheme);
       updateActiveTheme(savedTheme);
 
@@ -317,6 +378,11 @@
         }
       }
     }).catch(function() {});
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/sw.js').catch(function() {});
+    }
   </script>
   {% block extra_js %}{% endblock %}
 </body>

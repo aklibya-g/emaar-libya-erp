@@ -73,6 +73,9 @@
             </td>
             <td style="padding:12px;text-align:center;font-size:12px;color:#64748b">{{ p.notes or '-' }}</td>
             <td style="padding:12px;text-align:center">
+              <button type="button" class="btn btn-sm btn-outline-primary me-1" style="border-radius:8px" onclick="openEditModal('{{ p.id }}', '{{ p.vehicle_type_id }}', '{{ p.seats_count or '' }}', '{{ p.daily_price }}', '{{ p.notes or '' }}', '{{ p.vehicle_type.name_ar if p.vehicle_type else '' }}')">
+                <i class="bi bi-pencil"></i>
+              </button>
               <form method="POST" action="{{ url_for('marketing.bus_rental_price_delete', price_id=p.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا السعر؟')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px">
@@ -140,10 +143,61 @@
     </div>
   </div>
 </div>
+
+<!-- Edit Price Modal -->
+<div class="modal fade" id="editPriceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px;border:2px solid #3182ce">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;border-radius:14px 14px 0 0">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>تعديل سعر الايجار</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="editPriceForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label fw-bold">نوع السيارة</label>
+              <input type="text" class="form-control" id="editVehicleTypeName" readonly style="background:#f1f5f9;border-radius:10px;font-weight:700">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">عدد الركاب</label>
+              <input type="number" class="form-control" name="seats_count" id="editSeatsCount" style="border-radius:10px">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">سعر الايجار اليومي (د.ل) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="daily_price" id="editDailyPrice" required step="0.01" min="0" style="border-radius:10px;font-weight:700;font-size:16px;color:#059669">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold">ملاحظات</label>
+              <textarea class="form-control" name="notes" id="editNotes" rows="2" style="border-radius:10px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">الغاء</button>
+          <button type="submit" class="btn btn-primary" style="border-radius:10px;padding:10px 24px">
+            <i class="bi bi-check-lg me-1"></i>حفظ التعديل
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+function openEditModal(priceId, vehicleTypeId, seats, price, notes, typeName) {
+  document.getElementById('editPriceForm').action = '/marketing/bus-rental-prices/' + priceId + '/edit';
+  document.getElementById('editVehicleTypeName').value = typeName;
+  document.getElementById('editSeatsCount').value = seats;
+  document.getElementById('editDailyPrice').value = price;
+  document.getElementById('editNotes').value = notes;
+  var modal = new bootstrap.Modal(document.getElementById('editPriceModal'));
+  modal.show();
+}
+
 function onRentalTypeChange() {
   var sel = document.getElementById('rentalVehicleType');
   var seatsInput = document.getElementById('rentalSeatsCount');

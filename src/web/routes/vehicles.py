@@ -25,7 +25,7 @@ def vehicle_dashboard():
         inactive_vehicles = session.query(Vehicle).filter(Vehicle.status == "inactive").count()
 
         pending_maintenance = session.query(VehicleMaintenance).filter(
-            VehicleMaintenance.status == "pending"
+            VehicleMaintenance.status.in_(["pending", "in_progress"])
         ).count()
 
         from datetime import timedelta
@@ -36,6 +36,16 @@ def vehicle_dashboard():
         expiring_registration = session.query(Vehicle).filter(
             Vehicle.registration_expiry <= today + timedelta(days=30),
             Vehicle.registration_expiry >= today,
+        ).count()
+        expired_insurance = session.query(Vehicle).filter(
+            Vehicle.insurance_expiry < today,
+        ).count()
+        expired_registration = session.query(Vehicle).filter(
+            Vehicle.registration_expiry < today,
+        ).count()
+
+        unresolved_breakdowns = session.query(VehicleBreakdown).filter(
+            VehicleBreakdown.resolved == False
         ).count()
 
         month_start = today.replace(day=1)
@@ -54,7 +64,9 @@ def vehicle_dashboard():
         vehicle_types = session.query(VehicleType).filter(VehicleType.is_active == True).all()
         recent_maintenance = session.query(VehicleMaintenance).order_by(
             VehicleMaintenance.created_at.desc()
-        ).limit(5).all()
+        ).limit(6).all()
+
+        assigned_count = session.query(Vehicle).filter(Vehicle.driver_id.isnot(None)).count()
 
         return render_template("vehicles/dashboard.html",
             total_vehicles=total_vehicles,
@@ -64,10 +76,14 @@ def vehicle_dashboard():
             pending_maintenance=pending_maintenance,
             expiring_insurance=expiring_insurance,
             expiring_registration=expiring_registration,
+            expired_insurance=expired_insurance,
+            expired_registration=expired_registration,
+            unresolved_breakdowns=unresolved_breakdowns,
             total_expenses=total_expenses,
             total_fuel=total_fuel,
             vehicle_types=vehicle_types,
             recent_maintenance=recent_maintenance,
+            assigned_count=assigned_count,
             today=today,
         )
 
@@ -98,6 +114,42 @@ def vehicle_list():
         return render_template("vehicles/list.html",
             vehicles=vehicles, vehicle_types=vehicle_types,
             search=search, type_id=type_id, status=status,
+        )
+
+
+@vehicle_bp.route("/expiring-insurance")
+@login_required
+def expiring_insurance():
+    with session_scope() as session:
+        from datetime import timedelta
+        today = date.today()
+        vehicles = session.query(Vehicle).filter(
+            Vehicle.insurance_expiry.isnot(None),
+            Vehicle.insurance_expiry <= today + timedelta(days=30),
+        ).order_by(Vehicle.insurance_expiry).all()
+        return render_template("vehicles/expiring_list.html",
+            vehicles=vehicles, today=today,
+            list_title="تأمين المركبات المنتهي قريباً",
+            list_icon="shield-check",
+            date_field="insurance_expiry",
+        )
+
+
+@vehicle_bp.route("/expiring-registration")
+@login_required
+def expiring_registration():
+    with session_scope() as session:
+        from datetime import timedelta
+        today = date.today()
+        vehicles = session.query(Vehicle).filter(
+            Vehicle.registration_expiry.isnot(None),
+            Vehicle.registration_expiry <= today + timedelta(days=30),
+        ).order_by(Vehicle.registration_expiry).all()
+        return render_template("vehicles/expiring_list.html",
+            vehicles=vehicles, today=today,
+            list_title="الفحص الفني المنتهي قريباً",
+            list_icon="clipboard2-check",
+            date_field="registration_expiry",
         )
 
 
