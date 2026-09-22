@@ -98,12 +98,9 @@
     </div>
     <div class="d-flex gap-3 header-actions">
       {% if current_user.is_admin and drivers %}
-      <form method="POST" action="{{ url_for('drivers.drivers_delete_all') }}" class="d-inline"
-            onsubmit="return confirm('تحذير: سيتم حذف جميع السائقين نهائياً!\nهل أنت متأكد من المتابعة؟');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="confirm" value="DELETE">
-        <button type="submit" class="btn-delete-all"><i class="bi bi-trash3"></i> حذف جميع السائقين</button>
-      </form>
+      <button type="button" class="btn-delete-all" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
+        <i class="bi bi-trash3"></i> حذف جميع السائقين
+      </button>
       {% endif %}
       <a href="{{ url_for('drivers.drivers_add') }}" class="btn-add"><i class="bi bi-plus-lg"></i> إضافة سائق</a>
     </div>
@@ -234,10 +231,10 @@
               <div class="actions-cell">
                 <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="action-btn view" title="عرض"><i class="bi bi-eye"></i></a>
                 <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="action-btn edit" title="تعديل"><i class="bi bi-pencil-square"></i></a>
-                <form method="POST" action="{{ url_for('drivers.drivers_delete', id=drv.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا السائق؟')">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="action-btn del" title="حذف"><i class="bi bi-trash3"></i></button>
-                </form>
+                <button type="button" class="action-btn del" title="حذف"
+                        onclick="confirmDeleteDriver('{{ drv.id }}', '{{ drv.full_name_ar | e }}')">
+                  <i class="bi bi-trash3"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -257,4 +254,87 @@
     {% endif %}
   </div>
 </div>
+
+<!-- مودال تأكيد حذف سائق -->
+<div class="modal fade" id="deleteDriverModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:2px solid var(--accent-red);overflow:hidden">
+      <div class="modal-header" style="background:rgba(248,113,113,0.08);border-bottom:1px solid var(--border-color)">
+        <h5 class="modal-title" style="color:var(--accent-red);font-weight:700">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>تأكيد حذف السائق
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <div class="text-center mb-3">
+          <div style="width:64px;height:64px;border-radius:50%;background:rgba(248,113,113,0.1);display:inline-flex;align-items:center;justify-content:center">
+            <i class="bi bi-person-x" style="font-size:28px;color:var(--accent-red)"></i>
+          </div>
+        </div>
+        <p class="text-center mb-1" style="color:var(--text-primary);font-weight:600;font-size:15px">
+          هل أنت متأكد من حذف السائق؟
+        </p>
+        <p class="text-center mb-0" id="deleteDriverName" style="color:var(--accent);font-weight:700;font-size:16px"></p>
+        <p class="text-center mt-2 mb-0" style="color:var(--text-muted);font-size:13px">
+          يمكن استعادته لاحقاً من سلة المحذوفات
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:16px 24px">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">إلغاء</button>
+        <form method="POST" id="deleteDriverForm" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger" style="border-radius:10px;font-weight:700;padding:10px 28px">
+            <i class="bi bi-trash3 me-1"></i> نعم، حذف
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مودال تأكيد حذف جميع السائقين -->
+{% if current_user.is_admin and drivers %}
+<div class="modal fade" id="deleteAllModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:2px solid var(--accent-red);overflow:hidden">
+      <div class="modal-header" style="background:rgba(248,113,113,0.08);border-bottom:1px solid var(--border-color)">
+        <h5 class="modal-title" style="color:var(--accent-red);font-weight:700">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>حذف جميع السائقين
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('drivers.drivers_delete_all') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body" style="padding:24px">
+          <div class="alert alert-danger" style="border-radius:10px;margin-bottom:16px">
+            <i class="bi bi-exclamation-diamond-fill me-1"></i>
+            <strong>تحذير:</strong> سيتم حذف <strong>{{ drivers|length }}</strong> سائق نهائياً.
+            يمكن استعادتهم من سلة المحذوفات.
+          </div>
+          <label class="form-label fw-bold">اكتب <span style="color:var(--accent-red)">DELETE</span> للتأكيد <span class="text-danger">*</span></label>
+          <input type="text" name="typed_confirm" class="form-control" id="deleteAllTyped"
+                 placeholder="اكتب DELETE" autocomplete="off" required
+                 style="border-radius:10px;letter-spacing:2px;font-weight:700"
+                 oninput="document.getElementById('deleteAllSubmitBtn').disabled = this.value.trim() !== 'DELETE'">
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:16px 24px">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px">إلغاء</button>
+          <button type="submit" class="btn btn-danger" id="deleteAllSubmitBtn" disabled
+                  style="border-radius:10px;font-weight:700;padding:10px 28px;opacity:0.5">
+            <i class="bi bi-trash3 me-1"></i> حذف الكل
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function confirmDeleteDriver(driverId, driverName) {
+  document.getElementById('deleteDriverName').textContent = driverName;
+  document.getElementById('deleteDriverForm').action = '{{ url_for("drivers.drivers_delete", id="") }}' + driverId;
+  new bootstrap.Modal(document.getElementById('deleteDriverModal')).show();
+}
+</script>
 {% endblock %}

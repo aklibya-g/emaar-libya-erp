@@ -217,7 +217,7 @@ def drivers_delete_all():
     if not current_user.is_admin:
         flash("هذه العملية متاحة لمدير النظام فقط", "danger")
         return redirect(url_for("drivers.drivers_list"))
-    confirm = request.form.get("confirm", "").strip()
+    confirm = request.form.get("typed_confirm", request.form.get("confirm", "")).strip()
     if confirm != "DELETE":
         flash('يرجى كتابة DELETE في مربع التأكيد', "danger")
         return redirect(url_for("drivers.drivers_list"))
