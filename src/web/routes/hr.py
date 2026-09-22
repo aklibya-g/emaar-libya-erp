@@ -2847,8 +2847,18 @@ def notifications_read_all():
 @login_required
 def notifications_count():
     session = get_web_session()
-    count = session.query(Notification).filter(
+    unread_q = session.query(Notification).filter(
         Notification.user_id == current_user.id,
         Notification.is_read == False,
-    ).count()
-    return jsonify({"count": count})
+    )
+    count = unread_q.count()
+    latest = unread_q.order_by(Notification.created_at.desc()).first()
+    payload = {"count": count, "is_admin": bool(current_user.is_admin)}
+    if latest:
+        payload["latest"] = {
+            "title": latest.title or "",
+            "message": latest.message or "",
+            "type": latest.notification_type or "",
+            "url": url_for("hr.notifications_list"),
+        }
+    return jsonify(payload)

@@ -111,8 +111,13 @@
     </div>
     <div class="d-flex gap-3 header-actions">
       {% if current_user.is_admin and pending_count %}
-      <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn-approve">
-        <i class="bi bi-patch-check"></i> بانتظار الاعتماد ({{ pending_count }})
+      <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn-approve approval-banner-glow">
+        <i class="bi bi-patch-check"></i> بانتظار اعتمادك ({{ pending_count }})
+      </a>
+      {% endif %}
+      {% if is_movement|default(false) and pending_count and not current_user.is_admin %}
+      <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn-approve approval-banner-glow" style="background:linear-gradient(135deg,#3b82f6,#2563eb);box-shadow:0 4px 16px rgba(59,130,246,0.3);">
+        <i class="bi bi-hourglass-split"></i> بانتظار المدير ({{ pending_count }})
       </a>
       {% endif %}
       {% if current_user.is_admin and drivers %}
@@ -124,6 +129,38 @@
     </div>
   </div>
 </div>
+
+{% if current_user.is_admin and pending_count %}
+<div class="approval-banner-glow mb-4 d-flex align-items-center justify-content-between gap-3" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #f59e0b;border-radius:14px;padding:16px 22px;">
+  <div class="d-flex align-items-center gap-3">
+    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="bi bi-person-badge-fill" style="color:#fff;font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:14px;color:#92400e;">تنبيه: {{ pending_count }} سائق من إدارة الحركة بانتظار اعتمادك</div>
+      <div style="font-size:12px;color:#a16207;">اضغط على السائق ثم اعتمِ أو ارفض (سبب الرفض إلزامي)</div>
+    </div>
+  </div>
+  <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:700;border-radius:10px;padding:10px 22px;">
+    <i class="bi bi-clipboard-check me-1"></i> مراجعة الآن
+  </a>
+</div>
+{% elif is_movement|default(false) and pending_count %}
+<div class="approval-banner-glow mb-4 d-flex align-items-center justify-content-between gap-3" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #3b82f6;border-radius:14px;padding:16px 22px;">
+  <div class="d-flex align-items-center gap-3">
+    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="bi bi-send-fill" style="color:#fff;font-size:20px;"></i>
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:14px;color:#1e40af;">{{ pending_count }} سائق قمت بإرسالهم بانتظار اعتماد المدير التنفيذي</div>
+      <div style="font-size:12px;color:#1d4ed8;">ستصلك إشعارات عند الاعتماد أو الرفض</div>
+    </div>
+  </div>
+  <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:700;border-radius:10px;padding:10px 22px;">
+    <i class="bi bi-eye me-1"></i> عرض
+  </a>
+</div>
+{% endif %}
 
 <!-- Stats -->
 <div class="row g-3 mb-4">

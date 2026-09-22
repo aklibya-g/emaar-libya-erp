@@ -178,6 +178,9 @@ def create_app() -> Flask:
         corr_perms = {}
         unread_notifications = 0
         pending_driver_approvals = 0
+        is_movement = False
+        movement_pending_drivers = 0
+        movement_rejected_drivers = 0
         driver_contract_types = DEFAULT_CONTRACT_TYPES
         driver_activity_types = DEFAULT_ACTIVITY_TYPES
         if current_user.is_authenticated:
@@ -191,11 +194,25 @@ def create_app() -> Flask:
                 Notification.user_id == current_user.id,
                 Notification.is_read == False,
             ).count()
+            is_movement = any(
+                m.module_name == "movement" and m.can_view
+                for m in sidebar_perms.values()
+            )
             if current_user.is_admin:
                 from src.core.models.base_models import Driver as _Driver
                 pending_driver_approvals = session.query(_Driver).filter(
                     _Driver.is_deleted == False,
                     _Driver.approval_status == "pending",
+                ).count()
+            if is_movement:
+                from src.core.models.base_models import Driver as _Driver
+                movement_pending_drivers = session.query(_Driver).filter(
+                    _Driver.is_deleted == False,
+                    _Driver.approval_status == "pending",
+                ).count()
+                movement_rejected_drivers = session.query(_Driver).filter(
+                    _Driver.is_deleted == False,
+                    _Driver.approval_status == "rejected",
                 ).count()
             try:
                 driver_contract_types = get_contract_types(session)
@@ -210,6 +227,9 @@ def create_app() -> Flask:
             "corr_perms": corr_perms,
             "unread_notifications": unread_notifications,
             "pending_driver_approvals": pending_driver_approvals,
+            "is_movement": is_movement,
+            "movement_pending_drivers": movement_pending_drivers,
+            "movement_rejected_drivers": movement_rejected_drivers,
             "driver_contract_types": driver_contract_types,
             "driver_activity_types": driver_activity_types,
         }

@@ -284,6 +284,27 @@
         {% endif %}
       {% endwith %}
 
+      <!-- Global alert toast + sound -->
+      <div id="alertToast" style="display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:99999;min-width:340px;max-width:520px;border-radius:16px;padding:16px 22px;box-shadow:0 12px 40px rgba(0,0,0,0.28);border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7);animation:alertSlideIn 0.4s ease;color:#92400e;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div id="alertToastIcon" style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:alertPulse 1s ease infinite;">
+            <i class="bi bi-bell-fill" style="color:#fff;font-size:22px"></i>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div id="alertToastTitle" style="font-weight:800;font-size:14px;margin-bottom:2px;">تنبيه جديد</div>
+            <div id="alertToastMsg" style="font-size:13px;color:#a16207;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          </div>
+          <button type="button" onclick="document.getElementById('alertToast').style.display='none'" style="background:none;border:none;color:#b45309;font-size:18px;cursor:pointer;padding:0 4px;" title="إغلاق">&times;</button>
+        </div>
+        <a id="alertToastLink" href="#" style="display:inline-block;margin-top:10px;margin-right:60px;font-size:12px;font-weight:700;color:#b45309;text-decoration:underline;">عرض التفاصيل</a>
+      </div>
+      <style>
+        @keyframes alertSlideIn { from { opacity:0; transform:translateX(-50%) translateY(-24px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+        @keyframes alertPulse { 0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(245,158,11,0.5); } 50% { transform:scale(1.08); box-shadow:0 0 0 12px rgba(245,158,11,0); } }
+        @keyframes bannerGlow { 0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0.35); } 50% { box-shadow:0 0 18px 4px rgba(245,158,11,0.45); } }
+        .approval-banner-glow { animation: bannerGlow 2s ease infinite; }
+      </style>
+
       <div class="page-content animate-fade">
         {% block content %}{% endblock %}
       </div>
@@ -389,6 +410,114 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/static/sw.js').catch(function() {});
     }
+
+    // ===== Global notification alert: sound + toast =====
+    (function() {
+      var INIT_UNREAD = {{ unread_notifications|default(0) }};
+      var IS_ADMIN = {{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }};
+      var IS_MOVEMENT = {{ 'true' if is_movement|default(false) else 'false' }};
+      var lastCount = INIT_UNREAD;
+      var toastHideTimer = null;
+
+      function playStrongAlert() {
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          var ctx = new Ctx();
+          function tone(freq, at, dur, vol) {
+            var o = ctx.createOscillator();
+            var g = ctx.createGain();
+            o.type = 'square';
+            o.frequency.value = freq;
+            g.gain.value = vol || 0.35;
+            o.connect(g); g.connect(ctx.destination);
+            var t0 = ctx.currentTime + at;
+            g.gain.setValueAtTime(vol || 0.35, t0);
+            g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+            o.start(t0); o.stop(t0 + dur);
+          }
+          tone(880, 0, 0.18, 0.4);
+          tone(880, 0.22, 0.18, 0.4);
+          tone(1174.66, 0.44, 0.35, 0.45);
+          setTimeout(function(){ try{ ctx.close(); }catch(e){} }, 1200);
+        } catch(e) {}
+      }
+
+      function showToast(title, msg, url, type) {
+        var toast = document.getElementById('alertToast');
+        if (!toast) return;
+        document.getElementById('alertToastTitle').textContent = title || 'تنبيه جديد';
+        document.getElementById('alertToastMsg').textContent = msg || '';
+        var link = document.getElementById('alertToastLink');
+        if (url) { link.href = url; link.style.display = 'inline-block'; }
+        else { link.style.display = 'none'; }
+        var danger = (type || '').indexOf('reject') >= 0;
+        if (danger) {
+          toast.style.borderColor = '#ef4444';
+          toast.style.background = 'linear-gradient(135deg,#fef2f2,#fee2e2)';
+          toast.style.color = '#991b1b';
+          document.getElementById('alertToastIcon').style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+          document.getElementById('alertToastMsg').style.color = '#b91c1c';
+        } else {
+          toast.style.borderColor = '#f59e0b';
+          toast.style.background = 'linear-gradient(135deg,#fffbeb,#fef3c7)';
+          toast.style.color = '#92400e';
+          document.getElementById('alertToastIcon').style.background = 'linear-gradient(135deg,#f59e0b,#f97316)';
+          document.getElementById('alertToastMsg').style.color = '#a16207';
+        }
+        toast.style.display = 'block';
+        if (toastHideTimer) clearTimeout(toastHideTimer);
+        toastHideTimer = setTimeout(function(){ toast.style.display = 'none'; }, 12000);
+      }
+
+      function handlePayload(data, forceSound) {
+        if (!data || typeof data.count !== 'number') return;
+        var increased = data.count > lastCount;
+        if (increased || forceSound) {
+          playStrongAlert();
+          var latest = data.latest || {};
+          var isAdminType = (latest.type || '').indexOf('pending_executive') >= 0
+            || (latest.type || '').indexOf('driver_') >= 0
+            || (latest.type || '').indexOf('claim_') >= 0;
+          if (forceSound || increased) {
+            showToast(
+              (IS_ADMIN && isAdminType) ? 'تنبيه للمدير التنفيذي' : 'إشعار جديد',
+              latest.message || latest.title || 'لديك إشعار جديد غير مقروء',
+              latest.url || '{{ url_for("hr.notifications_list") }}',
+              latest.type || ''
+            );
+          }
+        }
+        lastCount = data.count;
+        var bell = document.querySelector('.topbar-notification .badge.bg-danger');
+        if (bell) {
+          if (data.count > 0) { bell.textContent = data.count; bell.style.display = 'inline'; }
+          else { bell.style.display = 'none'; }
+        }
+      }
+
+      function poll() {
+        fetch('{{ url_for("hr.notifications_count") }}', {credentials:'same-origin'})
+          .then(function(r){ return r.json(); })
+          .then(function(d){ handlePayload(d, false); })
+          .catch(function(){});
+      }
+
+      if (INIT_UNREAD > 0 && (IS_ADMIN || IS_MOVEMENT)) {
+        setTimeout(function(){
+          playStrongAlert();
+          showToast(
+            IS_ADMIN ? 'تنبيه: إشعارات غير مقروءة' : 'تنبيه لإدارة الحركة',
+            'لديك ' + INIT_UNREAD + ' إشعار غير مقروء — يرجى المراجعة',
+            '{{ url_for("hr.notifications_list") }}',
+            ''
+          );
+        }, 700);
+      }
+
+      setInterval(poll, 5000);
+      document.addEventListener('visibilitychange', function(){ if (!document.hidden) poll(); });
+    })();
   </script>
   {% block extra_js %}{% endblock %}
 </body>
