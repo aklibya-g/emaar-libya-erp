@@ -381,6 +381,7 @@ class Driver(Base, TimestampMixin, ActiveMixin, SoftDeleteMixin):
     contract_type: Mapped[Optional[str]] = mapped_column(String(30), default=None)
     activity_type: Mapped[Optional[str]] = mapped_column(String(50), default=None)
     status: Mapped[str] = mapped_column(String(20), default="active")
+    approval_status: Mapped[str] = mapped_column(String(20), default="approved")
     notes: Mapped[Optional[str]] = mapped_column(Text, default=None)
     license_photo_path: Mapped[Optional[str]] = mapped_column(String(500), default=None)
     photo_path: Mapped[Optional[str]] = mapped_column(String(500), default=None)
@@ -389,6 +390,27 @@ class Driver(Base, TimestampMixin, ActiveMixin, SoftDeleteMixin):
     documents: Mapped[List["DriverDocument"]] = relationship(
         back_populates="driver", cascade="all, delete-orphan"
     )
+    approval_messages: Mapped[List["DriverApprovalMessage"]] = relationship(
+        back_populates="driver", cascade="all, delete-orphan", order_by="DriverApprovalMessage.created_at"
+    )
+
+
+class DriverApprovalMessage(Base, TimestampMixin):
+    """محادثة اعتماد السائق بين قسم الحركة ومدير النظام"""
+    __tablename__ = "driver_approval_messages"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    driver_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("drivers.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sender_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("users.id"), default=None
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    msg_type: Mapped[str] = mapped_column(String(30), default="comment")  # comment|submit|approve|reject|resend
+
+    driver: Mapped["Driver"] = relationship(back_populates="approval_messages")
+    sender: Mapped[Optional["User"]] = relationship()
 
 
 class DriverDocument(Base, TimestampMixin):

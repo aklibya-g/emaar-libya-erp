@@ -248,6 +248,12 @@
             <span class="badge bg-danger position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ unread_notifications }}</span>
             {% endif %}
           </a>
+          {% if current_user.is_admin and pending_driver_approvals %}
+          <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="topbar-notification text-decoration-none" title="سائقين بانتظار الاعتماد" style="position:relative;background:none;border:none;cursor:pointer;">
+            <i class="bi bi-patch-check" style="font-size:18px;color:#f59e0b"></i>
+            <span class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ pending_driver_approvals }}</span>
+          </a>
+          {% endif %}
 
           <div class="topbar-user" data-bs-toggle="dropdown">
             <div class="topbar-avatar">{{ current_user.username[0] | upper if current_user and current_user.username else 'U' }}</div>

@@ -9,6 +9,20 @@ from src.core.models.base_models import User
 from src.app.config import ensure_directories, settings as app_settings
 
 
+def user_is_admin(user) -> bool:
+    if getattr(user, "username", None) == "admin":
+        return True
+    role = getattr(user, "role", None)
+    if role:
+        role_name = getattr(role, "name", "") or ""
+        role_name_ar = getattr(role, "name_ar", "") or ""
+        admin_keywords = ["admin", "super", "general manager", "مدير", "نظام", "عام"]
+        for kw in admin_keywords:
+            if kw.lower() in role_name.lower() or kw.lower() in role_name_ar.lower():
+                return True
+    return False
+
+
 class FlaskUser:
     def __init__(self, user):
         self.id = user.id
@@ -38,16 +52,7 @@ class FlaskUser:
 
     @property
     def is_admin(self):
-        if self.username == "admin":
-            return True
-        if self.role:
-            role_name = getattr(self.role, 'name', '') or ''
-            role_name_ar = getattr(self.role, 'name_ar', '') or ''
-            admin_keywords = ['admin', 'super', 'general manager', 'مدير', 'نظام', 'عام']
-            for kw in admin_keywords:
-                if kw.lower() in role_name.lower() or kw.lower() in role_name_ar.lower():
-                    return True
-        return False
+        return user_is_admin(self)
 
     @property
     def role_name(self):
@@ -172,6 +177,7 @@ def create_app() -> Flask:
         sidebar_perms = {}
         corr_perms = {}
         unread_notifications = 0
+        pending_driver_approvals = 0
         driver_contract_types = DEFAULT_CONTRACT_TYPES
         driver_activity_types = DEFAULT_ACTIVITY_TYPES
         if current_user.is_authenticated:
@@ -185,6 +191,12 @@ def create_app() -> Flask:
                 Notification.user_id == current_user.id,
                 Notification.is_read == False,
             ).count()
+            if current_user.is_admin:
+                from src.core.models.base_models import Driver as _Driver
+                pending_driver_approvals = session.query(_Driver).filter(
+                    _Driver.is_deleted == False,
+                    _Driver.approval_status == "pending",
+                ).count()
             try:
                 driver_contract_types = get_contract_types(session)
                 driver_activity_types = get_activity_types(session)
@@ -197,6 +209,7 @@ def create_app() -> Flask:
             "sidebar_perms": sidebar_perms,
             "corr_perms": corr_perms,
             "unread_notifications": unread_notifications,
+            "pending_driver_approvals": pending_driver_approvals,
             "driver_contract_types": driver_contract_types,
             "driver_activity_types": driver_activity_types,
         }

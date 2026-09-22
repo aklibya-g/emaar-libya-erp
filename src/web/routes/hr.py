@@ -2367,7 +2367,11 @@ def driver_contracts_list():
 def driver_contracts_add():
     session = get_web_session()
     from src.core.models.base_models import Driver
-    drivers = session.query(Driver).filter(Driver.is_deleted == False, Driver.status == "active").order_by(Driver.created_at.desc()).all()
+    drivers = session.query(Driver).filter(
+        Driver.is_deleted == False,
+        Driver.status == "active",
+        Driver.approval_status == "approved",
+    ).order_by(Driver.created_at.desc()).all()
 
     if request.method == "POST":
         driver_id = request.form.get("driver_id", "").strip()
@@ -2377,6 +2381,11 @@ def driver_contracts_add():
 
         if not all([driver_id, contract_type, start_date_str]):
             flash("جميع الحقول المطلوبة يجب ملؤها", "danger")
+            return render_template("hr/driver_contract_form.html", drivers=drivers, contract=None)
+
+        drv_check = session.query(Driver).filter(Driver.id == driver_id).first()
+        if drv_check and (drv_check.approval_status != "approved" or drv_check.status != "active"):
+            flash("لا يمكن إنشاء عقد — السائق غير معتمد من المدير التنفيذي", "danger")
             return render_template("hr/driver_contract_form.html", drivers=drivers, contract=None)
 
         if not contract_number:
@@ -2816,6 +2825,8 @@ def notification_read(id):
             return redirect(url_for("hr.leave_list", tab="pending_executive"))
         if notif.notification_type == "finance_claim_pending" and notif.reference_id:
             return redirect(url_for("finance.claim_detail", claim_id=notif.reference_id))
+        if notif.notification_type in ("driver_pending_executive", "driver_approved", "driver_rejected", "driver_comment") and notif.reference_id:
+            return redirect(url_for("drivers.drivers_detail", id=notif.reference_id))
     return redirect(url_for("hr.notifications_list"))
 
 

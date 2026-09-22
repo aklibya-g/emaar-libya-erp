@@ -30,6 +30,14 @@
                 <i class="bi bi-x-circle text-danger me-2" style="font-size:18px"></i>
                 {% elif n.notification_type == 'finance_claim_pending' %}
                 <i class="bi bi-wallet2 text-warning me-2" style="font-size:18px"></i>
+                {% elif n.notification_type == 'driver_pending_executive' %}
+                <i class="bi bi-person-badge text-warning me-2" style="font-size:18px"></i>
+                {% elif n.notification_type == 'driver_approved' %}
+                <i class="bi bi-patch-check text-success me-2" style="font-size:18px"></i>
+                {% elif n.notification_type == 'driver_rejected' %}
+                <i class="bi bi-x-octagon text-danger me-2" style="font-size:18px"></i>
+                {% elif n.notification_type == 'driver_comment' %}
+                <i class="bi bi-chat-dots text-info me-2" style="font-size:18px"></i>
                 {% else %}
                 <i class="bi bi-info-circle text-info me-2" style="font-size:18px"></i>
                 {% endif %}

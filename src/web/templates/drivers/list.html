@@ -75,6 +75,19 @@
 
   .btn-delete-all { background: linear-gradient(135deg, #f87171, #ef4444); border: none; color: #fff; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3); transition: var(--transition-normal); display: inline-flex; align-items: center; gap: 8px; }
   .btn-delete-all:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4); color: #fff; }
+
+  .btn-approve { background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3); transition: var(--transition-normal); display: inline-flex; align-items: center; gap: 8px; }
+  .btn-approve:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4); color: #fff; }
+
+  .action-btn.approve { color: var(--accent-green, #10b981); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.08); }
+  .action-btn.approve:hover { background: rgba(16, 185, 129, 0.18); }
+
+  .chat-bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+  .chat-bubble.from-movement { background: rgba(var(--accent-rgb), 0.08); border: 1px solid rgba(var(--accent-rgb), 0.15); margin-left: auto; border-top-right-radius: 4px; }
+  .chat-bubble.from-admin { background: rgba(72, 187, 120, 0.08); border: 1px solid rgba(72, 187, 120, 0.2); margin-right: auto; border-top-left-radius: 4px; }
+  .chat-meta { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .chat-system { text-align: center; font-size: 11px; color: var(--text-muted); margin: 8px 0; }
+  .chat-system span { background: var(--bg-hover); padding: 3px 12px; border-radius: 10px; }
 </style>
 {% endblock %}
 
@@ -97,6 +110,11 @@
       </div>
     </div>
     <div class="d-flex gap-3 header-actions">
+      {% if current_user.is_admin and pending_count %}
+      <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="btn-approve">
+        <i class="bi bi-patch-check"></i> بانتظار الاعتماد ({{ pending_count }})
+      </a>
+      {% endif %}
       {% if current_user.is_admin and drivers %}
       <button type="button" class="btn-delete-all" data-bs-toggle="modal" data-bs-target="#deleteAllModal">
         <i class="bi bi-trash3"></i> حذف جميع السائقين
@@ -109,7 +127,7 @@
 
 <!-- Stats -->
 <div class="row g-3 mb-4">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <div class="stat-card stat-blue">
       <div class="d-flex justify-content-between align-items-start">
         <div>
@@ -120,7 +138,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <div class="stat-card stat-green">
       <div class="d-flex justify-content-between align-items-start">
         <div>
@@ -131,7 +149,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <div class="stat-card stat-red">
       <div class="d-flex justify-content-between align-items-start">
         <div>
@@ -139,6 +157,17 @@
           <div class="stat-label">سائق متوقف</div>
         </div>
         <div class="stat-icon"><i class="bi bi-pause-circle-fill"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card stat-teal">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ pending_count }}</div>
+          <div class="stat-label">بانتظار الاعتماد</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
       </div>
     </div>
   </div>
@@ -160,10 +189,18 @@
         <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>متوقف</option>
       </select>
     </div>
+    <div class="col-md-3">
+      <select name="approval" class="form-select">
+        <option value="">جميع حالات الاعتماد</option>
+        <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>بانتظار الاعتماد</option>
+        <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>معتمد</option>
+        <option value="rejected" {% if approval_filter == 'rejected' %}selected{% endif %}>مرفوض</option>
+      </select>
+    </div>
     <div class="col-md-2">
       <button type="submit" class="btn btn-primary w-100" style="border-radius:12px;font-weight:600;padding:12px"><i class="bi bi-search me-1"></i> بحث</button>
     </div>
-    {% if search or status_filter %}
+    {% if search or status_filter or approval_filter %}
     <div class="col-md-1">
       <a href="{{ url_for('drivers.drivers_list') }}" class="btn btn-outline-secondary w-100" style="border-radius:12px;padding:12px" title="مسح الفلاتر"><i class="bi bi-x-lg"></i></a>
     </div>
@@ -226,11 +263,19 @@
               {% else %}
                 <span class="badge" style="background:rgba(252,129,129,0.12);color:var(--accent-red);font-weight:600;padding:6px 12px;border-radius:8px">متوقف</span>
               {% endif %}
+              {% if drv.approval_status == 'pending' %}
+                <span class="badge ms-1" style="background:rgba(245,158,11,0.15);color:#d97706;font-weight:600;padding:6px 10px;border-radius:8px;font-size:10px">بانتظار الاعتماد</span>
+              {% elif drv.approval_status == 'rejected' %}
+                <span class="badge ms-1" style="background:rgba(239,68,68,0.15);color:#dc2626;font-weight:600;padding:6px 10px;border-radius:8px;font-size:10px">مرفوض</span>
+              {% endif %}
             </td>
             <td>
               <div class="actions-cell">
                 <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="action-btn view" title="عرض"><i class="bi bi-eye"></i></a>
                 <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="action-btn edit" title="تعديل"><i class="bi bi-pencil-square"></i></a>
+                {% if current_user.is_admin and drv.approval_status == 'pending' %}
+                <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="action-btn approve" title="الاعتماد والمحادثة"><i class="bi bi-patch-check"></i></a>
+                {% endif %}
                 <button type="button" class="action-btn del" title="حذف"
                         onclick="confirmDeleteDriver('{{ drv.id }}', '{{ drv.full_name_ar | e }}')">
                   <i class="bi bi-trash3"></i>

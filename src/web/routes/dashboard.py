@@ -90,6 +90,11 @@ def dashboard_view():
         DriverPayout.status == "pending"
     ).count()
 
+    pending_driver_approvals = session.query(Driver).filter(
+        Driver.is_deleted == False,
+        Driver.approval_status == "pending",
+    ).count()
+
     work_order_alerts = []
     draft_orders = session.query(WorkOrder).filter(
         WorkOrder.status == "draft",
@@ -172,6 +177,7 @@ def dashboard_view():
         pending_finance_claims=pending_finance_claims,
         pending_finance_amount=pending_finance_amount,
         pending_driver_payouts=pending_driver_payouts,
+        pending_driver_approvals=pending_driver_approvals,
         school_trips_count=school_trips_count,
         today=date.today(),
     )

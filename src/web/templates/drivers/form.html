@@ -250,6 +250,13 @@
           <label class="form-label" style="font-size:12px;">ملاحظات</label>
           <textarea name="notes" class="form-control form-control-sm" rows="2">{{ driver.notes if driver and driver.notes else '' }}</textarea>
         </div>
+        {% if not driver %}
+        <div class="col-md-12">
+          <label class="form-label" style="font-size:12px;">ملاحظات للمدير التنفيذي (اختياري)</label>
+          <textarea name="approval_note" class="form-control form-control-sm" rows="2" placeholder="أي ملاحظات ترغب بإرسالها مع السائق للاعتماد..."></textarea>
+          <div class="form-text">سيتم إرسال السائق للمدير التنفيذي للاعتماد — حالته مؤقتاً: نشط بانتظار الاعتماد</div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>

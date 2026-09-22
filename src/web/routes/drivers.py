@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from src.core.database.connection import get_web_session
-from src.core.models.base_models import Driver
+from src.core.models.base_models import Driver, DriverApprovalMessage, Notification, User, UserSidebarPermission
 from src.core.repositories.base_repository import BaseRepository
 from datetime import date
 
@@ -18,11 +18,48 @@ def _parse_date(val):
         return None
 
 
+def _movement_user_ids(session):
+    """كل مستخدم لديه صلاحية قسم الحركة (can_view) + الأدمن"""
+    ids = set()
+    if current_user.is_admin:
+        ids.add(current_user.id)
+    rows = session.query(UserSidebarPermission).filter(
+        UserSidebarPermission.module_name == "movement",
+        UserSidebarPermission.can_view == True,
+    ).all()
+    for r in rows:
+        ids.add(r.user_id)
+    return list(ids)
+
+
+def _notify(session, user_ids, title, message, ntype, ref_id):
+    for uid in user_ids:
+        if not uid:
+            continue
+        session.add(Notification(
+            user_id=uid,
+            title=title,
+            message=message,
+            notification_type=ntype,
+            reference_id=ref_id,
+            reference_type="Driver",
+        ))
+
+
+def _admin_user_ids(session):
+    """المدير التنفيذي / مدير النظام (is_admin)"""
+    from src.core.models.base_models import User
+    from src.web.app import user_is_admin
+    users = session.query(User).filter(User.is_deleted == False, User.is_active == True).all()
+    return [u.id for u in users if user_is_admin(u)]
+
+
 @drivers_bp.route("/")
 @login_required
 def drivers_list():
     search = request.args.get("search", "").strip()
     status_filter = request.args.get("status", "").strip()
+    approval_filter = request.args.get("approval", "").strip()
     session = get_web_session()
     q = session.query(Driver).filter(Driver.is_deleted == False)
     if search:
@@ -34,18 +71,25 @@ def drivers_list():
         )
     if status_filter in ("active", "inactive"):
         q = q.filter(Driver.status == status_filter)
+    if approval_filter in ("pending", "approved", "rejected"):
+        q = q.filter(Driver.approval_status == approval_filter)
     drivers = q.order_by(Driver.created_at.desc()).all()
     total = session.query(Driver).filter(Driver.is_deleted == False).count()
     active = session.query(Driver).filter(Driver.is_deleted == False, Driver.status == "active").count()
     inactive = session.query(Driver).filter(Driver.is_deleted == False, Driver.status == "inactive").count()
+    pending_count = session.query(Driver).filter(
+        Driver.is_deleted == False, Driver.approval_status == "pending"
+    ).count()
     return render_template(
         "drivers/list.html",
         drivers=drivers,
         search=search,
         status_filter=status_filter,
+        approval_filter=approval_filter,
         total_count=total,
         active_count=active,
         inactive_count=inactive,
+        pending_count=pending_count,
     )
 
 
@@ -97,6 +141,10 @@ def drivers_add():
                     flash(f"الرقم الوظيفي {driver_number} مستخدم مسبقاً", "danger")
                     return render_template("drivers/form.html", driver=None)
 
+            # الحالة الافتراضي نشط، لكن الاعتماد pending دائماً للجديد
+            status = request.form.get("status", "active") or "active"
+            approval_note = request.form.get("approval_note", "").strip()
+
             repo = BaseRepository(session, Driver)
             driver = repo.create(
                 driver_number=driver_number,
@@ -117,12 +165,33 @@ def drivers_add():
                 join_date=_parse_date(request.form.get("join_date")),
                 contract_type=request.form.get("contract_type", "").strip() or None,
                 activity_type=request.form.get("activity_type", "").strip() or None,
-                status=request.form.get("status", "active"),
+                status=status,
+                approval_status="pending",
                 notes=request.form.get("notes", "").strip() or None,
                 created_by=current_user.id,
             )
+            session.flush()
+
+            # رسالة الإرسال الأولى في المحادثة
+            initial_msg = approval_note or f"تمت إضافة السائق {full_name_ar} من قسم الحركة — بانتظار اعتماد المدير التنفيذي"
+            session.add(DriverApprovalMessage(
+                driver_id=driver.id,
+                sender_id=current_user.id,
+                message=initial_msg,
+                msg_type="submit",
+            ))
+
+            # إشعار المدير التنفيذي
+            _notify(
+                session,
+                _admin_user_ids(session),
+                "سائق جديد بانتظار الاعتماد",
+                f"تمت إضافة السائق: {full_name_ar} ({driver_number}) — برجاء الموافقة عليه",
+                "driver_pending_executive",
+                driver.id,
+            )
             session.commit()
-            flash(f"تم إضافة السائق {full_name_ar} بنجاح", "success")
+            flash(f"تمت إضافة السائق {full_name_ar} — بانتظار اعتماد المدير التنفيذي", "success")
             return redirect(url_for("drivers.drivers_detail", id=driver.id))
         except Exception as e:
             session.rollback()
@@ -142,7 +211,16 @@ def drivers_detail(id):
     if not driver:
         flash("السائق غير موجود", "danger")
         return redirect(url_for("drivers.drivers_list"))
-    return render_template("drivers/detail.html", driver=driver)
+    messages = session.query(DriverApprovalMessage).filter(
+        DriverApprovalMessage.driver_id == id
+    ).order_by(DriverApprovalMessage.created_at.asc()).all()
+    senders = {}
+    for m in messages:
+        if m.sender_id and m.sender_id not in senders:
+            u = session.query(User).filter(User.id == m.sender_id).first()
+            if u:
+                senders[m.sender_id] = u.full_name_ar or u.username
+    return render_template("drivers/detail.html", driver=driver, approval_messages=messages, senders=senders)
 
 
 @drivers_bp.route("/<id>/edit", methods=["GET", "POST"])
@@ -167,6 +245,9 @@ def drivers_edit(id):
                 flash(f"الرقم الوظيفي {new_driver_number} مستخدم مسبقاً", "danger")
                 return render_template("drivers/form.html", driver=driver)
 
+        # الحفظ لا يغيّر حالة الاعتماد الحالية (pending يبقى pending حتى يقرر الأدمن)
+        status = request.form.get("status", driver.status) or driver.status
+
         repo = BaseRepository(session, Driver)
         repo.update(id,
             driver_number=new_driver_number,
@@ -187,7 +268,7 @@ def drivers_edit(id):
             join_date=_parse_date(request.form.get("join_date")),
             contract_type=request.form.get("contract_type", "").strip() or None,
             activity_type=request.form.get("activity_type", "").strip() or None,
-            status=request.form.get("status", "active"),
+            status=status,
             notes=request.form.get("notes", "").strip() or None,
             updated_by=current_user.id,
         )
@@ -196,6 +277,164 @@ def drivers_edit(id):
         return redirect(url_for("drivers.drivers_detail", id=id))
 
     return render_template("drivers/form.html", driver=driver)
+
+
+@drivers_bp.route("/<id>/approve", methods=["POST"])
+@login_required
+def drivers_approve(id):
+    if not current_user.is_admin:
+        flash("الاعتماد متاح لمدير النظام فقط", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    session = get_web_session()
+    driver = session.query(Driver).filter(Driver.id == id, Driver.is_deleted == False).first()
+    if not driver:
+        flash("السائق غير موجود", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    if driver.approval_status == "approved":
+        flash("السائق معتمد مسبقاً", "info")
+        return redirect(url_for("drivers.drivers_detail", id=id))
+
+    note = request.form.get("message", "").strip() or "تم الاعتماد بواسطة المدير التنفيذي"
+    driver.approval_status = "approved"
+    driver.status = "active"
+    driver.updated_by = current_user.id
+    session.add(DriverApprovalMessage(
+        driver_id=driver.id,
+        sender_id=current_user.id,
+        message=note,
+        msg_type="approve",
+    ))
+    _notify(
+        session,
+        _movement_user_ids(session),
+        "تم اعتماد السائق",
+        f"تم اعتماد السائق: {driver.full_name_ar} ({driver.driver_number}) من قبل المدير التنفيذي",
+        "driver_approved",
+        driver.id,
+    )
+    session.commit()
+    flash(f"تم اعتماد السائق {driver.full_name_ar} — حالته نشط", "success")
+    return redirect(url_for("drivers.drivers_detail", id=id))
+
+
+@drivers_bp.route("/<id>/reject", methods=["POST"])
+@login_required
+def drivers_reject(id):
+    if not current_user.is_admin:
+        flash("الرفض متاح لمدير النظام فقط", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    session = get_web_session()
+    driver = session.query(Driver).filter(Driver.id == id, Driver.is_deleted == False).first()
+    if not driver:
+        flash("السائق غير موجود", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+
+    reason = request.form.get("reject_reason", "").strip()
+    if not reason:
+        flash("سبب الرفض مطلوب", "danger")
+        return redirect(url_for("drivers.drivers_detail", id=id))
+
+    driver.approval_status = "rejected"
+    driver.status = "inactive"
+    driver.updated_by = current_user.id
+    session.add(DriverApprovalMessage(
+        driver_id=driver.id,
+        sender_id=current_user.id,
+        message=f"تم الرفض: {reason}",
+        msg_type="reject",
+    ))
+    _notify(
+        session,
+        _movement_user_ids(session),
+        "تم رفض سائق من قبل المدير التنفيذي",
+        f"تم رفض السائق: {driver.full_name_ar} ({driver.driver_number}) — السبب: {reason}",
+        "driver_rejected",
+        driver.id,
+    )
+    session.commit()
+    flash(f"تم رفض السائق {driver.full_name_ar} — أصبح متوقفاً", "warning")
+    return redirect(url_for("drivers.drivers_detail", id=id))
+
+
+@drivers_bp.route("/<id>/resend", methods=["POST"])
+@login_required
+def drivers_resend(id):
+    """الحركة تعيد الإرسال بعد الرفض/التعديل"""
+    if not current_user.is_admin:
+        # السماح للحركة بإعادة الإرسال أيضاً
+        sp = None
+        session0 = get_web_session()
+        sp = session0.query(UserSidebarPermission).filter(
+            UserSidebarPermission.user_id == current_user.id,
+            UserSidebarPermission.module_name == "movement",
+            UserSidebarPermission.can_view == True,
+        ).first()
+        if not sp and not current_user.is_admin:
+            flash("غير مصرح لك بإعادة الإرسال", "danger")
+            return redirect(url_for("drivers.drivers_list"))
+    session = get_web_session()
+    driver = session.query(Driver).filter(Driver.id == id, Driver.is_deleted == False).first()
+    if not driver:
+        flash("السائق غير موجود", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    if driver.approval_status == "pending":
+        flash("السائق معلّق بانتظار الاعتماد بالفعل", "info")
+        return redirect(url_for("drivers.drivers_detail", id=id))
+
+    msg = request.form.get("message", "").strip() or "تم تعديل البيانات وإعادة الإرسال للمراجعة"
+    driver.approval_status = "pending"
+    driver.status = "active"
+    driver.updated_by = current_user.id
+    session.add(DriverApprovalMessage(
+        driver_id=driver.id,
+        sender_id=current_user.id,
+        message=msg,
+        msg_type="resend",
+    ))
+    _notify(
+        session,
+        _admin_user_ids(session),
+        "تمت إعادة إرسال سائق للمراجعة",
+        f"السائق: {driver.full_name_ar} ({driver.driver_number}) — بانتظار الموافقة",
+        "driver_pending_executive",
+        driver.id,
+    )
+    session.commit()
+    flash("تمت إعادة الإرسال للمدير التنفيذي", "success")
+    return redirect(url_for("drivers.drivers_detail", id=id))
+
+
+@drivers_bp.route("/<id>/message", methods=["POST"])
+@login_required
+def drivers_message(id):
+    """إضافة رسالة/ملاحظة في محادثة الاعتماد"""
+    session = get_web_session()
+    driver = session.query(Driver).filter(Driver.id == id, Driver.is_deleted == False).first()
+    if not driver:
+        return jsonify({"ok": False, "error": "not found"}), 404
+    text = request.form.get("message", "").strip()
+    if not text and request.is_json:
+        text = (request.get_json(silent=True) or {}).get("message", "").strip()
+    if not text:
+        flash("اكتب رسالة أولاً", "danger")
+        return redirect(url_for("drivers.drivers_detail", id=id))
+    session.add(DriverApprovalMessage(
+        driver_id=driver.id,
+        sender_id=current_user.id,
+        message=text,
+        msg_type="comment",
+    ))
+    # إشعار الطرف الآخر
+    if current_user.is_admin:
+        targets = _movement_user_ids(session)
+        title = "رسالة جديدة من المدير التنفيذي"
+    else:
+        targets = _admin_user_ids(session)
+        title = "رسالة جديدة بخصوص سائق"
+    _notify(session, targets, title, f"{driver.full_name_ar}: {text}", "driver_comment", driver.id)
+    session.commit()
+    flash("تمت إضافة الرسالة", "success")
+    return redirect(url_for("drivers.drivers_detail", id=id))
 
 
 @drivers_bp.route("/<id>/delete", methods=["POST"])
