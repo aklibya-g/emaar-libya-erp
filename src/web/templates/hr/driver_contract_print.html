@@ -108,6 +108,7 @@
           <div>
             <div class="data-row"><span class="data-label">رقم العقد:</span><span class="data-value">{{ contract.contract_number or '-' }}</span></div>
             <div class="data-row"><span class="data-label">نوع العقد:</span><span class="data-value">{% set ns = namespace(label=none) %}{% for value, label in driver_contract_types %}{% if value == contract.contract_type %}{% set ns.label = label %}{% endif %}{% endfor %}{{ ns.label or contract.contract_type or '-' }}</span></div>
+            <div class="data-row"><span class="data-label">نوع الخدمة:</span><span class="data-value">{% set ns2 = namespace(label=none) %}{% for value, label in driver_activity_types %}{% if value == contract.activity_type %}{% set ns2.label = label %}{% endif %}{% endfor %}{{ ns2.label or contract.activity_type or '-' }}</span></div>
             <div class="data-row"><span class="data-label">مدة العقد:</span><span class="data-value">{% if contract.contract_duration == 'year' %}سنة{% elif contract.contract_duration == 'end_of_season' %}نهاية الموسم{% elif contract.contract_duration == '52_weeks' %}52 اسبوع{% else %}{{ contract.contract_duration or '-' }}{% endif %}</span></div>
           </div>
           <div>

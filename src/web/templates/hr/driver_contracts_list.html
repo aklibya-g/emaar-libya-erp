@@ -17,6 +17,7 @@
             <th>رقم العقد</th>
             <th>السائق</th>
             <th>النوع</th>
+            <th>نوع الخدمة</th>
             <th>تاريخ البدء</th>
             <th>تاريخ الانتهاء</th>
             <th>الراتب</th>
@@ -37,6 +38,11 @@
               {% for value, label in driver_contract_types %}{% if value == contract.contract_type %}{% set ns.label = label %}{% endif %}{% endfor %}
               {{ ns.label or contract.contract_type or '-' }}
             </td>
+            <td>
+              {% set ns2 = namespace(label=none) %}
+              {% for value, label in driver_activity_types %}{% if value == contract.activity_type %}{% set ns2.label = label %}{% endif %}{% endfor %}
+              {{ ns2.label or contract.activity_type or '-' }}
+            </td>
             <td>{{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '-' }}</td>
             <td>{{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else '-' }}</td>
             <td>{{ '{:,.2f}'.format(contract.salary) if contract.salary else '-' }}</td>
@@ -54,7 +60,7 @@
           </tr>
           {% endfor %}
           {% if not contracts %}
-          <tr><td colspan="8" class="text-center text-muted py-4">لا توجد عقود سائقين</td></tr>
+          <tr><td colspan="9" class="text-center text-muted py-4">لا توجد عقود سائقين</td></tr>
           {% endif %}
         </tbody>
       </table>

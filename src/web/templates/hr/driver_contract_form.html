@@ -66,6 +66,18 @@
           </select>
         </div>
         <div class="col-md-4">
+          <label class="form-label">نوع الخدمة</label>
+          <select name="activity_type" class="form-select" id="activityType">
+            <option value="">اختر نوع الخدمة</option>
+            {% for value, label in driver_activity_types %}
+            <option value="{{ value }}" {% if contract and contract.activity_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+            {% if contract and contract.activity_type and contract.activity_type not in driver_activity_types | map('first') | list %}
+            <option value="{{ contract.activity_type }}" selected>{{ contract.activity_type }}</option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="col-md-4">
           <label class="form-label">مدة العقد</label>
           <div class="input-group">
             <select name="contract_duration" class="form-select" id="contractDuration">
@@ -200,6 +212,9 @@ function onDriverChange(driverId) {
               break;
             }
           }
+          if (typeSelect.value !== data.contract_type) {
+            typeSelect.appendChild(new Option(data.contract_type, data.contract_type, true, true));
+          }
           var durSelect = document.getElementById('contractDuration');
           if (data.contract_type === 'reserve') {
             for (var j = 0; j < durSelect.options.length; j++) {
@@ -216,6 +231,21 @@ function onDriverChange(driverId) {
           } else if (data.contract_type === 'rent_to_own') {
             for (var j = 0; j < durSelect.options.length; j++) {
               if (durSelect.options[j].value === '52_weeks') { durSelect.selectedIndex = j; break; }
+            }
+          }
+        }
+        var actSelect = document.getElementById('activityType');
+        if (actSelect) {
+          actSelect.value = '';
+          if (data.activity_type) {
+            for (var k = 0; k < actSelect.options.length; k++) {
+              if (actSelect.options[k].value === data.activity_type) {
+                actSelect.selectedIndex = k;
+                break;
+              }
+            }
+            if (actSelect.value !== data.activity_type) {
+              actSelect.appendChild(new Option(data.activity_type, data.activity_type, true, true));
             }
           }
         }

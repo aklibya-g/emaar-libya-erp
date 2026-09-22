@@ -2401,6 +2401,7 @@ def driver_contracts_add():
             driver_id=driver_id,
             contract_number=contract_number,
             contract_type=contract_type,
+            activity_type=request.form.get("activity_type", "").strip() or None,
             start_date=start_date,
             end_date=end_date,
             salary=float(request.form.get("salary") or 0),
@@ -2434,6 +2435,7 @@ def driver_contracts_edit(id):
     if request.method == "POST":
         contract.driver_id = request.form.get("driver_id", contract.driver_id).strip()
         contract.contract_type = request.form.get("contract_type", contract.contract_type).strip()
+        contract.activity_type = request.form.get("activity_type", "").strip() or None
         start_date_str = request.form.get("start_date", "").strip()
         if start_date_str:
             contract.start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -2472,6 +2474,7 @@ def api_driver_info(driver_id):
         "national_id": driver.national_id or "",
         "status": driver.status or "active",
         "contract_type": driver.contract_type or "",
+        "activity_type": driver.activity_type or "",
         "id_type": driver.id_type or "",
         "id_number": driver.id_number or "",
     })

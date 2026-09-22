@@ -464,6 +464,7 @@ class DriverContract(Base):
     )
     contract_number: Mapped[Optional[str]] = mapped_column(String(50), default=None)
     contract_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    activity_type: Mapped[Optional[str]] = mapped_column(String(100), default=None)  # نوع الخدمة
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[Optional[date]] = mapped_column(Date, default=None)
     salary: Mapped[Optional[float]] = mapped_column(Float, default=None)
