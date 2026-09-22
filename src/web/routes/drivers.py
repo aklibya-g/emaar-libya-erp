@@ -22,6 +22,7 @@ def _parse_date(val):
 @login_required
 def drivers_list():
     search = request.args.get("search", "").strip()
+    status_filter = request.args.get("status", "").strip()
     session = get_web_session()
     q = session.query(Driver).filter(Driver.is_deleted == False)
     if search:
@@ -31,8 +32,21 @@ def drivers_list():
             (Driver.phone.ilike(f"%{search}%")) |
             (Driver.license_number.ilike(f"%{search}%"))
         )
+    if status_filter in ("active", "inactive"):
+        q = q.filter(Driver.status == status_filter)
     drivers = q.order_by(Driver.created_at.desc()).all()
-    return render_template("drivers/list.html", drivers=drivers, search=search)
+    total = session.query(Driver).filter(Driver.is_deleted == False).count()
+    active = session.query(Driver).filter(Driver.is_deleted == False, Driver.status == "active").count()
+    inactive = session.query(Driver).filter(Driver.is_deleted == False, Driver.status == "inactive").count()
+    return render_template(
+        "drivers/list.html",
+        drivers=drivers,
+        search=search,
+        status_filter=status_filter,
+        total_count=total,
+        active_count=active,
+        inactive_count=inactive,
+    )
 
 
 def _next_driver_number(session):

@@ -1,5 +1,70 @@
 ﻿{% extends "layouts/base.html" %}
 {% block title %}السائقين | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 40%, #3182ce 70%, #2b6cb0 100%); border-radius: 18px; padding: 32px 40px; color: #fff; margin-bottom: 24px; position: relative; overflow: hidden; min-height: 140px; display: flex; align-items: center; box-shadow: 0 8px 32px rgba(26, 54, 93, 0.25); }
+  .page-header::before { content: ''; position: absolute; top: -60%; right: -15%; width: 350px; height: 350px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+  .page-header::after { content: ''; position: absolute; bottom: -40%; left: -10%; width: 250px; height: 250px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+  .page-header h1 { font-size: 26px; font-weight: 800; margin: 0; position: relative; z-index: 1; letter-spacing: -0.5px; }
+  .page-header .breadcrumb { position: relative; z-index: 1; margin: 0; padding: 0; background: transparent; }
+  .page-header .breadcrumb-item { color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 400; }
+  .page-header .breadcrumb-item a { color: rgba(255,255,255,0.9); text-decoration: none; transition: color 0.2s; }
+  .page-header .breadcrumb-item a:hover { color: #fff; text-decoration: underline; }
+  .page-header .breadcrumb-item.active { color: rgba(255,255,255,0.85); }
+  .page-header .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,0.4); }
+  .back-btn-header { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.25s ease; }
+  .back-btn-header:hover { background: rgba(255,255,255,0.25); color: #fff; transform: translateX(3px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 22px 24px; position: relative; overflow: hidden; transition: var(--transition-normal); box-shadow: var(--shadow-sm); }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .stat-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 4px; }
+  .stat-card.stat-blue::before { background: var(--gradient-accent); }
+  .stat-card.stat-green::before { background: var(--gradient-success); }
+  .stat-card.stat-red::before { background: var(--gradient-danger); }
+  .stat-card.stat-teal::before { background: linear-gradient(135deg, #38b2ac, #2c7a7b); }
+  .stat-card .stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: var(--transition-normal); flex-shrink: 0; }
+  .stat-card:hover .stat-icon { transform: scale(1.08) rotate(-4deg); }
+  .stat-card.stat-blue .stat-icon { background: rgba(var(--accent-rgb), 0.12); color: var(--accent); }
+  .stat-card.stat-green .stat-icon { background: rgba(72, 187, 120, 0.12); color: var(--accent-green); }
+  .stat-card.stat-red .stat-icon { background: rgba(252, 129, 129, 0.12); color: var(--accent-red); }
+  .stat-card.stat-teal .stat-icon { background: rgba(56, 178, 172, 0.12); color: #38b2ac; }
+  .stat-card .stat-value { font-size: 30px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+  .driver-avatar { width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; background: var(--gradient-brand); flex-shrink: 0; }
+  .driver-cell { display: flex; align-items: center; gap: 12px; }
+  .driver-cell a { color: var(--text-primary); font-weight: 600; text-decoration: none; }
+  .driver-cell a:hover { color: var(--accent); }
+  .driver-cell .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+  .license-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: rgba(var(--accent-rgb), 0.1); color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.2); }
+
+  .table thead th { background: var(--bg-hover); color: var(--text-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-color); padding: 14px 16px; white-space: nowrap; }
+  .table tbody td { padding: 14px 16px; vertical-align: middle; border-color: var(--border-light); color: var(--text-secondary); font-size: 14px; }
+  .table tbody tr { transition: var(--transition-fast); }
+  .table tbody tr:hover { background: var(--bg-hover); }
+  .table tbody tr:hover .driver-avatar { transform: scale(1.05); }
+
+  .search-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+  .search-card .form-control, .search-card .form-select { background: var(--bg-input); border: 1.5px solid var(--border-color); border-radius: 12px; color: var(--text-primary); padding: 12px 16px; font-size: 14px; transition: var(--transition-fast); }
+  .search-card .form-control:focus, .search-card .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); background: var(--bg-input); color: var(--text-primary); }
+  .search-card .form-control::placeholder { color: var(--text-muted); }
+
+  .btn-add { background: var(--gradient-brand); border: none; color: #fff; padding: 10px 24px; border-radius: 12px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.3); transition: var(--transition-normal); display: inline-flex; align-items: center; gap: 8px; }
+  .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.4); color: #fff; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state i { font-size: 64px; color: var(--text-muted); opacity: 0.4; margin-bottom: 16px; display: block; }
+  .empty-state h6 { color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; }
+  .empty-state p { color: var(--text-muted); font-size: 13px; }
+
+  .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 0 4px; }
+  .results-bar .count { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+  .results-bar .count strong { color: var(--accent); font-weight: 700; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div class="d-flex justify-content-between align-items-center" style="width:100%;position:relative;z-index:2;">
@@ -19,26 +84,83 @@
       </div>
     </div>
     <div class="d-flex gap-3 header-actions">
-      <a href="{{ url_for('drivers.drivers_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>إضافة سائق</a>
+      <a href="{{ url_for('drivers.drivers_add') }}" class="btn-add"><i class="bi bi-plus-lg"></i> إضافة سائق</a>
     </div>
   </div>
 </div>
 
-<div class="card mb-4">
-  <div class="card-body">
-    <form method="GET" class="row g-2">
-      <div class="col-md-10">
-        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم أو الرقم أو رقم الرخصة..." value="{{ search }}">
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card stat-blue">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ total_count }}</div>
+          <div class="stat-label">إجمالي السائقين</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>بحث</button>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-green">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ active_count }}</div>
+          <div class="stat-label">سائق نشط</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
       </div>
-    </form>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card stat-red">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-value">{{ inactive_count }}</div>
+          <div class="stat-label">سائق متوقف</div>
+        </div>
+        <div class="stat-icon"><i class="bi bi-pause-circle-fill"></i></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="card">
+<!-- Search -->
+<div class="search-card">
+  <form method="GET" class="row g-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text" style="background:var(--bg-input);border:1.5px solid var(--border-color);border-left:none;border-radius:0 12px 12px 0;color:var(--text-muted)"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control" style="border-radius:0" placeholder="بحث بالاسم أو الرقم أو رقم الرخصة أو الهاتف..." value="{{ search }}">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">جميع الحالات</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>نشط</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>متوقف</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100" style="border-radius:12px;font-weight:600;padding:12px"><i class="bi bi-search me-1"></i> بحث</button>
+    </div>
+    {% if search or status_filter %}
+    <div class="col-md-1">
+      <a href="{{ url_for('drivers.drivers_list') }}" class="btn btn-outline-secondary w-100" style="border-radius:12px;padding:12px" title="مسح الفلاتر"><i class="bi bi-x-lg"></i></a>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Results + Table -->
+<div class="results-bar">
+  <div class="count">عرض <strong>{{ drivers|length }}</strong> من أصل <strong>{{ total_count }}</strong> سائق</div>
+</div>
+
+<div class="card" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)">
   <div class="card-body p-0">
+    {% if drivers %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
@@ -48,6 +170,7 @@
             <th>الهاتف</th>
             <th>رقم الرخصة</th>
             <th>نوع الرخصة</th>
+            <th>تاريخ المباشرة</th>
             <th>الحالة</th>
             <th>إجراءات</th>
           </tr>
@@ -55,32 +178,62 @@
         <tbody>
           {% for drv in drivers %}
           <tr>
-            <td>{{ drv.driver_number }}</td>
-            <td><a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}">{{ drv.full_name_ar }}</a></td>
-            <td>{{ drv.phone or '-' }}</td>
+            <td><span class="license-badge"><i class="bi bi-hash"></i>{{ drv.driver_number }}</span></td>
+            <td>
+              <div class="driver-cell">
+                <div class="driver-avatar">{{ drv.full_name_ar[:1] }}</div>
+                <div>
+                  <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}">{{ drv.full_name_ar }}</a>
+                  {% if drv.contract_type %}
+                  <div class="sub">
+                    {% set ns = namespace(label=none) %}
+                    {% for value, label in driver_contract_types %}{% if value == drv.contract_type %}{% set ns.label = label %}{% endif %}{% endfor %}
+                    {{ ns.label or drv.contract_type }}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td>
+              {% if drv.phone %}
+              <a href="tel:{{ drv.phone }}" style="color:var(--text-secondary);text-decoration:none"><i class="bi bi-telephone me-1" style="color:var(--accent-green)"></i>{{ drv.phone }}</a>
+              {% else %}-{% endif %}
+            </td>
             <td>{{ drv.license_number or '-' }}</td>
             <td>{{ drv.license_type or '-' }}</td>
+            <td>{{ drv.join_date.strftime('%Y-%m-%d') if drv.join_date else '-' }}</td>
             <td>
-              {% if drv.status == 'active' %}<span class="badge bg-success">نشط</span>
-              {% else %}<span class="badge bg-secondary">{{ drv.status }}</span>{% endif %}
+              {% if drv.status == 'active' %}
+                <span class="badge" style="background:rgba(72,187,120,0.12);color:var(--accent-green);font-weight:600;padding:6px 12px;border-radius:8px">نشط</span>
+              {% else %}
+                <span class="badge" style="background:rgba(252,129,129,0.12);color:var(--accent-red);font-weight:600;padding:6px 12px;border-radius:8px">متوقف</span>
+              {% endif %}
             </td>
             <td>
               <div class="btn-group btn-group-sm">
-                <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="btn btn-outline-primary" title="تعديل"><i class="bi bi-pencil"></i></a>
+                <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="btn btn-outline-info" title="عرض" style="border-radius:8px"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="btn btn-outline-primary" title="تعديل" style="border-radius:8px"><i class="bi bi-pencil"></i></a>
                 <form method="POST" action="{{ url_for('drivers.drivers_delete', id=drv.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-outline-danger" title="حذف"><i class="bi bi-trash"></i></button>
+                  <button type="submit" class="btn btn-outline-danger" title="حذف" style="border-radius:8px"><i class="bi bi-trash"></i></button>
                 </form>
               </div>
             </td>
           </tr>
           {% endfor %}
-          {% if not drivers %}
-          <tr><td colspan="7" class="text-center text-muted py-4">لا يوجد سائقين</td></tr>
-          {% endif %}
         </tbody>
       </table>
     </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-person-x"></i>
+      <h6>لا يوجد سائقين</h6>
+      <p>{% if search or status_filter %}لم يتم العثور على سائقين مطابقين للبحث{% else %}لم تتم إضافة أي سائق بعد{% endif %}</p>
+      {% if not search and not status_filter %}
+      <a href="{{ url_for('drivers.drivers_add') }}" class="btn-add mt-2"><i class="bi bi-plus-lg"></i> إضافة أول سائق</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
