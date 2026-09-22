@@ -195,7 +195,7 @@
               {% if leave.status == 'pending' %}
               <form method="POST" action="{{ url_for('hr.leave_approve', id=leave.id) }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="action-btn btn-approve" title="موافقة الموارد البشرية"><i class="bi bi-check-lg"></i>موافقة</button>
+                <button type="submit" class="action-btn btn-approve" title="موافقة قسم الشؤون الادارية"><i class="bi bi-check-lg"></i>موافقة</button>
               </form>
               <a href="{{ url_for('hr.leave_detail', id=leave.id) }}#reject" class="action-btn btn-reject" title="رفض"><i class="bi bi-x-lg"></i></a>
               {% elif leave.status == 'pending_executive' %}

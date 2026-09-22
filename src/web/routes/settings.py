@@ -16,7 +16,7 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__)
 
 # جداول كل قسم
 SECTION_TABLES = {
-    "الموارد البشرية": [
+    "قسم الشؤون الادارية": [
         "employees", "employee_contracts", "employee_documents", "employee_attendance",
         "employee_vacations", "employee_loans", "employee_penalties", "salary_scale",
         "salary_scale_items", "employee_salaries", "employee_salary_items",
@@ -377,7 +377,7 @@ def reset_all_data():
         "vehicle_maintenances", "vehicle_fuel", "vehicle_documents",
         "vehicle_insurances", "vehicle_inspection", "vehicle_violations",
         "vehicle_driver_logs", "vehicles",
-        # الموارد البشرية
+        # قسم الشؤون الادارية
         "employee_fingerprints", "employee_courses", "recruitment_interviews",
         "recruitment_applicants", "recruitment_requests", "exit_reexit_requests",
         "employee_return_to_work", "employee_evaluations", "employee_trainings",
@@ -414,7 +414,7 @@ def reset_all_data():
 
 
 # ============================================================
-# إدارة خطوات الاعتماد
+# قسم خطوات الاعتماد
 # ============================================================
 
 @settings_bp.route("/approval-steps")
@@ -426,7 +426,7 @@ def approval_steps_list():
         steps = session.query(ApprovalStep).order_by(ApprovalStep.step_order).all()
         users = session.query(User).order_by(User.full_name_ar).all()
         return render_template("settings/approval_steps.html",
-                             page_title="إدارة خطوات الاعتماد",
+                             page_title="قسم خطوات الاعتماد",
                              steps=steps,
                              users=users)
 

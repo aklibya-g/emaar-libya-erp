@@ -8,8 +8,8 @@ users_bp = Blueprint("users", __name__, url_prefix="/users")
 
 SIDEBAR_MODULES = [
     {"key": "dashboard", "name": "الرئيسية", "icon": "bi-house"},
-    {"key": "movement", "name": "ادارة الحركة", "icon": "bi-bus-front"},
-    {"key": "hr", "name": "الموارد البشرية", "icon": "bi-people"},
+    {"key": "movement", "name": "قسم الحركة", "icon": "bi-bus-front"},
+    {"key": "hr", "name": "قسم الشؤون الادارية", "icon": "bi-people"},
     {"key": "marketing", "name": "التسويق", "icon": "bi-megaphone"},
     {"key": "correspondence", "name": "المراسلات", "icon": "bi-envelope"},
     {"key": "warehouses", "name": "المستودعات", "icon": "bi-box-seam"},

@@ -51,7 +51,7 @@
 <!-- Welcome -->
 <div class="welcome-banner">
   <h2>مرحباً، {{ current_user.username }}</h2>
-  <p>نظام إدارة الموارد البشرية - شركة اعمار ليبيا لنقل الركاب</p>
+  <p>نظام قسم الشؤون الادارية - شركة اعمار ليبيا لنقل الركاب</p>
   <div class="date-text">{% set days = ['الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد'] %}{% set months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'] %}{{ days[today.weekday()] }}، {{ today.day }} {{ months[today.month - 1] }} {{ today.year }}</div>
 </div>
 
@@ -189,7 +189,7 @@
   </a>
   <a href="{{ url_for('hr.hr_dashboard') }}" class="quick-card">
     <div class="q-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6"><i class="bi bi-speedometer2"></i></div>
-    <div class="q-info"><div class="q-title">شؤون الموظفين</div><div class="q-desc">لوحة تحكم الموارد البشرية</div></div>
+    <div class="q-info"><div class="q-title">شؤون الموظفين</div><div class="q-desc">لوحة تحكم قسم الشؤون الادارية</div></div>
   </a>
 </div>
 

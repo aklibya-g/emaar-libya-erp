@@ -1,5 +1,5 @@
 ﻿{% extends "layouts/base.html" %}
-{% block title %}ادارة الحركة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block title %}قسم الحركة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
 {% block content %}
 
 <!-- Page Header -->
@@ -13,7 +13,7 @@
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-2">
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard_view') }}">لوحة التحكم</a></li>
-            <li class="breadcrumb-item active">إدارة الحركة</li>
+            <li class="breadcrumb-item active">قسم الحركة</li>
           </ol>
         </nav>
         <h1><i class="bi bi-arrow-left-right me-2"></i>لوحة تحكم الحركة</h1>
@@ -187,13 +187,13 @@
           <div class="col-md-4 col-6">
             <a href="{{ url_for('vehicles.vehicle_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#11998e15,#38ef7d15);border:1px solid #11998e30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
               <i class="bi bi-car-front-fill mb-1" style="font-size:1.6rem;color:#11998e;"></i>
-              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ادارة السيارات</div>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">قسم السيارات</div>
             </a>
           </div>
           <div class="col-md-4 col-6">
             <a href="{{ url_for('driver_hr.driver_hr_dashboard') }}" class="d-block text-decoration-none p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#4facfe15,#00f2fe15);border:1px solid #4facfe30;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
               <i class="bi bi-person-badge mb-1" style="font-size:1.6rem;color:#4facfe;"></i>
-              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">ادارة السائقين</div>
+              <div style="color:var(--text-primary);font-size:13px;font-weight:600;">قسم السائقين</div>
             </a>
           </div>
           <div class="col-md-4 col-6">

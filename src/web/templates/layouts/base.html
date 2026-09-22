@@ -59,7 +59,7 @@
         <div class="sidebar-section">
           <a href="{{ url_for('movement.movement_dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('movement') %}active{% endif %}">
             <i class="bi bi-arrow-left-right"></i>
-            <span>ادارة الحركة</span>
+            <span>قسم الحركة</span>
           </a>
         </div>
         {% endif %}
@@ -68,7 +68,7 @@
         <div class="sidebar-section">
           <a href="{{ url_for('hr.hr_dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('hr.') %}active{% endif %}">
             <i class="bi bi-speedometer2"></i>
-            <span>ادارة الموارد البشرية</span>
+            <span>قسم الشؤون الادارية</span>
           </a>
         </div>
         {% endif %}
@@ -77,7 +77,7 @@
         <div class="sidebar-section">
           <a href="{{ url_for('marketing.dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('marketing') %}active{% endif %}">
             <i class="bi bi-megaphone-fill"></i>
-            <span>ادارة التسويق التجاري</span>
+            <span>قسم التسويق التجاري</span>
           </a>
         </div>
         {% endif %}
@@ -85,7 +85,7 @@
         <div class="sidebar-section">
           <a href="{{ url_for('maintenance.dashboard') }}" class="nav-item {% if request.endpoint == 'maintenance.dashboard' %}active{% endif %}">
             <i class="bi bi-tools"></i>
-            <span>ادارة الصيانة</span>
+            <span>قسم الصيانة</span>
           </a>
           {% if request.endpoint and request.endpoint.startswith('maintenance') and request.endpoint != 'maintenance.dashboard' %}
           <div class="sidebar-submenu">
@@ -108,7 +108,7 @@
         <div class="sidebar-section">
           <a href="{{ url_for('finance.finance_dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('finance') %}active{% endif %}">
             <i class="bi bi-wallet2"></i>
-            <span>ادارة المالية</span>
+            <span>قسم المالية</span>
           </a>
         </div>
 
@@ -117,13 +117,13 @@
           {% if not sidebar_perms or (sp_correspondence and sp_correspondence.can_view) %}
           <a href="{{ url_for('correspondence.correspondence_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('correspondence') %}active{% endif %}">
             <i class="bi bi-envelope-paper-fill"></i>
-            <span>ادارة المراسلات</span>
+            <span>قسم المراسلات</span>
           </a>
           {% endif %}
           {% if not sidebar_perms or (sp_warehouses and sp_warehouses.can_view) %}
           <a href="{{ url_for('warehouses.warehouses_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('warehouses') %}active{% endif %}">
             <i class="bi bi-box-seam-fill"></i>
-            <span>ادارة المخازن</span>
+            <span>قسم المخازن</span>
           </a>
           {% endif %}
         </div>
@@ -163,7 +163,7 @@
           </a>
           <a href="{{ url_for('settings.approval_steps_list') }}" class="nav-item {% if request.endpoint == 'settings.approval_steps_list' %}active{% endif %}">
             <i class="bi bi-clipboard-check"></i>
-            <span>إدارة الاعتمادات</span>
+            <span>قسم الاعتمادات</span>
           </a>
           {% endif %}
           {% if not sidebar_perms or (sp_recycle and sp_recycle.can_view) %}

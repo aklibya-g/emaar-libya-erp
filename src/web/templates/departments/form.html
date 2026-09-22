@@ -10,7 +10,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
         <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">اسم القسم بالعربي <span class="text-danger">*</span></label>
-        <input type="text" name="name_ar" class="form-control" value="{{ department.name_ar if department else '' }}" required placeholder="مثال: ادارة الموارد البشرية" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
+        <input type="text" name="name_ar" class="form-control" value="{{ department.name_ar if department else '' }}" required placeholder="مثال: قسم الشؤون الادارية" style="border-radius:10px;border:1.5px solid #e2e8f0;padding:10px 14px;">
       </div>
       <div class="mb-3">
         <label class="form-label fw-bold" style="font-size:12px;color:#64748b;">كود القسم <span class="text-danger">*</span></label>

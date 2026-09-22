@@ -62,7 +62,7 @@ def movement_dashboard():
         ).scalar() or 0
 
         return render_template("movement/dashboard.html",
-                             page_title="ادارة الحركة",
+                             page_title="قسم الحركة",
                              total_vehicles=total_vehicles,
                              active_vehicles=active_vehicles,
                              maintenance_vehicles=maintenance_vehicles,

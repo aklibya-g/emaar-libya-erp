@@ -209,7 +209,7 @@ def clients_list():
         clients = session.query(MarketingClient).order_by(MarketingClient.client_number.desc()).all()
         return render_template(
             "marketing/clients_list.html",
-            page_title="إدارة العملاء",
+            page_title="قسم العملاء",
             clients=clients,
         )
 
@@ -279,7 +279,7 @@ def contracts_list():
         contracts = session.query(MarketingContract).order_by(MarketingContract.created_at.desc()).all()
         return render_template(
             "marketing/contracts_list.html",
-            page_title="إدارة العقود",
+            page_title="قسم العقود",
             contracts=contracts,
         )
 
@@ -1672,7 +1672,7 @@ def school_drivers_pdf():
         c.roundRect(right_x, y - stamp_h, stamp_w, stamp_h, 4, stroke=1, fill=0)
         c.setFillColor(blue)
         c.setFont("ArBd", 8)
-        c.drawCentredString(right_x + stamp_w/2, y - 6*mm, ar("ادارة التسويق التجاري"))
+        c.drawCentredString(right_x + stamp_w/2, y - 6*mm, ar("قسم التسويق التجاري"))
         c.setFont("Ar", 7)
         c.setFillColor(slate)
         c.drawCentredString(right_x + stamp_w/2, y - 14*mm, ar("الاسم: ........................"))

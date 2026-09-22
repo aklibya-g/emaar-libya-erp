@@ -1424,7 +1424,7 @@ def attendance_report_pdf():
 
     sig_items = [
         {"label": ar("المدير التنفيذي"), "x": page_w - margin - 55*mm, "approved": exec_approved},
-        {"label": ar("مدير الموارد البشرية"), "x": page_w/2 - 25*mm, "approved": hr_approved},
+        {"label": ar("مدير قسم الشؤون الادارية"), "x": page_w/2 - 25*mm, "approved": hr_approved},
         {"label": ar("المسؤول المباشر"), "x": margin, "approved": False},
     ]
     for item in sig_items:
@@ -1783,7 +1783,7 @@ def leave_approve(id):
             ))
 
         session.commit()
-        flash("تمت موافقة الموارد البشرية — في انتظار موافقة المدير التنفيذي", "success")
+        flash("تمت موافقة قسم الشؤون الادارية — في انتظار موافقة المدير التنفيذي", "success")
     elif leave_request.status == "pending_executive":
         leave_request.status = "approved"
         leave_request.final_approved_by = current_user.id
