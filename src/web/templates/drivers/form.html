@@ -212,7 +212,7 @@
           </div>
         </div>
         <div class="col-md-3">
-          <label class="form-label" style="font-size:12px;">نوع النشاط</label>
+          <label class="form-label" style="font-size:12px;">نوع الخدمة</label>
           <div class="input-group input-group-sm">
             <select name="activity_type" class="form-select form-select-sm" id="activityType">
               <option value="">اختر</option>
@@ -220,10 +220,10 @@
               <option value="{{ value }}" {% if driver and driver.activity_type == value %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
-            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addActivityTypeModal" title="إضافة نوع نشاط جديد">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addActivityTypeModal" title="إضافة نوع خدمة جديد">
               <i class="bi bi-plus-lg"></i>
             </button>
-            <button type="button" class="btn btn-outline-warning btn-sm" onclick="window.location.href='{{ url_for('hr.contract_types_page') }}'" title="إدارة تصنيفات النشاط">
+            <button type="button" class="btn btn-outline-warning btn-sm" onclick="window.location.href='{{ url_for('hr.contract_types_page') }}'" title="إدارة أنواع الخدمة">
               <i class="bi bi-gear"></i>
             </button>
             <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSelectOption('activityType')" title="حذف الإدخال المحدد">
@@ -315,12 +315,12 @@
   </div>
 </div>
 
-<!-- مودال اضافة نوع نشاط جديد -->
+<!-- مودال اضافة نوع خدمة جديد -->
 <div class="modal fade" id="addActivityTypeModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع نشاط جديد</h5>
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع خدمة جديد</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">

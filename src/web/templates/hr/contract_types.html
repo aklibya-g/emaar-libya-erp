@@ -70,7 +70,7 @@
   <div class="col-lg-6">
     <div class="card h-100" style="background:var(--bg-card);border-color:var(--border-color)">
       <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
-        <h6 class="mb-0"><i class="bi bi-bus-front me-2" style="color:var(--accent-green)"></i>تصنيفات النشاط</h6>
+        <h6 class="mb-0"><i class="bi bi-bus-front me-2" style="color:var(--accent-green)"></i>أنواع الخدمة</h6>
         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTypeModal" data-kind="activity">
           <i class="bi bi-plus-lg me-1"></i>إضافة
         </button>
@@ -105,7 +105,7 @@
               {% endfor %}
               {% if not activity_types %}
               <tr>
-                <td colspan="4" class="text-center py-4 text-muted">لا توجد تصنيفات نشاط</td>
+                <td colspan="4" class="text-center py-4 text-muted">لا توجد أنواع خدمة</td>
               </tr>
               {% endif %}
             </tbody>
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var title = modalEl.querySelector('.modal-title');
     if (title) {
       title.innerHTML = kind === 'activity'
-        ? '<i class="bi bi-plus-circle me-2"></i>إضافة تصنيف نشاط'
+        ? '<i class="bi bi-plus-circle me-2"></i>إضافة نوع خدمة'
         : '<i class="bi bi-plus-circle me-2"></i>إضافة نوع عقد';
     }
   });
