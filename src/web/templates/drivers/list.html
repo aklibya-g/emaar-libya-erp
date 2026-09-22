@@ -62,6 +62,19 @@
   .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 0 4px; }
   .results-bar .count { font-size: 13px; color: var(--text-muted); font-weight: 500; }
   .results-bar .count strong { color: var(--accent); font-weight: 700; }
+
+  .action-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1.5px solid var(--border-color); background: var(--bg-input); color: var(--text-secondary); font-size: 14px; text-decoration: none; transition: var(--transition-fast); padding: 0; cursor: pointer; }
+  .action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .action-btn.view { color: var(--accent-cyan); border-color: rgba(34, 211, 238, 0.3); background: rgba(34, 211, 238, 0.08); }
+  .action-btn.view:hover { background: rgba(34, 211, 238, 0.18); }
+  .action-btn.edit { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.3); background: rgba(var(--accent-rgb), 0.08); }
+  .action-btn.edit:hover { background: rgba(var(--accent-rgb), 0.18); }
+  .action-btn.del { color: var(--accent-red); border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); }
+  .action-btn.del:hover { background: rgba(248, 113, 113, 0.18); }
+  .actions-cell { display: flex; align-items: center; gap: 8px; }
+
+  .btn-delete-all { background: linear-gradient(135deg, #f87171, #ef4444); border: none; color: #fff; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3); transition: var(--transition-normal); display: inline-flex; align-items: center; gap: 8px; }
+  .btn-delete-all:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4); color: #fff; }
 </style>
 {% endblock %}
 
@@ -84,6 +97,14 @@
       </div>
     </div>
     <div class="d-flex gap-3 header-actions">
+      {% if current_user.is_admin and drivers %}
+      <form method="POST" action="{{ url_for('drivers.drivers_delete_all') }}" class="d-inline"
+            onsubmit="return confirm('تحذير: سيتم حذف جميع السائقين نهائياً!\nهل أنت متأكد من المتابعة؟');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm" value="DELETE">
+        <button type="submit" class="btn-delete-all"><i class="bi bi-trash3"></i> حذف جميع السائقين</button>
+      </form>
+      {% endif %}
       <a href="{{ url_for('drivers.drivers_add') }}" class="btn-add"><i class="bi bi-plus-lg"></i> إضافة سائق</a>
     </div>
   </div>
@@ -210,12 +231,12 @@
               {% endif %}
             </td>
             <td>
-              <div class="btn-group btn-group-sm">
-                <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="btn btn-outline-info" title="عرض" style="border-radius:8px"><i class="bi bi-eye"></i></a>
-                <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="btn btn-outline-primary" title="تعديل" style="border-radius:8px"><i class="bi bi-pencil"></i></a>
-                <form method="POST" action="{{ url_for('drivers.drivers_delete', id=drv.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+              <div class="actions-cell">
+                <a href="{{ url_for('drivers.drivers_detail', id=drv.id) }}" class="action-btn view" title="عرض"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('drivers.drivers_edit', id=drv.id) }}" class="action-btn edit" title="تعديل"><i class="bi bi-pencil-square"></i></a>
+                <form method="POST" action="{{ url_for('drivers.drivers_delete', id=drv.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا السائق؟')">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-outline-danger" title="حذف" style="border-radius:8px"><i class="bi bi-trash"></i></button>
+                  <button type="submit" class="action-btn del" title="حذف"><i class="bi bi-trash3"></i></button>
                 </form>
               </div>
             </td>

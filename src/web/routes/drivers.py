@@ -209,3 +209,21 @@ def drivers_delete(id):
     else:
         flash("لم يتم العثور على السائق", "danger")
     return redirect(url_for("drivers.drivers_list"))
+
+
+@drivers_bp.route("/delete-all", methods=["POST"])
+@login_required
+def drivers_delete_all():
+    if not current_user.is_admin:
+        flash("هذه العملية متاحة لمدير النظام فقط", "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    confirm = request.form.get("confirm", "").strip()
+    if confirm != "DELETE":
+        flash('يرجى كتابة DELETE في مربع التأكيد', "danger")
+        return redirect(url_for("drivers.drivers_list"))
+    session = get_web_session()
+    count = session.query(Driver).filter(Driver.is_deleted == False).count()
+    session.query(Driver).filter(Driver.is_deleted == False).update({"is_deleted": True}, synchronize_session=False)
+    session.commit()
+    flash(f"تم حذف جميع السائقين ({count}) بنجاح", "success")
+    return redirect(url_for("drivers.drivers_list"))
