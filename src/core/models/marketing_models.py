@@ -61,6 +61,7 @@ class MarketingContract(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     contract_number: Mapped[str] = mapped_column(String(30), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
+    activity_type: Mapped[Optional[str]] = mapped_column(String(100), default=None)  # نوع الخدمة
     client_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("marketing_clients.id"), nullable=False
     )

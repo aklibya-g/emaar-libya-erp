@@ -65,6 +65,7 @@
       <div class="card-body">
         <div class="info-row"><span class="info-label">رقم العقد:</span> {{ contract.contract_number }}</div>
         <div class="info-row"><span class="info-label">نوع العقد:</span> {{ contract.title }}</div>
+        <div class="info-row"><span class="info-label">نوع الخدمة:</span> {{ contract.activity_type or '-' }}</div>
         <div class="info-row"><span class="info-label">الجهة:</span> {{ contract.client.name_ar if contract.client else '-' }}</div>
         <div class="info-row"><span class="info-label">رقم هاتف الجهة:</span> {{ contract.client.phone if contract.client else '-' }}</div>
         <div class="info-row"><span class="info-label">المسؤول:</span> {{ contract.responsible_name if contract.responsible_name else '-' }}</div>

@@ -72,6 +72,7 @@
       <div class="section-body">
         <div class="info-grid">
           <div class="info-item"><span class="info-label">نوع العقد:</span><span class="info-value">{{ contract.title }}</span></div>
+          <div class="info-item"><span class="info-label">نوع الخدمة:</span><span class="info-value">{{ contract.activity_type or '-' }}</span></div>
           <div class="info-item"><span class="info-label">الجهة:</span><span class="info-value">{{ contract.client.name_ar if contract.client else '-' }}</span></div>
           <div class="info-item"><span class="info-label">رقم هاتف الجهة:</span><span class="info-value">{{ contract.client.phone if contract.client else '-' }}</span></div>
           <div class="info-item"><span class="info-label">المسؤول:</span><span class="info-value">{{ contract.responsible_name if contract.responsible_name else '-' }}</span></div>

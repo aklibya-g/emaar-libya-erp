@@ -46,7 +46,7 @@
     <form method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">نوع العقد <span class="text-danger">*</span></label>
           <div class="input-group">
             <select class="form-select" name="title" id="contractTypeSelect" required>
@@ -66,7 +66,27 @@
             </a>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+          <label class="form-label">نوع الخدمة</label>
+          <div class="input-group">
+            <select class="form-select" name="activity_type" id="activityTypeSelect">
+              <option value="">اختر نوع الخدمة</option>
+              {% for value, label in driver_activity_types %}
+              <option value="{{ label }}" {{ 'selected' if contract and contract.activity_type == label }}>{{ label }}</option>
+              {% endfor %}
+              {% if contract and contract.activity_type and contract.activity_type not in driver_activity_types | map('last') | list %}
+              <option value="{{ contract.activity_type }}" selected>{{ contract.activity_type }}</option>
+              {% endif %}
+            </select>
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addActivityTypeModal" title="إضافة نوع خدمة جديد">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+            <a href="{{ url_for('hr.contract_types_page') }}" class="btn btn-outline-warning btn-sm" title="إدارة أنواع الخدمة">
+              <i class="bi bi-gear"></i>
+            </a>
+          </div>
+        </div>
+        <div class="col-md-4">
           <label class="form-label">الجهة <span class="text-danger">*</span></label>
           <select class="form-select" name="client_id" required>
             <option value="">اختر الجهة</option>
@@ -166,6 +186,31 @@
   </div>
 </div>
 
+<!-- مودال اضافة نوع خدمة جديد -->
+<div class="modal fade" id="addActivityTypeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-1"></i>إضافة نوع خدمة جديد</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">اسم النوع <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="newActivityTypeName" placeholder="أدخل اسم النوع">
+        </div>
+        <div id="activityTypeAlert" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-success" onclick="saveActivityType()">
+          <i class="bi bi-check-lg me-1"></i>حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function addNewType() {
   var type = prompt("اكتب نوع العقد الجديد:");
@@ -207,6 +252,43 @@ function saveContractType() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('addContractTypeModal'));
       if (modal) modal.hide();
       document.getElementById('newContractTypeName').value = '';
+      alertEl.className = 'alert d-none';
+    })
+    .catch(function () {
+      alertEl.className = 'alert alert-danger';
+      alertEl.textContent = 'تعذر الاتصال بالخادم';
+      alertEl.classList.remove('d-none');
+    });
+}
+function saveActivityType() {
+  const name = document.getElementById('newActivityTypeName').value.trim();
+  const alertEl = document.getElementById('activityTypeAlert');
+  if (!name) {
+    alertEl.className = 'alert alert-danger';
+    alertEl.textContent = 'يرجى إدخال اسم النوع';
+    alertEl.classList.remove('d-none');
+    return;
+  }
+  const value = name.replace(/\s+/g, '_');
+  const csrf = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+  fetch('/hr/contract-types/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+    body: JSON.stringify({ action: 'add', kind: 'activity', label: name, value: value })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data.ok) {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = data.message || 'تعذر الحفظ';
+        alertEl.classList.remove('d-none');
+        return;
+      }
+      const select = document.getElementById('activityTypeSelect');
+      select.appendChild(new Option(name, name, true, true));
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addActivityTypeModal'));
+      if (modal) modal.hide();
+      document.getElementById('newActivityTypeName').value = '';
       alertEl.className = 'alert d-none';
     })
     .catch(function () {

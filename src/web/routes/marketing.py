@@ -302,6 +302,7 @@ def contract_add():
             contract = MarketingContract(
                 contract_number=contract_number,
                 title=request.form.get("title", ""),
+                activity_type=request.form.get("activity_type", "").strip() or None,
                 client_id=request.form.get("client_id"),
                 start_date=datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date(),
                 end_date=datetime.strptime(request.form.get("end_date"), "%Y-%m-%d").date(),
@@ -338,6 +339,7 @@ def contract_edit(contract_id):
             return redirect(url_for("marketing.contracts_list"))
         if request.method == "POST":
             contract.title = request.form.get("title", contract.title)
+            contract.activity_type = request.form.get("activity_type", "").strip() or None
             contract.client_id = request.form.get("client_id", contract.client_id)
             contract.start_date = datetime.strptime(request.form.get("start_date"), "%Y-%m-%d").date()
             contract.end_date = datetime.strptime(request.form.get("end_date"), "%Y-%m-%d").date()
