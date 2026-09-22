@@ -242,6 +242,9 @@
             </div>
           </div>
 
+          <button type="button" id="alertSoundToggle" class="topbar-notification text-decoration-none" title="صوت التنبيهات: مفعل — اضغط للإيقاف" style="position:relative;background:none;border:none;cursor:pointer;padding:0 6px;">
+            <i class="bi bi-volume-up-fill" id="alertSoundIcon" style="font-size:18px;color:#059669"></i>
+          </button>
           <a href="{{ url_for('hr.notifications_list') }}" class="topbar-notification text-decoration-none" title="الإشعارات" style="position:relative;background:none;border:none;cursor:pointer;">
             <i class="bi bi-bell" style="font-size:18px;color:var(--text-color)"></i>
             {% if unread_notifications is defined and unread_notifications > 0 %}
@@ -418,8 +421,35 @@
       var IS_MOVEMENT = {{ 'true' if is_movement|default(false) else 'false' }};
       var lastCount = INIT_UNREAD;
       var toastHideTimer = null;
+      var SOUND_KEY = 'emaar-alert-sound';
+
+      function isSoundOn() {
+        return localStorage.getItem(SOUND_KEY) !== 'off';
+      }
+
+      function setSoundOn(on) {
+        localStorage.setItem(SOUND_KEY, on ? 'on' : 'off');
+        updateSoundBtn();
+        if (on) playStrongAlert();
+      }
+
+      function updateSoundBtn() {
+        var btn = document.getElementById('alertSoundToggle');
+        var icon = document.getElementById('alertSoundIcon');
+        if (!btn || !icon) return;
+        if (isSoundOn()) {
+          icon.className = 'bi bi-volume-up-fill';
+          icon.style.color = '#059669';
+          btn.title = 'صوت التنبيهات: مفعل — اضغط للإيقاف';
+        } else {
+          icon.className = 'bi bi-volume-mute-fill';
+          icon.style.color = '#94a3b8';
+          btn.title = 'صوت التنبيهات: مُوقف — اضغط للتشغيل';
+        }
+      }
 
       function playStrongAlert() {
+        if (!isSoundOn()) return;
         try {
           var Ctx = window.AudioContext || window.webkitAudioContext;
           if (!Ctx) return;
@@ -442,6 +472,14 @@
           setTimeout(function(){ try{ ctx.close(); }catch(e){} }, 1200);
         } catch(e) {}
       }
+
+      var soundBtn = document.getElementById('alertSoundToggle');
+      if (soundBtn) {
+        soundBtn.addEventListener('click', function() {
+          setSoundOn(!isSoundOn());
+        });
+      }
+      updateSoundBtn();
 
       function showToast(title, msg, url, type) {
         var toast = document.getElementById('alertToast');
