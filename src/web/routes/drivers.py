@@ -215,12 +215,22 @@ def drivers_detail(id):
         DriverApprovalMessage.driver_id == id
     ).order_by(DriverApprovalMessage.created_at.asc()).all()
     senders = {}
+    admin_senders = set()
     for m in messages:
         if m.sender_id and m.sender_id not in senders:
             u = session.query(User).filter(User.id == m.sender_id).first()
             if u:
                 senders[m.sender_id] = u.full_name_ar or u.username
-    return render_template("drivers/detail.html", driver=driver, approval_messages=messages, senders=senders)
+                from src.web.app import user_is_admin
+                if user_is_admin(u):
+                    admin_senders.add(m.sender_id)
+    return render_template(
+        "drivers/detail.html",
+        driver=driver,
+        approval_messages=messages,
+        senders=senders,
+        admin_senders=admin_senders,
+    )
 
 
 @drivers_bp.route("/<id>/edit", methods=["GET", "POST"])

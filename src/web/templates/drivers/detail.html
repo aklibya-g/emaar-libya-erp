@@ -1,5 +1,53 @@
 ﻿{% extends "layouts/base.html" %}
 {% block title %}{{ driver.full_name_ar }} | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chat-area { max-height: 420px; overflow-y: auto; background: var(--bg-hover, #f0f4f8); border-radius: 12px; padding: 16px; }
+  .chat-bubble { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 13.5px; line-height: 1.7; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); position: relative; }
+  .chat-bubble .chat-sender { font-weight: 700; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .chat-bubble .chat-role { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+  .chat-meta { font-size: 10px; opacity: 0.7; margin-top: 6px; }
+
+  /* المدير التنفيذي — أخضر */
+  .chat-bubble.from-admin {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border: 1px solid #6ee7b7;
+    color: #064e3b;
+    margin-left: auto;
+    border-bottom-left-radius: 4px;
+  }
+  .chat-bubble.from-admin .chat-sender { color: #065f46; }
+  .chat-bubble.from-admin .chat-role { background: #059669; color: #fff; }
+
+  /* قسم الحركة — أزرق */
+  .chat-bubble.from-movement {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border: 1px solid #93c5fd;
+    color: #1e3a8a;
+    margin-right: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-bubble.from-movement .chat-sender { color: #1e40af; }
+  .chat-bubble.from-movement .chat-role { background: #2563eb; color: #fff; }
+
+  /* رسائل النظام في المنتصف */
+  .chat-system { text-align: center; font-size: 11.5px; color: var(--text-muted); margin: 10px 0; }
+  .chat-system span { background: var(--bg-card); border: 1px solid var(--border-color); padding: 4px 14px; border-radius: 12px; font-weight: 600; }
+
+  /* سجل الرفض يبقى أحمر خفيفاً */
+  .chat-bubble.from-admin.reject-bubble {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-color: #fca5a5;
+    color: #7f1d1d;
+  }
+  .chat-bubble.from-admin.reject-bubble .chat-sender { color: #991b1b; }
+  .chat-bubble.from-admin.reject-bubble .chat-role { background: #dc2626; }
+
+  .chat-bubble.from-admin.approve-bubble .chat-role { background: #059669; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center mb-4">
   <h4 class="page-title">بيانات السائق: {{ driver.full_name_ar }}</h4>
@@ -111,20 +159,22 @@
         <span class="badge" style="background:rgba(16,185,129,0.15);color:#059669;padding:6px 12px;border-radius:8px">معتمد</span>
         {% endif %}
       </div>
-      <div class="card-body" style="max-height:400px;overflow-y:auto;background:var(--bg-secondary)">
+      <div class="card-body chat-area">
         {% if approval_messages %}
           {% for m in approval_messages %}
+            {% set from_admin = (m.sender_id in admin_senders) or (m.msg_type in ('approve', 'reject')) %}
             {% if m.msg_type in ('submit', 'approve', 'reject', 'resend') %}
               <div class="chat-system"><span>
                 {% if m.msg_type == 'approve' %}✅ تم الاعتماد{% elif m.msg_type == 'reject' %}❌ تم الرفض{% elif m.msg_type == 'resend' %}🔄 إعادة إرسال{% else %}📤 إرسال للاعتماد{% endif %}
               </span></div>
             {% endif %}
-            {% set is_admin_sender = senders.get(m.sender_id, '') %}
-            <div class="chat-bubble {{ 'from-admin' if m.msg_type in ('approve', 'reject') else 'from-movement' }}">
-              <div style="font-weight:600;font-size:12px;margin-bottom:2px;color:var(--text-primary)">
+            <div class="chat-bubble {{ 'from-admin' if from_admin else 'from-movement' }}{% if m.msg_type == 'reject' %} reject-bubble{% elif m.msg_type == 'approve' %} approve-bubble{% endif %}">
+              <div class="chat-sender">
                 {{ senders.get(m.sender_id, 'مستخدم') }}
-                {% if m.msg_type == 'approve' %}<span style="color:#059669">— المدير التنفيذي</span>
-                {% elif m.msg_type == 'reject' %}<span style="color:#dc2626">— المدير التنفيذي</span>
+                {% if from_admin %}
+                  <span class="chat-role">المدير التنفيذي</span>
+                {% else %}
+                  <span class="chat-role">إدارة الحركة</span>
                 {% endif %}
               </div>
               {{ m.message }}
