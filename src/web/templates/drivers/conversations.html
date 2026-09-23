@@ -1,0 +1,141 @@
+{% extends "layouts/base.html" %}
+{% block title %}محادثات الاعتماد | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+
+{% block extra_css %}
+<style>
+  .conv-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+    text-decoration: none; color: inherit; transition: background 0.15s;
+    cursor: pointer;
+  }
+  .conv-row:hover { background: var(--bg-hover); }
+  .conv-row.needs-reply { background: rgba(245, 158, 11, 0.06); border-right: 4px solid #f59e0b; }
+  .conv-row.needs-reply:hover { background: rgba(245, 158, 11, 0.12); }
+  .conv-avatar {
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #fff;
+    background: var(--gradient-brand);
+  }
+  .conv-main { flex: 1; min-width: 0; }
+  .conv-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .conv-name { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+  .conv-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .conv-preview {
+    font-size: 12.5px; color: var(--text-secondary); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .conv-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .tab-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    color: var(--text-secondary); text-decoration: none; transition: all 0.15s;
+  }
+  .tab-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .tab-pill.active { background: var(--gradient-brand); color: #fff; border-color: transparent; }
+  .tab-pill .cnt { background: rgba(0,0,0,0.12); padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+  .tab-pill.active .cnt { background: rgba(255,255,255,0.25); }
+  .tab-pill.urgent { background: linear-gradient(135deg,#f59e0b,#f97316); color:#fff; border-color:transparent; }
+  .tab-pill.urgent .cnt { background: rgba(255,255,255,0.25); }
+  .reply-flag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg,#f59e0b,#f97316); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+  }
+  .side-chip {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px;
+  }
+  .side-chip.admin { background: #059669; color: #fff; }
+  .side-chip.movement { background: #2563eb; color: #fff; }
+  .empty-conv { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+  .empty-conv i { font-size: 48px; opacity: 0.35; display: block; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-chat-square-dots me-2"></i>محادثات الاعتماد</h4>
+    <p class="mb-0" style="font-size:13px;opacity:0.85">
+      {% if current_is_admin %}متابعة محادثاتك مع قسم الحركة{% else %}متابعة محادثاتك مع المدير التنفيذي{% endif %}
+      — {{ needs_reply_count }} بانتظار ردك
+    </p>
+  </div>
+  <a href="{{ url_for('drivers.drivers_list') }}" class="back-btn-header">
+    <i class="bi bi-arrow-right"></i> قائمة السائقين
+  </a>
+</div>
+
+<!-- Tabs -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a href="{{ url_for('drivers.drivers_conversations') }}" class="tab-pill {% if not inbox %}active{% endif %}">
+    <i class="bi bi-chat-dots"></i> الكل
+  </a>
+  <a href="{{ url_for('drivers.drivers_conversations', inbox='mine') }}" class="tab-pill {% if inbox == 'mine' %}active{% endif %} {% if needs_reply_count and inbox != 'mine' %}urgent{% endif %}">
+    <i class="bi bi-reply-fill"></i> بانتظار ردك
+    {% if needs_reply_count %}<span class="cnt">{{ needs_reply_count }}</span>{% endif %}
+  </a>
+  <a href="{{ url_for('drivers.drivers_conversations', inbox='pending') }}" class="tab-pill {% if inbox == 'pending' %}active{% endif %}">
+    <i class="bi bi-hourglass-split"></i> قيد الاعتماد
+  </a>
+  <a href="{{ url_for('drivers.drivers_conversations', inbox='rejected') }}" class="tab-pill {% if inbox == 'rejected' %}active{% endif %}">
+    <i class="bi bi-x-octagon"></i> مرفوض
+  </a>
+  <a href="{{ url_for('drivers.drivers_conversations', inbox='approved') }}" class="tab-pill {% if inbox == 'approved' %}active{% endif %}">
+    <i class="bi bi-check-circle"></i> معتمد
+  </a>
+</div>
+
+<div class="card" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)">
+  {% if rows %}
+    {% for r in rows %}
+    <a href="{{ url_for('drivers.drivers_detail', id=r.driver.id) }}" class="conv-row {% if r.needs_reply %}needs-reply{% endif %}">
+      <div class="conv-avatar">{{ r.driver.full_name_ar[:1] }}</div>
+      <div class="conv-main">
+        <div class="conv-top">
+          <div class="conv-name">{{ r.driver.full_name_ar }} <span style="font-weight:500;font-size:11px;color:var(--text-muted)">({{ r.driver.driver_number }})</span></div>
+          <div class="conv-time">
+            {% if r.last and r.last.created_at %}{{ r.last.created_at.strftime('%Y-%m-%d %H:%M') }}{% elif r.driver.created_at %}{{ r.driver.created_at.strftime('%Y-%m-%d') }}{% endif %}
+          </div>
+        </div>
+        <div class="conv-preview">
+          {% if r.last %}
+            {% if r.last_from_admin %}<span class="side-chip admin">المدير</span>{% else %}<span class="side-chip movement">الحركة</span>{% endif %}
+            {{ r.last.message }}
+          {% else %}
+            <span style="opacity:0.7">لا توجد رسائل بعد — بانتظار إرسال المحادثة</span>
+          {% endif %}
+        </div>
+        <div class="conv-badges">
+          {% if r.driver.approval_status == 'pending' %}
+          <span style="font-size:10px;font-weight:700;background:rgba(245,158,11,0.15);color:#d97706;padding:3px 10px;border-radius:8px">بانتظار الاعتماد</span>
+          {% elif r.driver.approval_status == 'rejected' %}
+          <span style="font-size:10px;font-weight:700;background:rgba(239,68,68,0.15);color:#dc2626;padding:3px 10px;border-radius:8px">مرفوض</span>
+          {% else %}
+          <span style="font-size:10px;font-weight:700;background:rgba(16,185,129,0.15);color:#059669;padding:3px 10px;border-radius:8px">معتمد</span>
+          {% endif %}
+          {% if r.count %}
+          <span style="font-size:10px;background:var(--bg-hover);color:var(--text-muted);padding:3px 10px;border-radius:8px">{{ r.count }} رسالة</span>
+          {% endif %}
+          {% if r.needs_reply %}
+          <span class="reply-flag"><i class="bi bi-reply"></i> بانتظار ردك</span>
+          {% endif %}
+        </div>
+      </div>
+      <i class="bi bi-chevron-left" style="color:var(--text-muted);font-size:16px"></i>
+    </a>
+    {% endfor %}
+  {% else %}
+    <div class="empty-conv">
+      <i class="bi bi-chat-square-dots"></i>
+      <h6 style="color:var(--text-secondary)">لا توجد محادثات في هذا التصنيف</h6>
+      <p style="font-size:13px">ابدأ من صفحة السائقين بإضافة سائق أو فتح محادثة</p>
+      <a href="{{ url_for('drivers.drivers_list') }}" class="btn btn-primary" style="border-radius:12px;font-weight:600">
+        <i class="bi bi-people me-1"></i> قائمة السائقين
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

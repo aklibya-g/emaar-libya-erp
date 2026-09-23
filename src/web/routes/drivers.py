@@ -4,6 +4,7 @@ from src.core.database.connection import get_web_session
 from src.core.models.base_models import Driver, DriverApprovalMessage, Notification, User, UserSidebarPermission
 from src.core.repositories.base_repository import BaseRepository
 from datetime import date
+from sqlalchemy import func
 
 drivers_bp = Blueprint("drivers", __name__, url_prefix="/drivers")
 
@@ -52,6 +53,111 @@ def _admin_user_ids(session):
     from src.web.app import user_is_admin
     users = session.query(User).filter(User.is_deleted == False, User.is_active == True).all()
     return [u.id for u in users if user_is_admin(u)]
+
+
+@drivers_bp.route("/conversations")
+@login_required
+def drivers_conversations():
+    """تتبع محادثات الاعتماد — لل楼主ين (المدير التنفيذي + قسم الحركة)"""
+    from src.web.app import user_is_admin
+    session = get_web_session()
+    inbox = request.args.get("inbox", "").strip()  # mine|pending|rejected|approved|""
+
+    msg_counts = dict(
+        session.query(
+            DriverApprovalMessage.driver_id,
+            func.count(DriverApprovalMessage.id),
+        ).group_by(DriverApprovalMessage.driver_id).all()
+    )
+
+    last_ids = dict(
+        session.query(
+            DriverApprovalMessage.driver_id,
+            func.max(DriverApprovalMessage.created_at),
+        ).group_by(DriverApprovalMessage.driver_id).all()
+    )
+
+    last_map = {}
+    if last_ids:
+        from sqlalchemy import or_
+        pairs = session.query(DriverApprovalMessage).filter(
+            or_(*[
+                (DriverApprovalMessage.driver_id == d) & (DriverApprovalMessage.created_at == t)
+                for d, t in last_ids.items()
+            ])
+        ).all()
+        for m in pairs:
+            last_map[m.driver_id] = m
+
+    sender_ids = {m.sender_id for m in last_map.values() if m.sender_id}
+    sender_names = {}
+    admin_ids = set()
+    if sender_ids:
+        for u in session.query(User).filter(User.id.in_(sender_ids)).all():
+            sender_names[u.id] = u.full_name_ar or u.username
+            if user_is_admin(u):
+                admin_ids.add(u.id)
+
+    current_is_admin = bool(current_user.is_admin)
+    q = session.query(Driver).filter(Driver.is_deleted == False)
+    if inbox == "pending":
+        q = q.filter(Driver.approval_status == "pending")
+    elif inbox == "rejected":
+        q = q.filter(Driver.approval_status == "rejected")
+    elif inbox == "approved":
+        q = q.filter(Driver.approval_status == "approved")
+
+    drivers = q.order_by(Driver.updated_at.desc().nullslast(), Driver.created_at.desc()).all()
+
+    rows = []
+    for d in drivers:
+        last = last_map.get(d.id)
+        if inbox == "mine":
+            if not last:
+                continue
+            last_from_admin = last.sender_id in admin_ids
+            needs_reply = (last_from_admin and not current_is_admin) or ((not last_from_admin) and current_is_admin)
+            if not needs_reply:
+                continue
+        elif not last and d.approval_status == "approved":
+            # لا محادثة ولا بانتظار اعتماد — تجاوز
+            if inbox == "":
+                # نعرض كل من له محادثة أو pending/rejected فقط في "الكل"
+                continue
+
+        needs_reply = False
+        last_from_admin = False
+        if last:
+            last_from_admin = last.sender_id in admin_ids
+            needs_reply = (last_from_admin and not current_is_admin) or ((not last_from_admin) and current_is_admin)
+
+        rows.append({
+            "driver": d,
+            "last": last,
+            "count": msg_counts.get(d.id, 0),
+            "last_sender": sender_names.get(last.sender_id, "مستخدم") if last else "",
+            "last_from_admin": last_from_admin,
+            "needs_reply": needs_reply,
+        })
+
+    # الكل: فقط المحادثات النشطة أو بانتظار/مرفوض
+    if inbox == "":
+        rows = [r for r in rows if r["last"] or r["driver"].approval_status in ("pending", "rejected")]
+
+    rows.sort(key=lambda r: (r["last"].created_at if r["last"] else r["driver"].created_at), reverse=True)
+
+    needs_reply_count = 0
+    for r in rows:
+        if r["needs_reply"]:
+            needs_reply_count += 1
+
+    return render_template(
+        "drivers/conversations.html",
+        rows=rows,
+        inbox=inbox,
+        needs_reply_count=needs_reply_count,
+        current_is_admin=current_is_admin,
+    )
 
 
 @drivers_bp.route("/")
@@ -224,12 +330,14 @@ def drivers_detail(id):
                 from src.web.app import user_is_admin
                 if user_is_admin(u):
                     admin_senders.add(m.sender_id)
+    # تمرير تلقائي لأسفل المحادثة
     return render_template(
         "drivers/detail.html",
         driver=driver,
         approval_messages=messages,
         senders=senders,
         admin_senders=admin_senders,
+        chat_focus=True,
     )
 
 
