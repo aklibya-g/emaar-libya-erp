@@ -1,5 +1,13 @@
 ﻿{% extends "layouts/base.html" %}
 {% block title %}قسم الحركة | شركة اعمار ليبيا لنقل الركاب{% endblock %}
+{% block extra_css %}
+<style>
+  @keyframes approvalPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(245,158,11,0.25); }
+    50% { box-shadow: 0 0 0 6px rgba(245,158,11,0.15); }
+  }
+</style>
+{% endblock %}
 {% block content %}
 
 <!-- Page Header -->
@@ -105,63 +113,79 @@
     <span class="badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;font-size:11px;border-radius:8px;padding:3px 8px;">اضغط للتفاصيل</span>
   </div>
   <div class="card-body py-2 px-3">
-    <div class="row g-2">
-      <div class="col-lg-3 col-md-6">
-        <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none">
-        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_licenses_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div class="d-flex flex-wrap gap-2 align-items-stretch">
+      <div style="flex:1 1 0;min-width:0">
+        <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="text-decoration-none d-block h-100">
+        {% set ap = approval_pending_count|default(movement_pending_drivers|default(0)) %}
+        {% set rj = approval_rejected_count|default(movement_rejected_drivers|default(0)) %}
+        {% set has_ap = ap > 0 or rj > 0 %}
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 h-100" style="min-height:66px;border:2px solid {{ '#fde68a' if has_ap else '#e5e7eb' }};background:{{ '#fffbeb' if has_ap else '#f8fafc' }};cursor:pointer;transition:transform 0.15s;{{ 'box-shadow:0 0 0 3px rgba(245,158,11,0.25);animation:approvalPulse 1.6s ease-in-out infinite;' if ap > 0 }}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fef3c7' if has_ap else '#e5e7eb' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-patch-check-fill" style="font-size:1.2rem;color:{{ '#d97706' if has_ap else '#64748b' }};"></i>
+          </div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">اعتماد/رفض السائقين</div>
+            <div style="font-size:11px;color:{{ '#b45309' if has_ap else 'var(--text-secondary)' }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ ap }} بانتظار · {{ rj }} مرفوض</div>
+          </div>
+          <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fef3c7' if has_ap else '#e5e7eb' }};color:{{ '#d97706' if has_ap else '#64748b' }};">{{ ap }}</span>
+        </div>
+        </a>
+      </div>
+      <div style="flex:1 1 0;min-width:0">
+        <a href="{{ url_for('driver_hr.licenses_list') }}" class="text-decoration-none d-block h-100">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 h-100" style="min-height:66px;border:2px solid {{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_licenses_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="bi bi-card-heading" style="font-size:1.2rem;color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};"></i>
           </div>
-          <div class="flex-grow-1">
-            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">رخص السائقين</div>
-            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">رخص السائقين</div>
+            <div style="font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">تنتهي قريباً</div>
           </div>
           <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if expired_licenses_count > 0 else '#d1fae5' }};color:{{ '#dc3545' if expired_licenses_count > 0 else '#10b981' }};">{{ expired_licenses_count }}</span>
         </div>
         </a>
       </div>
-      <div class="col-lg-3 col-md-6">
-        <a href="{{ url_for('hr.driver_contracts_list') }}" class="text-decoration-none">
-        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_contracts_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="flex:1 1 0;min-width:0">
+        <a href="{{ url_for('hr.driver_contracts_list') }}" class="text-decoration-none d-block h-100">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 h-100" style="min-height:66px;border:2px solid {{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};background:{{ '#fff5f5' if expired_contracts_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           <div style="width:38px;height:38px;border-radius:10px;background:{{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="bi bi-file-earmark-text" style="font-size:1.2rem;color:{{ '#dc3545' if expired_contracts_count > 0 else '#10b981' }};"></i>
           </div>
-          <div class="flex-grow-1">
-            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">عقود السائقين</div>
-            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">عقود السائقين</div>
+            <div style="font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">تنتهي قريباً</div>
           </div>
           <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#fee2e2' if expired_contracts_count > 0 else '#d1fae5' }};color:{{ '#dc3545' if expired_contracts_count > 0 else '#10b981' }};">{{ expired_contracts_count }}</span>
         </div>
         </a>
       </div>
-      <div class="col-lg-3 col-md-6">
-        <a href="{{ url_for('vehicles.expiring_insurance') }}" class="text-decoration-none">
-        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expired_insurance_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="flex:1 1 0;min-width:0">
+        <a href="{{ url_for('vehicles.expiring_insurance') }}" class="text-decoration-none d-block h-100">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 h-100" style="min-height:66px;border:2px solid {{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expired_insurance_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           <div style="width:38px;height:38px;border-radius:10px;background:{{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="bi bi-shield-check" style="font-size:1.2rem;color:{{ '#2563eb' if expired_insurance_count > 0 else '#10b981' }};"></i>
           </div>
-          <div class="flex-grow-1">
-            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">تأمين المركبات</div>
-            <div style="font-size:11px;color:var(--text-secondary);">تنتهي قريباً</div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">تأمين المركبات</div>
+            <div style="font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">تنتهي قريباً</div>
           </div>
           <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#dbeafe' if expired_insurance_count > 0 else '#d1fae5' }};color:{{ '#2563eb' if expired_insurance_count > 0 else '#10b981' }};">{{ expired_insurance_count }}</span>
         </div>
         </a>
       </div>
-      <div class="col-lg-3 col-md-6">
-        <a href="{{ url_for('vehicles.expiring_registration') }}" class="text-decoration-none">
-        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="border:2px solid {{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expiring_registration_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="flex:1 1 0;min-width:0">
+        <a href="{{ url_for('vehicles.expiring_registration') }}" class="text-decoration-none d-block h-100">
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 h-100" style="min-height:66px;border:2px solid {{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};background:{{ '#eff6ff' if expiring_registration_count > 0 else '#f0fdf4' }};cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
           <div style="width:38px;height:38px;border-radius:10px;background:{{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="bi bi-clipboard2-check" style="font-size:1.2rem;color:{{ '#2563eb' if expiring_registration_count > 0 else '#10b981' }};"></i>
           </div>
-          <div class="flex-grow-1">
-            <div style="font-size:14px;font-weight:700;color:var(--text-primary);">الفحص الفني</div>
-            <div style="font-size:11px;color:var(--text-secondary);">ينتهي قريباً</div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">الفحص الفني</div>
+            <div style="font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ينتهي قريباً</div>
           </div>
           <span class="badge rounded-pill" style="font-size:15px;font-weight:800;padding:5px 10px;background:{{ '#dbeafe' if expiring_registration_count > 0 else '#d1fae5' }};color:{{ '#2563eb' if expiring_registration_count > 0 else '#10b981' }};">{{ expiring_registration_count }}</span>
         </div>
         </a>
-      </div>
       </div>
     </div>
   </div>

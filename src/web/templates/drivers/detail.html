@@ -7,7 +7,32 @@
   .chat-bubble { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 13.5px; line-height: 1.7; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); position: relative; }
   .chat-bubble .chat-sender { font-weight: 700; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
   .chat-bubble .chat-role { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
-  .chat-meta { font-size: 10px; opacity: 0.7; margin-top: 6px; }
+  .chat-meta { font-size: 10px; opacity: 0.7; margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .chat-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 22px; padding: 0 7px;
+    border-radius: 8px; font-size: 11px; font-weight: 800;
+    background: #1e293b; color: #fff; letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .chat-bubble.from-admin .chat-num { background: #047857; }
+  .chat-bubble.from-movement .chat-num { background: #1d4ed8; }
+  .chat-bubble.reject-bubble .chat-num { background: #b91c1c; }
+  .reply-to-num {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 700; cursor: pointer;
+    background: rgba(0,0,0,0.06); border: 1px dashed rgba(0,0,0,0.2);
+    padding: 2px 8px; border-radius: 8px; color: inherit;
+    opacity: 0.75; transition: opacity 0.15s;
+  }
+  .reply-to-num:hover { opacity: 1; background: rgba(0,0,0,0.12); }
+  .chat-ref {
+    display: inline-block; font-size: 11px; font-weight: 800;
+    background: rgba(30,41,59,0.08); border: 1px solid rgba(30,41,59,0.2);
+    padding: 1px 7px; border-radius: 6px; margin-bottom: 4px;
+    color: inherit; opacity: 0.85;
+  }
+  #chatMsgInput { font-size: 13.5px; }
 
   /* المدير التنفيذي — أخضر */
   .chat-bubble.from-admin {
@@ -173,8 +198,9 @@
                 {% if m.msg_type == 'approve' %}✅ تم الاعتماد{% elif m.msg_type == 'reject' %}❌ تم الرفض{% elif m.msg_type == 'resend' %}🔄 إعادة إرسال{% else %}📤 إرسال للاعتماد{% endif %}
               </span></div>
             {% endif %}
-            <div class="chat-bubble {{ 'from-admin' if from_admin else 'from-movement' }}{% if m.msg_type == 'reject' %} reject-bubble{% elif m.msg_type == 'approve' %} approve-bubble{% endif %}">
+            <div class="chat-bubble {{ 'from-admin' if from_admin else 'from-movement' }}{% if m.msg_type == 'reject' %} reject-bubble{% elif m.msg_type == 'approve' %} approve-bubble{% endif %}" id="msg-{{ loop.index }}">
               <div class="chat-sender">
+                <span class="chat-num">#{{ loop.index }}</span>
                 {{ senders.get(m.sender_id, 'مستخدم') }}
                 {% if from_admin %}
                   <span class="chat-role">المدير التنفيذي</span>
@@ -183,7 +209,12 @@
                 {% endif %}
               </div>
               {{ m.message }}
-              <div class="chat-meta">{{ m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else '' }}</div>
+              <div class="chat-meta">
+                <span>{{ m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else '' }}</span>
+                <button type="button" class="reply-to-num" onclick="replyToNum({{ loop.index }})" title="الرد على الرسالة رقم {{ loop.index }}">
+                  <i class="bi bi-reply"></i> رد على #{{ loop.index }}
+                </button>
+              </div>
             </div>
           {% endfor %}
         {% else %}
@@ -193,11 +224,14 @@
       <div class="card-footer" style="background:var(--bg-card);border-top:1px solid var(--border-color)">
         <form method="POST" action="{{ url_for('drivers.drivers_message', id=driver.id) }}" class="d-flex gap-2">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="text" name="message" class="form-control form-control-sm" placeholder="اكتب ملاحظة أو رد..." required style="border-radius:10px" autocomplete="off">
+          <input type="text" name="message" id="chatMsgInput" class="form-control form-control-sm" placeholder="اكتب ملاحظة أو رد... (يمكنك الإشارة لرقم رسالة)" required style="border-radius:10px" autocomplete="off">
           <button type="submit" class="btn btn-sm" style="background:var(--gradient-brand);color:#fff;border-radius:10px;font-weight:700;padding:8px 18px">
             <i class="bi bi-send me-1"></i> إرسال
           </button>
         </form>
+        <div class="mt-2" style="font-size:11px;color:var(--text-muted)">
+          <i class="bi bi-lightbulb me-1"></i> كل رسالة مرقّمة (#1، #2، …) — اضغط «رد على #N» للإشارة السريعة
+        </div>
       </div>
     </div>
   </div>
@@ -298,5 +332,16 @@
   var area = document.querySelector('.chat-area');
   if (area) area.scrollTop = area.scrollHeight;
 })();
+
+function replyToNum(n) {
+  var input = document.getElementById('chatMsgInput');
+  if (!input) return;
+  var prefix = 'ر.م #' + n + ' — ';
+  if (input.value.indexOf(prefix) === -1) {
+    input.value = prefix + input.value;
+  }
+  input.focus();
+  input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
 </script>
 {% endblock %}

@@ -61,6 +61,15 @@ def movement_dashboard():
             Vehicle.registration_expiry <= today + timedelta(days=30),
         ).scalar() or 0
 
+        approval_pending_count = session.query(func.count(Driver.id)).filter(
+            Driver.is_deleted == False,
+            Driver.approval_status == "pending",
+        ).scalar() or 0
+        approval_rejected_count = session.query(func.count(Driver.id)).filter(
+            Driver.is_deleted == False,
+            Driver.approval_status == "rejected",
+        ).scalar() or 0
+
         return render_template("movement/dashboard.html",
                              page_title="قسم الحركة",
                              total_vehicles=total_vehicles,
@@ -78,6 +87,8 @@ def movement_dashboard():
                              expired_licenses_count=expired_licenses_count,
                              expired_contracts_count=expired_contracts_count,
                              expired_insurance_count=expired_insurance_count,
+                             approval_pending_count=approval_pending_count,
+                             approval_rejected_count=approval_rejected_count,
                              expiring_registration_count=expiring_registration_count,
                              today=today)
 

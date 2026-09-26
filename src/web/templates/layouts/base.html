@@ -251,10 +251,16 @@
             <span class="badge bg-danger position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ unread_notifications }}</span>
             {% endif %}
           </a>
-          {% if current_user.is_admin and pending_driver_approvals %}
-          <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="topbar-notification text-decoration-none" title="سائقين بانتظار الاعتماد" style="position:relative;background:none;border:none;cursor:pointer;">
-            <i class="bi bi-patch-check" style="font-size:18px;color:#f59e0b"></i>
-            <span class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ pending_driver_approvals }}</span>
+          {% if current_user.is_admin or is_movement|default(false) %}
+          {% set approval_n = pending_driver_approvals if current_user.is_admin else (movement_pending_drivers|default(0)) %}
+          {% set approval_rj = movement_rejected_drivers|default(0) if not current_user.is_admin else 0 %}
+          <a href="{{ url_for('drivers.drivers_list', approval='pending') }}" class="topbar-notification text-decoration-none" title="اعتماد/رفض السائقين — دخول مباشر" style="position:relative;background:none;border:none;cursor:pointer;">
+            <i class="bi bi-patch-check" style="font-size:18px;color:{{ '#dc2626' if approval_rj > 0 and approval_n == 0 else '#f59e0b' if approval_n > 0 else '#64748b' }}"></i>
+            {% if approval_n %}
+            <span class="badge bg-warning text-dark position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ approval_n }}</span>
+            {% elif approval_rj %}
+            <span class="badge bg-danger position-absolute top-0 start-50 translate-middle" style="font-size:10px;padding:2px 5px;border-radius:50%;">{{ approval_rj }}</span>
+            {% endif %}
           </a>
           {% endif %}
 

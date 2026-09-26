@@ -102,6 +102,7 @@
         </div>
         <div class="conv-preview">
           {% if r.last %}
+            <span style="font-weight:800;font-size:11px;background:var(--bg-hover);border:1px solid var(--border-color);padding:1px 7px;border-radius:6px;margin-inline-end:6px">#{{ r.count }}</span>
             {% if r.last_from_admin %}<span class="side-chip admin">المدير</span>{% else %}<span class="side-chip movement">الحركة</span>{% endif %}
             {{ r.last.message }}
           {% else %}
